@@ -40,6 +40,7 @@ import { binDetector } from './bin.js';
 import { typosquatDetector } from './typo.js';
 import { firstVersionClusterDetector } from './first-version-cluster.js';
 import { wasmDetector } from './wasm.js';
+import { bundledDepsDetector } from './bundled.js';
 import { advisoriesForVersion } from './advisories.js';
 
 export const ALL_DETECTORS: readonly Detector[] = [
@@ -58,6 +59,7 @@ export const ALL_DETECTORS: readonly Detector[] = [
   typosquatDetector,
   firstVersionClusterDetector,
   wasmDetector,
+  bundledDepsDetector,
 ];
 
 export {
@@ -76,6 +78,7 @@ export {
   typosquatDetector,
   firstVersionClusterDetector,
   wasmDetector,
+  bundledDepsDetector,
 };
 
 /**

@@ -274,8 +274,8 @@ describe('runAll — escalation + validation', () => {
     expect(a.length).toBe(2);
   });
 
-  it('registers all built-in detectors (fifteen after wave-4 wasm)', () => {
-    expect(ALL_DETECTORS.length).toBe(15);
+  it('registers all built-in detectors (sixteen after N1 bundled-deps detector)', () => {
+    expect(ALL_DETECTORS.length).toBe(16);
   });
 
   it('stablesort exported', () => {
