@@ -1,0 +1,30 @@
+{
+  "name": "@vetlock/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "typecheck": "tsc -p . --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.24.0",
+    "@babel/traverse": "^7.24.0",
+    "@babel/types": "^7.24.0",
+    "pacote": "^18.0.0",
+    "tar": "^7.0.0",
+    "ssri": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/pacote": "^11.1.8",
+    "@types/babel__traverse": "^7.20.5",
+    "@types/tar": "^6.1.11",
+    "@types/ssri": "^7.1.5"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "vetlock-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Behavioral diffing for npm dependency updates. Answers 'what does this update DO now that it didn't before?'",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r --workspace-concurrency=1 build",
+    "test": "pnpm -r --workspace-concurrency=1 test",
+    "typecheck": "pnpm -r --workspace-concurrency=1 typecheck",
+    "check": "pnpm build && pnpm test",
+    "corpus:replay": "node packages/cli/dist/replay-corpus.js",
+    "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/parser": "^7.4.0",
+    "@typescript-eslint/eslint-plugin": "^7.4.0"
+  }
+}
