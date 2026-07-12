@@ -1,0 +1,167 @@
+[
+  {
+    "id": "C1",
+    "title": "advisory-known BLOCK + same-PR .vetlock.json ignorePackages = CLEAN verdict + GHSA cite silently dropped",
+    "class": "compositional: config trust + advisory correlation + verdict flow",
+    "description": "Chain: (a) advisories.ts:141-158 attaches a GHSA/CVE annotation and bumps confidence to 'high' for known-vulnerable versions. (b) runAll (detectors/index.ts:84-159) emits findings that would result in BLOCK (e.g. ua-parser-js@0.7.29 correlates with GHSA-fh58-9fw3-vf2v). (c) applyConfig (config.ts:87-90) runs AFTER runAll at cli.ts:208 and its FIRST filter drops any finding whose package appears in ignorePackages: `!config.ignorePackages.includes(f.package)`. (d) computeVerdict recomputes verdict from filtered findings, yielding CLEAN. (e) The `.vetlock.json` file is loaded from cwd (cli.ts:120-135) with ZERO checks that it existed pre-PR. A single-line addition to `.vetlock.json` in the SAME PR that pins the malicious version silently exempts a package the built-in GHSA database KNOWS to be malicious. Difference from S2: this exploit specifically defeats vetlock's second-source citation (GHSA), which the CHANGELOG cites as a v0.2 trust multiplier. The annotation is COMPUTED but never seen because the finding is dropped BEFORE render. No error is emitted; no residual signal survives.",
+    "reproduction_steps": [
+      "Create a directory representing a PR under review.",
+      "Write lockfile.before.json without ua-parser-js.",
+      "Write lockfile.after.json pinning ua-parser-js@0.7.29 (the known-malicious version from GHSA-fh58-9fw3-vf2v).",
+      "Write .vetlock.json in the SAME PR that contains: {\"version\":1,\"ignorePackages\":[\"ua-parser-js\"]}",
+      "Run `vetlock diff lockfile.before.json lockfile.after.json`. Verdict is CLEAN, exit code 0. No mention of GHSA-fh58-9fw3-vf2v in output.",
+      "Compare with running without .vetlock.json (or after removing ua-parser-js from ignorePackages): BLOCK verdict, exit code 2, with GHSA-fh58-9fw3-vf2v cited on every finding."
+    ],
+    "fixture_code": "// .vetlock.json (attacker-committed alongside the malicious upgrade)\n{\n  \"version\": 1,\n  \"ignorePackages\": [\"ua-parser-js\"]\n}\n\n// lockfile.after.json (npm v3) pins the KNOWN-malicious version\n{\n  \"name\": \"target-app\",\n  \"version\": \"1.0.0\",\n  \"lockfileVersion\": 3,\n  \"packages\": {\n    \"\": { \"name\": \"target-app\", \"version\": \"1.0.0\", \"dependencies\": { \"ua-parser-js\": \"0.7.29\" } },\n    \"node_modules/ua-parser-js\": {\n      \"name\": \"ua-parser-js\",\n      \"version\": \"0.7.29\",\n      \"integrity\": \"sha512-badBADbadHash+++++==\",\n      \"resolved\": \"https://registry.npmjs.org/ua-parser-js/-/ua-parser-js-0.7.29.tgz\"\n    }\n  }\n}",
+    "severity_if_confirmed": "BLOCK",
+    "confidence": "high",
+    "attacker_effort": "trivial — two files, one lockfile pin + one config line",
+    "detectors_bypassed": [
+      "GHSA advisory correlation (annotation + confidence upgrade — annotation is computed then discarded)",
+      "obf.new-obfuscated-file (via allowlist)",
+      "install.script-added",
+      "env.token-harvest",
+      "net.new-endpoint",
+      "exec.new-module",
+      "meta.maintainer-change",
+      "bin.new-native-artifact",
+      "deps.first-version-cluster",
+      "compound-suspicion escalation (rule 3)"
+    ],
+    "suggested_fix": "The advisory-annotation pass produces authoritative second-source signal — GHSA-cited findings should NOT be droppable by user config. Either (a) special-case findings with GHSA annotations in applyConfig so they cannot be filtered by ignorePackages, or (b) apply a hard-verdict floor: any finding matched by advisoriesForVersion() propagates a BLOCK verdict even when the finding array is fully suppressed. Additionally: the verdict computation should surface a suppressed-by-config counter to keep policy visibility.",
+    "fix_effort": "small — either an allowlist-exempt tag on GHSA-annotated findings or a verdict-floor check after applyConfig"
+  },
+  {
+    "id": "C2",
+    "title": "ignorePathsInside prefix + META detector's fixed 'package.json' evidence-file drops all maintainer-change findings package-wide",
+    "class": "compositional: config path-filter + detector evidence-file convention",
+    "description": "Chain: (a) meta.ts:87-94 always emits evidence with file:'package.json' (hard-coded string). (b) install.ts:63-68 and meta.ts and bin.ts also emit evidence with file:'package.json'. (c) applyConfig config.ts:92-98 drops findings whose FIRST evidence file starts with any prefix in `ignorePathsInside[package]`. (d) A `.vetlock.json` config entry `ignorePathsInside: {\"chalk\": [\"package.json\"]}` is schema-valid and reads harmlessly ('skip tests in chalk') but actually drops EVERY META, INSTALL, BIN, and INTEGRITY finding — anything whose canonical evidence anchor is package.json. Compositional novelty: unlike S2 (universal ignorePackages), this looks like a benign path-scoped rule but wipes out the entire manifest-anchored detection surface for that package. On a slow-review PR, a reviewer scanning the .vetlock.json diff sees a plausible 'skip package.json noise' rule; the actual effect is total maintainer-change / install-script / native-artifact / integrity-mismatch suppression for the target.",
+    "reproduction_steps": [
+      "Attacker's PR adds a chalk update from 5.3.1 → 5.99.0-evil which changes maintainers (BLOCK-tier takeover pattern) and adds a postinstall script.",
+      "Same PR adds .vetlock.json: {\"version\":1,\"ignorePathsInside\":{\"chalk\":[\"package.json\"]}}",
+      "vetlock runs: meta.maintainer-change emits with evidence[0].file='package.json'. applyConfig drops it. install.script-added emits with evidence[0].file='package.json'. applyConfig drops it. integrity.hash-mismatch (from engine.ts:161-167) emits with evidence[0].file='package.json'. applyConfig drops it.",
+      "Verdict: CLEAN. All manifest-anchored BLOCK findings vanish under a rule that reads like a test-noise filter."
+    ],
+    "fixture_code": "// .vetlock.json — plausible-looking scoped ignore\n{\n  \"version\": 1,\n  \"ignorePathsInside\": {\n    \"chalk\": [\"package.json\", \"test/\", \"examples/\"]\n  }\n}\n\n// package.json inside the chalk@5.99.0-evil tarball has:\n// - new maintainer set (unknown emails)\n// - postinstall script that does exfil\n// Both surface as findings whose evidence[0].file === 'package.json' and both are silently dropped.",
+    "severity_if_confirmed": "BLOCK",
+    "confidence": "high",
+    "attacker_effort": "trivial — 3-line .vetlock.json diff camouflaged as test-skip rule",
+    "detectors_bypassed": [
+      "meta.maintainer-change (including the trust-store BLOCK takeover path)",
+      "install.script-added",
+      "install.script-changed",
+      "bin.new-native-artifact (which emits evidence for the .node/.wasm PATH — NOT dropped; see limitation)",
+      "integrity.hash-mismatch (engine-emitted; evidence.file='package.json')"
+    ],
+    "suggested_fix": "(a) Reject `ignorePathsInside` entries that target manifest-anchor paths (`package.json`, `package-lock.json`) at parseConfig time — those aren't code paths. (b) Emit engine-synthesized manifest findings (integrity, meta, install) with a NON-file-shaped evidence anchor (e.g. file:'<manifest>' or a dedicated 'source' enum) so they are unambiguously distinguishable from tarball-file findings. (c) applyConfig should log a warning when an ignore rule matches a manifest-scoped detector — visible suppression.",
+    "fix_effort": "small — one line in config schema validation + optional evidence-source enum"
+  },
+  {
+    "id": "C3",
+    "title": "GHSA range uses semver.satisfies with includePrerelease + attacker-controlled version tag → advisory misses AND ignorePackages/allowlist is unnecessary — the finding is emitted at normal (non-high) confidence, no GHSA cite, no forced BLOCK-floor",
+    "class": "compositional: attacker version-string + advisory range algebra + escalation-3 threshold",
+    "description": "Chain: (a) attacker republishes a compromised @solana/web3.js at 1.95.8 (ONE MINOR ABOVE the advisory range >=1.95.5 <=1.95.7). (b) advisoriesForVersion returns [] because semver.satisfies('1.95.8', '>=1.95.5 <=1.95.7') is false. (c) The finding fires at default confidence 'medium' or 'high' but LOSES the GHSA-jj35-jhw9-vp4q citation. (d) Because the version bump is 1.95.7 → 1.95.8 (patch), depsManifestDetector fires as INFO 'new direct dep' or is silent (existing dep). (e) meta.ts requires oldEmails AND newEmails both non-empty (S6); if attacker also drops _npmUser and maintainers from the new manifest → META silently drops. (f) With META missing and DEPS at INFO, the escalation 3 (`>=3 WARN across >=2 categories`) needs OBF+NET+CODE (three WARN cats). But if the attacker ships a MINIFIED bundle with ONE encoded URL, only OBF fires (1 WARN, 1 cat) — escalation doesn't kick in. Result: WARN verdict, exit 1, on a version that GHSA would have BLOCKED at the previous patch. The compositional novelty: no single-line bypass — the attacker just chooses a version-string outside the advisory range AND drops the maintainer field. Two mild, individually-justifiable moves compound to a full evasion of both correlation AND meta detection AND escalation-3. This exploits the built-in defaults, no .vetlock.json required.",
+    "reproduction_steps": [
+      "Register attacker-controlled @solana/web3.js@1.95.8 with same-shaped code as the compromised 1.95.5-1.95.7 (crypto wallet drainer). Pack the tarball.",
+      "In the new tarball's package.json: `{\"name\":\"@solana/web3.js\",\"version\":\"1.95.8\"}` — no maintainers, no _npmUser field.",
+      "PR's lockfile.after.json pins @solana/web3.js at 1.95.8 with integrity of the malicious tarball.",
+      "vetlock runs: advisoriesForVersion('@solana/web3.js','1.95.8') → [] (out of range). meta.maintainerDetector returns [] (S6: newEmails empty). Only obf.new-obfuscated-file fires (WARN, 1 finding, 1 category). Escalation 3 doesn't kick (needs 3+ WARN). Verdict: WARN, exit 1.",
+      "Reviewer sees ONE low-confidence obfuscation warning; no GHSA cite; no BLOCK; no forced-fail. Merges."
+    ],
+    "fixture_code": "// package.json inside the malicious 1.95.8 tarball\n{\n  \"name\": \"@solana/web3.js\",\n  \"version\": \"1.95.8\",\n  \"main\": \"dist/index.min.js\",\n  \"dependencies\": {}\n  // Deliberately no `maintainers` field. No `_npmUser`. meta.ts returns [].\n}\n\n// dist/index.min.js is a legitimate-looking one-liner bundle;\n// obf.ts sees it as `minified=true` and emits obf.new-obfuscated-file WARN.\n// NO other findings fire because meta is silent (S6-shape), advisory-range misses,\n// and the payload is only ONE category so escalation-3 doesn't apply.",
+    "severity_if_confirmed": "BLOCK",
+    "confidence": "high",
+    "attacker_effort": "moderate — needs to publish a package OR craft a lockfile at a version 1 above the advisory range",
+    "detectors_bypassed": [
+      "GHSA advisory correlation (out-of-range version, no cite, no confidence bump)",
+      "meta.maintainer-change (chained via S6-shape empty maintainers)",
+      "compound-suspicion escalation (rule 3 — only 1 WARN below threshold)",
+      "verdict → WARN not BLOCK"
+    ],
+    "suggested_fix": "(a) Widen advisory ranges to include forward-of-tag versions when the vulnerability is a PUBLISHED-PAYLOAD rather than a code bug — the whole point of Solana-web3 was 1.95.5-1.95.7 SPECIFIC uploads; add a `soft:` variant of the range that fires WARN for any version published in the malicious window. (b) On packages with GHSA history, escalation-3 threshold should be lowered (1 category or 2 WARN vs 3 WARN / 2 cats). (c) Add version-anchored trust: any @solana/web3.js version between 1.95.5 and any next major bump should carry a mandatory META-check even if maintainers array is empty (integrity-check the publisher against known-post-incident publishers).",
+    "fix_effort": "medium — needs advisory-schema extension and per-package escalation-threshold overrides"
+  },
+  {
+    "id": "C4",
+    "title": "pnpm workspace-only importer + shortestPaths BFS via `root.dependencies` + rollupByDirect empty = malicious dep reports CLEAN in the direct-dep view even when detectors emit BLOCK",
+    "class": "compositional: monorepo lockfile shape + provenance BFS + rollup UI-truth channel",
+    "description": "Chain: (a) parsePnpmLockText (lockfile-pnpm.ts:71-77) reads root importer as `importers['.']` OR falls back to top-level flat `dependencies`/`devDependencies`/`optionalDependencies`. (b) If BOTH are absent (workspace-only project without a root package), rootDepNames=[] → rootNode.dependencies=[]. (c) shortestPaths in lockfile.ts:192-227 starts BFS from `''` and traverses `node.dependencies`. With root.dependencies=[], every provenance search returns [] — findings have provenance:[]. (d) computeRollup (engine.ts:280-316) enumerates ONLY children of root (line 285-292). With root.dependencies=[], directNames=Set() → rollupByDirect={} — completely empty. (e) The renderers (renderTTY, renderMarkdown, renderJSON) show the top-level 'Impact by direct dependency' as CLEAN or empty. (f) Individual findings STILL fire (they're per-package) but the reviewer-facing rollup, which vetlock's README highlights as the killer-feature reviewer touchpoint, is empty. On a real PR review, the reviewer's eye goes to the rollup FIRST; if it's empty, the diff looks like a routine transitive update. Compositional novelty over F8: F8 identified the provenance blindness, but this ALSO breaks the rollupByDirect signal — the PRIMARY reviewer-facing view — turning a BLOCK verdict into a review that looks like harmless upgrades. The attacker doesn't need to hide findings — they hide the ATTRIBUTION path.",
+    "reproduction_steps": [
+      "Create pnpm-lock.yaml with lockfileVersion: 9.0, no importers['.'] entry (use only importers['packages/app']), NO top-level `dependencies`/`devDependencies` fields.",
+      "Include a malicious package in `packages:` (e.g. `@types/typo-target@1.0.0` with install script + child_process).",
+      "Run `vetlock diff pnpm-lock.before.yaml pnpm-lock.after.yaml --md` (Markdown renderer).",
+      "Confirm: findings array contains BLOCK for install.script-added AND exec.new-module (correct). BUT the 'Impact by direct dependency' section is empty because rollupByDirect is {}. Provenance on every finding is `provenance: []`.",
+      "Reviewer sees a diff-changes list but no 'this update affects X, which you use directly' attribution — the whole PoV that the README markets as the key trust signal is silent."
+    ],
+    "fixture_code": "# pnpm-lock.yaml (attacker-crafted)\nlockfileVersion: '9.0'\n\nimporters:\n  packages/app:\n    dependencies:\n      '@types/typo-target':\n        specifier: ^1.0.0\n        version: 1.0.0\n\n# NOTE: no importers['.'] and no top-level `dependencies:` — the pnpm parser\n# reaches lockfile-pnpm.ts:72-76's fallback, which walks doc.dependencies (undefined).\n# rootDepNames = [] → rootNode.dependencies = [] → shortestPaths+rollupByDirect are empty.\n\npackages:\n  '@types/typo-target@1.0.0':\n    resolution: {integrity: sha512-attacker-controlled-hash===}\n    dependencies:\n      child-payload: 0.0.1\n\n  child-payload@0.0.1:\n    resolution: {integrity: sha512-attacker-hash2===}\n\nsnapshots:\n  '@types/typo-target@1.0.0':\n    dependencies:\n      child-payload: 0.0.1",
+    "severity_if_confirmed": "BLOCK",
+    "confidence": "high",
+    "attacker_effort": "moderate — needs pnpm workspace-shape monorepo without a root package or PR that removes `importers['.']`",
+    "detectors_bypassed": [
+      "provenance chains (empty on every finding)",
+      "rollupByDirect (empty map)",
+      "reviewer-facing 'via' path in TTY/MD/JSON/SARIF renderers",
+      "any policy gate keyed off `Object.keys(rollupByDirect).length > 0`"
+    ],
+    "suggested_fix": "(a) In parsePnpmLockText, when `importers` exists but `importers['.']` does not, MERGE all importers' deps into a synthetic root — the pnpm graph should always have a root that covers every workspace. (b) computeRollup should fall back to `Object.keys(newG.byName)` (or a curated subset) when rootDep is empty, so at least SOME grouping surfaces. (c) On empty rollupByDirect, the renderer should print a loud warning: 'lockfile has no root importer — provenance disabled; treat findings as top-level'.",
+    "fix_effort": "small — importer-merge in the pnpm parser is 5-10 lines; rollup fallback is another handful"
+  },
+  {
+    "id": "C5",
+    "title": "case-mismatch package name + TOP_SET lowercase membership + trust-store lookup + advisory package match = full typo/trust/GHSA blind spot in a lockfile that installs a KNOWN package",
+    "class": "compositional: parser case-preservation + detector Set/string-compare + npm registry case-normalization",
+    "description": "Chain: (a) The npm registry normalizes package names to lowercase on install. However, many lockfile parsers (including vetlock's parseLockfile in lockfile.ts:92-105) preserve the exact-case name from the lockfile JSON key. (b) A malicious lockfile can list `node_modules/Lodash` (capital L) with the malicious content — npm's install-side normalization would recover `lodash`, but vetlock reads `name='Lodash'`. (c) TOP_SET.has('Lodash') → false (TOP_SET is lowercase-only). typo.ts:42: `for (const top of TOP_NPM_NAMES)` iterates lowercase names; `dl('Lodash', 'lodash')` returns distance 1 (case-differ counts as edit) → THIS DOES fire typo WARN — but critically, `BUILTIN_TRUST_STORE['Lodash']` returns undefined, so meta.ts:35 `trustList = []` → all takeover-shape logic (BLOCK path) is skipped, output is generic WARN. (d) advisoriesForVersion(packageName='Lodash', version) returns [] because ADVISORIES entries have `.package: 'lodash'` (exact match). No GHSA cite, no confidence bump. (e) config.trustedPublishers['Lodash'] also mis-matches unless attacker manually sets a capitalized key. (f) On the RUNTIME side, npm installs the LOWERCASE 'lodash' package that resolves against the SAME integrity — so a malicious integrity value binds to the LOWERCASE package that the app actually installs. The user gets the malicious code; vetlock sees a WARN, no BLOCK, no trust-store lookup, no GHSA hit. Novel compositional shape: no config trickery, no fold-pass evasion — just a case-swap in the lockfile JSON key exploits three lookups that all assume lowercase-canonical names but which the parser doesn't normalize.",
+    "reproduction_steps": [
+      "Craft package-lock.json with an entry `\"node_modules/Lodash\": { \"name\": \"Lodash\", \"version\": \"4.17.21\", \"integrity\": \"sha512-attacker-tarball===\" }`.",
+      "Confirm parseLockfile stores name='Lodash' (uppercase L preserved).",
+      "Confirm typo.ts fires WARN 'Lodash edit-distance-1 from lodash' — good, one signal.",
+      "Confirm meta.ts uses BUILTIN_TRUST_STORE['Lodash']=undefined → trustList=[] → oldTrusted/newTrusted both false → severity=WARN not BLOCK, even though lodash is a jdalton-owned trust-anchored package.",
+      "Confirm advisoriesForVersion('Lodash', '4.17.21') → [] (ADVISORIES entries have package:'lodash', exact match).",
+      "Aggregate verdict: WARN, exit 1. The KNOWN takeover-shape (lodash maintainer replaced with attacker) is emitted at generic-typo confidence, never surfacing that this IS the top-download lodash package with a known trust store."
+    ],
+    "fixture_code": "// package-lock.json (attacker lockfile)\n{\n  \"name\": \"target-app\",\n  \"version\": \"1.0.0\",\n  \"lockfileVersion\": 3,\n  \"packages\": {\n    \"\": { \"name\": \"target-app\", \"version\": \"1.0.0\", \"dependencies\": { \"Lodash\": \"4.17.21\" } },\n    \"node_modules/Lodash\": {\n      \"name\": \"Lodash\",\n      \"version\": \"4.17.21\",\n      \"integrity\": \"sha512-attackerControlledTarballHash+++==\",\n      \"resolved\": \"https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz\",\n      \"maintainers\": [{\"name\": \"totally-not-jdalton\", \"email\": \"evil@attacker.tld\"}]\n    }\n  }\n}\n\n// The tarball, when analyzed, contains:\n// - package.json name='Lodash', maintainer=evil@attacker.tld\n// - the meta detector: pair.new.name='Lodash', BUILTIN_TRUST_STORE['Lodash']=undefined,\n//   trustList=[], severity stays WARN, note='', no takeover-BLOCK.\n// - the typo detector: distance('Lodash','lodash')=1, fires WARN 'edit-distance 1 from lodash'.\n// - advisoryForVersion('Lodash','4.17.21') → []. No GHSA cite, no confidence bump.\n// - Escalation 2 (typo→BLOCK): would fire if same package has BLOCK-tier capability. If the\n//   attacker keeps EXEC/ENV/NET below detection threshold (folds, encoded URLs), no BLOCK-tier\n//   fires → escalation stays WARN.",
+    "severity_if_confirmed": "BLOCK",
+    "confidence": "high",
+    "attacker_effort": "trivial — one character (uppercase L) in the lockfile JSON key",
+    "detectors_bypassed": [
+      "meta.maintainer-change (trust-store lookup misses; BLOCK takeover path skipped)",
+      "GHSA advisory correlation (case-sensitive package match)",
+      "config.trustedPublishers user-config lookup (case-sensitive)",
+      "typosquat detector (still fires, but confidence downgrade — distance-1 vs the target name masks that this is a lookalike of the SAME package the user thinks they're using)"
+    ],
+    "suggested_fix": "(a) In parseLockfile, normalize `name` to lowercase (npm registry names are case-insensitive; the ecosystem SHOULD be case-insensitive) or emit a NORMALIZATION-MISMATCH finding when a lockfile has a name that differs in case from the canonical form. (b) BUILTIN_TRUST_STORE lookups should be case-insensitive: `BUILTIN_TRUST_STORE[name.toLowerCase()]`. (c) advisoriesForVersion should case-insensitively match. (d) typo.ts should specifically-CASE-BLOCK on case-only variants of top-download packages (Lodash → lodash at distance 1 is a KNOWN attack shape, not a routine typo).",
+    "fix_effort": "small — lowercase-normalization at the parser and lookup sites"
+  },
+  {
+    "id": "C6",
+    "title": "Snapshot cache poisoning + tarball not fetched + advisories bypass + integrity-changed synthesis skip = malicious version served entirely from cache with no analysis and no advisory annotation",
+    "class": "compositional: cache-lookup by integrity + engine synthesized-finding skip + advisory range predicate",
+    "description": "Chain: (a) engine.ts:225-232 checks cache BEFORE calling pacote: `if (ref.integrity) { const cached = await cache.get(ref.integrity); if (cached && cached.name === ref.name && cached.version === ref.version) return cached; }`. (b) The cache key is `integrity.replace(/[^A-Za-z0-9._-]/g, '_')` (cache.ts:60-62) — attacker-controllable via the lockfile's integrity field. (c) If the attacker has ANY writable access to `~/.cache/vetlock/analysis/`, they can pre-plant a benign snapshot at the mangled-integrity path with `name=lodash, version=4.17.20`. When the PR pins `lodash@4.17.20` with that exact integrity, the cache short-circuit returns the benign snapshot; NO tarball is fetched. (d) Now the compositional add-on: changeset.ts:53-66 emits an integrity-changed synthetic finding ONLY when old.integrity !== new.integrity AND BOTH are non-empty. If the attacker also crafts the lockfile such that `lodash@4.17.20` is an UNCHANGED version (both old and new have the same version + same 'benign' integrity), no integrity-changed fires. (e) Meanwhile, on the runtime side, the app installs the actual npm tarball with a real integrity check — but that check is against the ATTACKER'S integrity string (from the lockfile), which the attacker chose. If the attacker corrupted the CI cache OR the lockfile's integrity string differs from the real registry (npm ci would fail — but vetlock analyzes WITHOUT re-fetching from registry, trusting the cache). Compositional novelty over S1: S1 identified cache poisoning; this exploit COMPOSES it with the integrity-changed synthesis-skip AND with the advisories.ts range-satisfies logic. The attacker builds a lockfile where the malicious version's integrity matches a pre-planted benign snapshot AND the version-range check `semver.satisfies(version, advisoryRange)` MISSES because the range is written narrowly. Result: vetlock reports CLEAN based on the pre-planted snapshot; the advisories DB has no chance to fire because it never sees the malicious content; no synthetic INTEG finding fires because integrity didn't change in the diff.",
+    "reproduction_steps": [
+      "Attacker has ANY write access to `~/.cache/vetlock/analysis/` on the CI runner (e.g. via a prior benign PR that ran vetlock, or via a shared runner).",
+      "Attacker pre-plants a snapshot file at `~/.cache/vetlock/analysis/sha512-BENIGN_HASH.json` whose contents describe a clean lodash@4.17.20 (empty capabilities, no scripts, no imports).",
+      "Attacker's PR keeps lockfile.after.json with `lodash@4.17.20, integrity: sha512-BENIGN_HASH` — SAME as before. NO diff. Engine's changeset() emits ZERO changes for lodash — the pair is never analyzed anew.",
+      "But the attacker's SEPARATE lockfile change adds a NEW package `benign-helper@1.0.0` that DEPENDS ON lodash — pnpm/npm re-resolves and the ACTUAL installed lodash (post-install) is malicious. vetlock never sees this because vetlock is DIFF-based, and lodash@4.17.20's integrity didn't change on disk in the lockfile.",
+      "Compositional twist: If the attacker CAN change the integrity (S1 shape), the pre-planted snapshot serves under the new integrity too — cache hit, no fetch, no analysis, no advisory correlation. Both integrity paths short-circuit."
+    ],
+    "fixture_code": "// Attacker pre-populates: ~/.cache/vetlock/analysis/sha512-YXR0YWNrZXItY29udHJvbGxlZC1oYXNoLXZhbHVlLXVzZWQtaW4tYm90aC1sb2NrZmlsZS1hbmQtY2FjaGU=.json\n{\n  \"name\": \"lodash\",\n  \"version\": \"4.17.20\",\n  \"integrity\": \"sha512-attacker-controlled-hash-value-used-in-both-lockfile-and-cache=\",\n  \"manifest\": { \"name\": \"lodash\", \"version\": \"4.17.20\" },\n  \"files\": [],\n  \"nativeArtifacts\": [],\n  \"formatVersion\": 1,\n  \"builtAt\": \"2024-01-01T00:00:00.000Z\"\n}\n\n// Attacker's lockfile.after.json pins lodash to that integrity:\n{\n  \"lockfileVersion\": 3,\n  \"packages\": {\n    \"\": { \"dependencies\": { \"lodash\": \"4.17.20\" } },\n    \"node_modules/lodash\": {\n      \"name\": \"lodash\",\n      \"version\": \"4.17.20\",\n      \"integrity\": \"sha512-attacker-controlled-hash-value-used-in-both-lockfile-and-cache=\"\n    }\n  }\n}\n\n// vetlock engine.ts:225-232: cache.get('sha512-attacker-...') returns the pre-planted\n// snap. cached.name==='lodash' && cached.version==='4.17.20' → return cached. NO fetch.\n// The malicious tarball (that WOULD have been fetched) is never analyzed. Advisory\n// correlation runs over an EMPTY files array → no capabilities, no findings.\n// Verdict: CLEAN. Exit 0.",
+    "severity_if_confirmed": "BLOCK",
+    "confidence": "medium",
+    "attacker_effort": "moderate to high — requires cache-write primitive on the analyzer host (shared CI runner, prior local vetlock run, or persistent cache volume)",
+    "detectors_bypassed": [
+      "install.script-added",
+      "env.token-harvest",
+      "net.new-endpoint",
+      "exec.new-module",
+      "fs.new-hotpath-write",
+      "bin.new-native-artifact",
+      "meta.maintainer-change",
+      "obf.entropy-jump",
+      "wasm.suspicious-import",
+      "GHSA advisory correlation (runs over EMPTY snapshot; no findings to annotate)",
+      "integrity.hash-mismatch (never emitted; integrity didn't change in the diff)"
+    ],
+    "suggested_fix": "(a) Cache-lookup must include a fetch-side integrity re-verification: after cache hit, re-hash the ORIGINAL tarball location (if still on disk) and compare. If no tarball is on disk, DO fetch and compare. (b) Store the cache in a per-run, isolated directory rather than a global ~/.cache/vetlock/analysis — shared caches across users/runs are the underlying enabler for this class. (c) Sign cache entries with a per-installation-secret HMAC and reject unsigned entries. (d) Empty/near-empty snapshots (files.length==0 && nativeArtifacts.length==0) should NEVER be returned from cache without re-fetch — legitimate packages have files.",
+    "fix_effort": "medium — HMAC-signed cache entries + empty-snapshot re-fetch heuristic"
+  }
+]

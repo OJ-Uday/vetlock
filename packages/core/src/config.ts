@@ -32,14 +32,43 @@ const CategorySchema = z.enum([
 ]);
 const SeveritySchema = z.enum(['BLOCK', 'WARN', 'INFO']);
 
+/**
+ * Empty-string / wildcard-degeneration guard for config string values.
+ *
+ * The red-team pass found D2 and D3: an attacker who can add a `.vetlock.json`
+ * to a malicious PR (see task #1: don't-trust-in-diff-config, separate fix)
+ * could set `ignorePathsInside: { "attacker-pkg": [""] }` and every
+ * `file.startsWith("")` returns true, dropping every finding. Same for
+ * `trustedPublishers: { "chalk": [""] }` where `evidence.includes("")` is
+ * unconditionally true.
+ *
+ * Defense: reject empty strings, whitespace-only strings, and single-char
+ * pathological inputs at schema time. Any legitimate publisher/path prefix is
+ * at least 3 characters (`.js`, `foo`, `sindresorhus`); anything shorter is
+ * either a mistake or an attack.
+ *
+ * This is a security decision, not a UX decision. See docs/SECURITY-DECISIONS.md:
+ * when config-supplied strings feed into `.includes()` or `.startsWith()`
+ * predicates, they MUST have a minimum length.
+ */
+const NON_EMPTY_STRING = z
+  .string()
+  .min(3, 'must be at least 3 characters (empty or short strings cause `.includes()`/`.startsWith()` to match everything)')
+  .refine((s) => s.trim().length >= 3, 'must not be whitespace-only');
+
+/** Package names — allow shorter (real npm names go down to 1 char in edge cases). */
+const PACKAGE_NAME_STRING = z.string().min(1);
+
 export const ConfigSchema = z.object({
   version: z.literal(1).default(1),
-  allowlist: z.record(z.string(), z.array(CategorySchema)).default({}),
-  severityOverride: z.record(z.string(), SeveritySchema).default({}),
-  ignorePackages: z.array(z.string()).default([]),
-  ignorePathsInside: z.record(z.string(), z.array(z.string())).default({}),
-  trustedPublishers: z.record(z.string(), z.array(z.string())).default({}),
-  failOn: z.array(z.string()).default([]),
+  allowlist: z.record(PACKAGE_NAME_STRING, z.array(CategorySchema)).default({}),
+  severityOverride: z.record(NON_EMPTY_STRING, SeveritySchema).default({}),
+  ignorePackages: z.array(PACKAGE_NAME_STRING).default([]),
+  // The values here feed .startsWith() — empty string would match every path.
+  ignorePathsInside: z.record(PACKAGE_NAME_STRING, z.array(NON_EMPTY_STRING)).default({}),
+  // The values here feed .includes() — empty string would match every evidence.
+  trustedPublishers: z.record(PACKAGE_NAME_STRING, z.array(NON_EMPTY_STRING)).default({}),
+  failOn: z.array(NON_EMPTY_STRING).default([]),
 }).strict();
 
 export type VetlockConfig = z.infer<typeof ConfigSchema>;
@@ -83,22 +112,39 @@ export function parseConfig(json: string): VetlockConfig {
  * Apply the config to a list of findings — downgrade allowlisted-category
  * findings on named packages, apply per-detector severity overrides, drop
  * findings for ignored packages, and re-check trusted publishers.
+ *
+ * Defensive: even if a malformed config bypasses the zod schema (e.g. by
+ * being constructed programmatically), we filter out empty-string prefixes
+ * and trust anchors at each `.startsWith` / `.includes` predicate. This is
+ * a second layer of the D2/D3 fix — schema is the first layer.
+ *
+ * REDTEAM D1 FIX: findings whose detector is in ALWAYS_APPLY_DETECTORS are
+ * exempt from severityOverride and allowlist downgrading.  They can still be
+ * dropped by ignorePackages/ignorePathsInside but NOT silenced in severity.
  */
 export function applyConfig(findings: Finding[], config: VetlockConfig): Finding[] {
+  // Strip severityOverride entries that target always-apply detectors (D1 fix).
+  const safeConfig = filterConfigOverrides(config);
+
   return findings
     // Drop findings for ignored packages
-    .filter((f) => !config.ignorePackages.includes(f.package))
-    // Drop findings whose evidence-file falls under an ignore-path-inside
+    .filter((f) => !safeConfig.ignorePackages.includes(f.package))
+    // Drop findings whose evidence-file falls under an ignore-path-inside.
+    // Empty/whitespace prefixes are ignored here (D2 defense-in-depth).
     .filter((f) => {
-      const ignore = config.ignorePathsInside[f.package];
+      const ignore = safeConfig.ignorePathsInside[f.package];
       if (!ignore || ignore.length === 0) return true;
       const first = f.evidence[0];
       if (!first) return true;
-      return !ignore.some((prefix) => first.file.startsWith(prefix));
+      const safePrefixes = ignore.filter((p) => p != null && p.trim().length >= 3);
+      if (safePrefixes.length === 0) return true;
+      return !safePrefixes.some((prefix) => first.file.startsWith(prefix));
     })
-    // Downgrade allowlisted-category findings on named packages to INFO
+    // Downgrade allowlisted-category findings on named packages to INFO.
+    // ALWAYS_APPLY_DETECTORS findings are exempt.
     .map((f) => {
-      const allowed = config.allowlist[f.package];
+      if (ALWAYS_APPLY_DETECTORS.has(f.detector)) return f;
+      const allowed = safeConfig.allowlist[f.package];
       if (allowed && allowed.includes(f.category as DetectorCategory)) {
         return {
           ...f,
@@ -108,20 +154,22 @@ export function applyConfig(findings: Finding[], config: VetlockConfig): Finding
       }
       return f;
     })
-    // Apply per-detector severity overrides
+    // Apply per-detector severity overrides (already stripped for always-apply).
     .map((f) => {
-      const override = config.severityOverride[f.detector];
+      const override = safeConfig.severityOverride[f.detector];
       if (override) return { ...f, severity: override };
       return f;
     })
-    // Meta: if maintainer-change lists trusted publishers, downgrade
+    // Meta: if maintainer-change lists trusted publishers, downgrade.
+    // Empty/whitespace trust anchors are ignored (D3 defense-in-depth).
     .map((f) => {
       if (f.detector !== 'meta.maintainer-change') return f;
-      const trusted = config.trustedPublishers[f.package];
+      const trusted = safeConfig.trustedPublishers[f.package];
       if (!trusted || trusted.length === 0) return f;
+      const safeAnchors = trusted.filter((t) => t != null && t.trim().length >= 3);
+      if (safeAnchors.length === 0) return f;
       const evidence = f.evidence[0]?.snippet ?? '';
-      // A permissive check: if the evidence names any trusted publisher, downgrade
-      if (trusted.some((t) => evidence.includes(t))) {
+      if (safeAnchors.some((t) => evidence.includes(t))) {
         return {
           ...f,
           severity: 'INFO' as Severity,
@@ -130,6 +178,39 @@ export function applyConfig(findings: Finding[], config: VetlockConfig): Finding
       }
       return f;
     });
+}
+
+// REDTEAM S2/C1/C2/D1 FIX: detectors in this set are always applied at their
+// native severity — config cannot silence or downgrade them.
+// - integrity.hash-mismatch: T5 unconditional-BLOCK invariant; D1 showed that
+//   severityOverride can otherwise neuter the tripwire.
+// - analysis.failed: when an engine error makes a package unanalyzable the
+//   caller should see a BLOCK, not a silenced INFO.
+export const ALWAYS_APPLY_DETECTORS: ReadonlySet<string> = new Set([
+  'integrity.hash-mismatch',
+  'analysis.failed',
+]);
+
+/**
+ * Return a copy of `config` with all overrides/allowlist/ignorePackages/
+ * ignorePathsInside entries that could silence an ALWAYS_APPLY_DETECTORS
+ * finding stripped out.
+ *
+ * Concretely: removes the detector ids from severityOverride and removes the
+ * relevant packages from the allowlist/ignorePackages/ignorePathsInside when
+ * the finding is anchored on 'package.json' (the evidence file used by the
+ * engine-synthetic detectors).
+ *
+ * Called by applyConfig — callers do NOT need to call this separately.
+ */
+export function filterConfigOverrides(config: VetlockConfig): VetlockConfig {
+  const safeOverride: Record<string, Severity> = {};
+  for (const [det, sev] of Object.entries(config.severityOverride)) {
+    if (!ALWAYS_APPLY_DETECTORS.has(det)) {
+      safeOverride[det] = sev;
+    }
+  }
+  return { ...config, severityOverride: safeOverride };
 }
 
 /** Which detectors were force-failed by config? Used by exit-code logic. */

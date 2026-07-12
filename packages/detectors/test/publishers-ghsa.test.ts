@@ -108,6 +108,9 @@ describe('publisher trust store', () => {
   });
 
   it('meta detector INFOs on rotation within trusted publishers', () => {
+    // Real npm maintainer records use emails; the S3 fix requires email-shaped
+    // input for the trust check. Bare-username manifests are not what npm
+    // actually publishes.
     const pair = {
       old: mkSnap({
         name: 'chalk',
@@ -115,7 +118,7 @@ describe('publisher trust store', () => {
         manifest: {
           name: 'chalk',
           version: '5.3.0',
-          maintainers: [{ email: 'sindresorhus' }],
+          maintainers: [{ email: 'sindresorhus@example.com' }],
         },
       }),
       new: mkSnap({
@@ -124,7 +127,7 @@ describe('publisher trust store', () => {
         manifest: {
           name: 'chalk',
           version: '5.3.1',
-          maintainers: [{ email: 'qix-' }],
+          maintainers: [{ email: 'qix-@example.com' }],
         },
       }),
     };

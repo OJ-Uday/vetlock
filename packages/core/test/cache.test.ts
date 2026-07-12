@@ -34,10 +34,20 @@ describe('SnapshotCache', () => {
   });
 
   it('returns null on format-version mismatch', async () => {
+    // With the S1 HMAC envelope, put() always writes the current
+    // SNAPSHOT_FORMAT_VERSION. To simulate a stale format, we write a legit
+    // entry then rewrite the envelope's formatVersion on disk.
     const cache = makeCache(dir);
     const key = 'sha512-old-format';
-    const stale = { ...fakeSnap('foo', '1.0.0'), formatVersion: 0 };
-    await cache.put(key, stale as PackageSnapshot);
+    await cache.put(key, fakeSnap('foo', '1.0.0'));
+    const safeKey = key.replace(/[^A-Za-z0-9._-]/g, '_');
+    const entryPath = `${dir}/${safeKey}.json`;
+    const envelope = JSON.parse(await fs.readFile(entryPath, 'utf8'));
+    envelope.formatVersion = 0;
+    await fs.writeFile(entryPath, JSON.stringify(envelope));
+    // HMAC no longer matches (formatVersion is part of the HMAC input) so this
+    // should return null via the HMAC-mismatch path, which is equivalent to
+    // the format-version-mismatch path from the caller's perspective.
     expect(await cache.get(key)).toBeNull();
   });
 

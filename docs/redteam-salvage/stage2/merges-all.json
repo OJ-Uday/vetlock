@@ -1,0 +1,316 @@
+[
+  {
+    "merges": [
+      {
+        "keep_id": "S2",
+        "drop_ids": [
+          "F5"
+        ],
+        "rationale": "F5 and S2 describe the same root vulnerability: the CLI loads .vetlock.json from the working directory without verifying it is trusted or absent from the PR diff, so a malicious PR can commit .vetlock.json entries (ignorePackages, allowlist, ignorePathsInside, severityOverride) that silence every detector finding against itself. Both cite cli.ts:119-136 and config.ts:87-133 as the locus. S2 has a more complete detectors_bypassed list and a clearer attack-scenario title; F5 adds no independent mechanism. Confidence: >95%."
+      },
+      {
+        "keep_id": "S10",
+        "drop_ids": [
+          "F3"
+        ],
+        "rationale": "F3 and S10 both exploit the identical guard in changeset.ts:54-56 — the condition `o.integrity !== n.integrity && n.integrity && o.integrity` requires BOTH sides to be truthy, so clearing either the old (S10) or the new (F3) integrity field disables the integrity tripwire entirely. The difference (which side the attacker blanks) is presentation-level; the code path, the fix, and the resulting vulnerability (same-version tarball swap goes undetected) are identical. S10 provides a more thorough description including the lockfile parser's ?? '' default. Confidence: >95%."
+      }
+    ],
+    "normalizations": []
+  },
+  {
+    "merges": [
+      {
+        "keep_id": "L1",
+        "drop_ids": [
+          "L7"
+        ],
+        "rationale": "L7 (rest-destructure `...rest` from process.env) is a sub-variant of the same root cause as L1 (ObjectPattern destructuring of process.env not visited by the MemberExpression handler); L7's own suggested fix explicitly defers to L1's fix."
+      }
+    ],
+    "normalizations": [
+      {
+        "id": "L1",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "medium"
+      },
+      {
+        "id": "L2",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "L3",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "L4",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "medium"
+      },
+      {
+        "id": "L5",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "L6",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "L8",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "L9",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "medium"
+      },
+      {
+        "id": "L10",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "medium"
+      },
+      {
+        "id": "L11",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "medium"
+      }
+    ]
+  },
+  {
+    "merges": [],
+    "normalizations": [
+      {
+        "id": "S1",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "medium",
+        "fix_effort": "small"
+      },
+      {
+        "id": "S2",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "medium"
+      },
+      {
+        "id": "S3",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "S4",
+        "confidence": "confirmed-locally"
+      },
+      {
+        "id": "S5",
+        "confidence": "confirmed-locally",
+        "fix_effort": "small"
+      },
+      {
+        "id": "S6",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "S7",
+        "severity_if_confirmed": "medium",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "S8",
+        "severity_if_confirmed": "medium",
+        "confidence": "confirmed-locally",
+        "fix_effort": "small"
+      },
+      {
+        "id": "S9",
+        "confidence": "plausible",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "S10",
+        "confidence": "confirmed-locally",
+        "fix_effort": "small"
+      }
+    ]
+  },
+  {
+    "merges": [],
+    "normalizations": [
+      {
+        "id": "C1",
+        "severity_if_confirmed": "critical",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "C2",
+        "severity_if_confirmed": "critical",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "C3",
+        "severity_if_confirmed": "critical",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "medium"
+      },
+      {
+        "id": "C4",
+        "severity_if_confirmed": "critical",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "medium"
+      },
+      {
+        "id": "C5",
+        "severity_if_confirmed": "critical",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "C6",
+        "severity_if_confirmed": "critical",
+        "confidence": "plausible",
+        "attacker_effort": "high"
+      }
+    ]
+  },
+  {
+    "merges": [],
+    "normalizations": [
+      {
+        "id": "D1",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "D2",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "D3",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "D4",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "medium",
+        "fix_effort": "small"
+      },
+      {
+        "id": "D5",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "D6",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "medium"
+      }
+    ]
+  },
+  {
+    "merges": [],
+    "normalizations": [
+      {
+        "id": "F1",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "F2",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "F3",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "F5",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "F6",
+        "confidence": "confirmed-locally"
+      },
+      {
+        "id": "F7",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "F8",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "F9",
+        "confidence": "confirmed-locally"
+      },
+      {
+        "id": "F10",
+        "confidence": "plausible"
+      }
+    ]
+  },
+  {
+    "merges": [],
+    "normalizations": [
+      {
+        "id": "N1",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "N2",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low",
+        "fix_effort": "small"
+      },
+      {
+        "id": "N3",
+        "confidence": "confirmed-locally"
+      },
+      {
+        "id": "N4",
+        "confidence": "confirmed-locally",
+        "attacker_effort": "low"
+      },
+      {
+        "id": "N5",
+        "confidence": "plausible"
+      },
+      {
+        "id": "N6",
+        "confidence": "confirmed-locally",
+        "fix_effort": "small"
+      }
+    ]
+  }
+]

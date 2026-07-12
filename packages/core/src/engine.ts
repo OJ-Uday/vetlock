@@ -9,6 +9,12 @@
  * IO here is intentional (fetch, extract). Detectors themselves are pure and
  * live in packages/detectors — they get called via a `runDetectors` closure so
  * the engine doesn't depend on that package at compile time (circular avoided).
+ *
+ * REDTEAM F1 FIX: runDiff now routes both lockfile texts through the universal
+ * parseLockfileText() dispatcher instead of JSON.parse() + parseLockfile().
+ * Previously engine.ts:77 called JSON.parse unconditionally, crashing with
+ * 'Unexpected token' on any pnpm-lock.yaml or yarn.lock despite the CLI
+ * advertising multi-format support.
  */
 
 import { promises as fs } from 'node:fs';
@@ -19,10 +25,10 @@ import type {
   Severity,
 } from './finding.js';
 import {
-  parseLockfile,
   shortestPaths,
   type LockGraph,
 } from './lockfile.js';
+import { parseLockfileText } from './lockfile-any.js';
 import { computeChangeset, type Change } from './changeset.js';
 import { fetchTarball, type PackageRef } from './fetch.js';
 import { analyzeTarball } from './analyze.js';
@@ -45,6 +51,16 @@ export interface EngineOptions {
   fetchOverride?: (ref: PackageRef & { resolved?: string | null }) => Promise<string>;
   /** Progress callback (optional). */
   onProgress?: (event: ProgressEvent) => void;
+  /**
+   * Filename hint for the OLD lockfile — used by parseLockfileText to dispatch
+   * to the correct format parser. E.g. 'pnpm-lock.yaml', 'yarn.lock'.
+   * Defaults to 'package-lock.json' (npm) when omitted.
+   *
+   * REDTEAM F1: without this, non-JSON lockfiles crashed with a JSON.parse error.
+   */
+  oldLockfilePath?: string;
+  /** Filename hint for the NEW lockfile. @see oldLockfilePath */
+  newLockfilePath?: string;
 }
 
 export type ProgressEvent =
@@ -74,8 +90,11 @@ export async function runDiff(
   opts: EngineOptions,
 ): Promise<RunResult> {
   const t0 = Date.now();
-  const oldG = parseLockfile(JSON.parse(oldLockfileText));
-  const newG = parseLockfile(JSON.parse(newLockfileText));
+  // REDTEAM F1 FIX: use the universal dispatcher so pnpm-lock.yaml and
+  // yarn.lock are handled correctly; previously JSON.parse was called
+  // unconditionally here, crashing on YAML input.
+  const oldG = parseLockfileText(oldLockfileText, opts.oldLockfilePath).graph;
+  const newG = parseLockfileText(newLockfileText, opts.newLockfilePath).graph;
 
   const changes = computeChangeset(oldG, newG);
   opts.onProgress?.({ kind: 'start', total: changes.length });
@@ -113,6 +132,11 @@ export async function runDiff(
   const snapshots = new Map<string, PackageSnapshot>();
   const errors: Array<{ package: string; version: string; error: string }> = [];
 
+  // REDTEAM S4 FIX: track which (name, version) pairs failed to analyze so we
+  // can emit a synthetic BLOCK-tier analysis.failed finding for each.  A run
+  // that had ANY analyzer failure must never render CLEAN.
+  const analysisFailed = new Map<string, { name: string; version: string; error: string }>();
+
   const refList = [...refs.entries()];
   let idx = 0;
   await Promise.all(
@@ -127,6 +151,7 @@ export async function runDiff(
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           errors.push({ package: ref.name, version: ref.version, error: msg });
+          analysisFailed.set(id, { name: ref.name, version: ref.version, error: msg });
           opts.onProgress?.({ kind: 'error', packageName: ref.name, error: msg });
         }
       }
@@ -145,7 +170,15 @@ export async function runDiff(
 
     const pair: SnapshotPair = { old: oldSnap, new: newSnap };
     // Integrity-changed always produces a synthetic finding, regardless of content diff.
+    // REDTEAM S10 FIX: a blank oldIntegrity means the "before" lockfile did not
+    // pin this artifact. That transition is itself the signal — the attacker
+    // may have crafted the before-side lockfile precisely to suppress this
+    // check. Message the two shapes distinctly so review can see which case.
     if (change.kind === 'integrity-changed') {
+      const oldBlank = !change.oldIntegrity;
+      const message = oldBlank
+        ? `Package '${change.name}' at version ${change.newVersion} previously had NO integrity pinned. The "before" lockfile omitted the integrity field — this may be an attacker-crafted lockfile intended to suppress the same-version tamper check.`
+        : `Same version, different integrity: ${change.oldIntegrity} → ${change.newIntegrity}. Registry-side or in-flight tamper.`;
       findings.push({
         detector: 'integrity.hash-mismatch',
         category: 'INTEG',
@@ -155,13 +188,14 @@ export async function runDiff(
         direction: 'changed',
         severity: 'BLOCK',
         confidence: 'high',
-        message:
-          `Same version, different integrity: ${change.oldIntegrity} → ${change.newIntegrity}. Registry-side or in-flight tamper.`,
+        message,
         evidence: [
           {
             file: 'package.json',
             line: 1,
-            snippet: `integrity ${change.oldIntegrity} → ${change.newIntegrity}`,
+            snippet: oldBlank
+              ? `integrity <missing> → ${change.newIntegrity}`
+              : `integrity ${change.oldIntegrity} → ${change.newIntegrity}`,
           },
         ],
         provenance: [],
@@ -180,6 +214,56 @@ export async function runDiff(
       f.provenance = paths;
     }
     findings.push(...detected);
+  }
+
+  // REDTEAM S4 FIX: for every package that failed to analyze, emit a synthetic
+  // BLOCK-tier finding.  This closes the denial-of-detection window: a tarball
+  // that stalls or crashes the analyzer can never yield a CLEAN verdict.
+  //
+  // We emit one finding per (name, version) pair that failed, keyed on the
+  // change.  If the failure was on the "new" side of a change we want to
+  // surface that change's identity in the finding; if there is no matching
+  // change (only-old-side failure) we still emit.
+  const emittedFailPackages = new Set<string>();
+  for (const change of changes) {
+    const failId = change.newVersion ? `${change.name}@${change.newVersion}` : null;
+    const failEntry = failId ? analysisFailed.get(failId) : null;
+    if (!failEntry) continue;
+    if (emittedFailPackages.has(failEntry.name)) continue;
+    emittedFailPackages.add(failEntry.name);
+    const snippet = failEntry.error.slice(0, 240);
+    findings.push({
+      detector: 'analysis.failed',
+      category: 'META',
+      package: failEntry.name,
+      from: change.oldVersion ?? null,
+      to: change.newVersion ?? null,
+      direction: change.kind === 'added' ? 'added' : change.kind === 'removed' ? 'removed' : 'changed',
+      severity: 'BLOCK',
+      confidence: 'high',
+      message: `Package '${failEntry.name}' could not be analyzed — all findings are absent. Error: ${failEntry.error}`,
+      evidence: [{ file: 'package.json', line: 1, snippet }],
+      provenance: [],
+    });
+  }
+  // Also emit for failures that didn't match any change (edge case: only-old-side fetch).
+  for (const [, failEntry] of analysisFailed) {
+    if (emittedFailPackages.has(failEntry.name)) continue;
+    emittedFailPackages.add(failEntry.name);
+    const snippet = failEntry.error.slice(0, 240);
+    findings.push({
+      detector: 'analysis.failed',
+      category: 'META',
+      package: failEntry.name,
+      from: failEntry.version,
+      to: null,
+      direction: 'changed',
+      severity: 'BLOCK',
+      confidence: 'high',
+      message: `Package '${failEntry.name}' could not be analyzed — all findings are absent. Error: ${failEntry.error}`,
+      evidence: [{ file: 'package.json', line: 1, snippet }],
+      provenance: [],
+    });
   }
 
   // Determinism: sort findings by (severity high→low, package, detector, first-evidence).

