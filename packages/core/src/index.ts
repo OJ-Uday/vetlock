@@ -5,3 +5,7 @@ export * from './extract.js';
 export * from './cache.js';
 export * from './analyze.js';
 export * from './capabilities.js';
+export * from './lockfile.js';
+export * from './changeset.js';
+export * from './engine.js';
+export * from './fetch.js';
