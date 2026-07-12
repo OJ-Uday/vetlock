@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": {
+        "lodash-lite": "^1"
+      }
+    },
+    "node_modules/lodash-lite": {
+      "name": "lodash-lite",
+      "version": "1.2.1",
+      "integrity": "sha512-f9BNtiaA76m++wB33rs9Bo2FY4A+0g/2fF/24Yln2MPzFSJAVl+pcpHj6JL1NlEU5KQMDEcuQ4u0v47lCvNC5A==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/a-docs-only/lodash-lite-new/lodash-lite-new.tgz"
+    }
+  }
+}

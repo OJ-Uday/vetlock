@@ -24,7 +24,7 @@ import {
   type LockGraph,
 } from './lockfile.js';
 import { computeChangeset, type Change } from './changeset.js';
-import { fetchTarball } from './fetch.js';
+import { fetchTarball, type PackageRef } from './fetch.js';
 import { analyzeTarball } from './analyze.js';
 import { makeCache, type SnapshotCache } from './cache.js';
 
@@ -37,6 +37,12 @@ export interface EngineOptions {
   timeoutMs?: number;
   /** Cache instance; default uses ~/.cache/vetlock/analysis. */
   cache?: SnapshotCache;
+  /**
+   * Override the fetch step — the engine will call this instead of the default
+   * pacote-backed fetchTarball. Useful for offline tests and corpus replay
+   * (points at file:// or local paths).
+   */
+  fetchOverride?: (ref: PackageRef & { resolved?: string | null }) => Promise<string>;
   /** Progress callback (optional). */
   onProgress?: (event: ProgressEvent) => void;
 }
@@ -79,16 +85,28 @@ export async function runDiff(
 
   // Snapshot fetch/analyze per (name, version, integrity) — dedup across changes that
   // point at the same tarball.
-  interface PackageRef { name: string; version: string; integrity: string; }
-  const refs = new Map<string, PackageRef>();
+  interface PackageRefFull { name: string; version: string; integrity: string; resolved: string | null; }
+  const refs = new Map<string, PackageRefFull>();
   for (const c of changes) {
     if (c.kind !== 'removed' && c.newVersion) {
       const id = `${c.name}@${c.newVersion}`;
-      refs.set(id, { name: c.name, version: c.newVersion, integrity: c.newIntegrity ?? '' });
+      const node = c.nodeKeyNew ? newG.nodes.get(c.nodeKeyNew) : null;
+      refs.set(id, {
+        name: c.name,
+        version: c.newVersion,
+        integrity: c.newIntegrity ?? '',
+        resolved: node?.resolved ?? null,
+      });
     }
     if (c.kind !== 'added' && c.oldVersion) {
       const id = `${c.name}@${c.oldVersion}`;
-      refs.set(id, { name: c.name, version: c.oldVersion, integrity: c.oldIntegrity ?? '' });
+      const node = c.nodeKeyOld ? oldG.nodes.get(c.nodeKeyOld) : null;
+      refs.set(id, {
+        name: c.name,
+        version: c.oldVersion,
+        integrity: c.oldIntegrity ?? '',
+        resolved: node?.resolved ?? null,
+      });
     }
   }
 
@@ -200,7 +218,7 @@ export async function runDiff(
 }
 
 async function analyzeOne(
-  ref: { name: string; version: string; integrity: string },
+  ref: { name: string; version: string; integrity: string; resolved: string | null },
   cache: SnapshotCache,
   opts: EngineOptions,
 ): Promise<PackageSnapshot> {
@@ -215,7 +233,9 @@ async function analyzeOne(
 
   opts.onProgress?.({ kind: 'analyze', packageName: ref.name, version: ref.version });
 
-  const tarballPath = await fetchTarball(ref);
+  const tarballPath = opts.fetchOverride
+    ? await opts.fetchOverride(ref)
+    : await fetchTarball(ref);
   try {
     const timeout = opts.timeoutMs ?? 90_000;
     const snap = await withTimeout(
@@ -229,8 +249,10 @@ async function analyzeOne(
     }
     return snap;
   } finally {
-    // fetchTarball wrote to a temp path; clean it up if it was ours.
-    await fs.unlink(tarballPath).catch(() => {});
+    // Only unlink temp files we fetched ourselves. Overrides own their files.
+    if (!opts.fetchOverride) {
+      await fs.unlink(tarballPath).catch(() => {});
+    }
   }
 }
 

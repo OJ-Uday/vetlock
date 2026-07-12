@@ -1,0 +1,34 @@
+# vetlock's own PR check — dogfoods the tool on this very repo.
+name: vetlock (dogfood)
+on:
+  pull_request:
+    paths:
+      - '**/package-lock.json'
+      - '**/pnpm-lock.yaml'   # we'll ignore for now — pnpm support is roadmap
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  vetlock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: pnpm/action-setup@v3
+        with: { version: 9 }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Self-diff against base
+        run: |
+          set -e
+          git show HEAD~1:package-lock.json > /tmp/before.json 2>/dev/null || echo "{}" > /tmp/before.json
+          node packages/cli/dist/cli.js diff /tmp/before.json package-lock.json --md > /tmp/vetlock.md
+          cat /tmp/vetlock.md
+          # Fail on the classic worm signatures.
+          node packages/cli/dist/cli.js diff /tmp/before.json package-lock.json \
+            --fail-on install.script-added,env.token-harvest,net.new-endpoint

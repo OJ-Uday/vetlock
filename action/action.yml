@@ -1,0 +1,103 @@
+name: 'vetlock'
+description: 'Behavioral diff for npm dependency updates — catches supply-chain attacks that advisory databases miss.'
+author: 'Uday Ojha'
+branding:
+  icon: 'shield'
+  color: 'red'
+
+inputs:
+  before:
+    description: 'Path to the pre-change package-lock.json'
+    required: false
+    default: 'package-lock.json'
+  base-ref:
+    description: 'Git ref of the base (before) state — used to fetch package-lock.json if `before` file is not present'
+    required: false
+    default: ${{ github.event.pull_request.base.sha }}
+  fail-on:
+    description: 'Comma-separated detector ids that force exit 2 (e.g. install.script-added,env.token-harvest)'
+    required: false
+    default: ''
+  sarif-out:
+    description: 'Path to write a SARIF report (uploaded to code-scanning in a downstream step)'
+    required: false
+    default: 'vetlock.sarif'
+  comment:
+    description: 'Post a sticky PR comment with the findings (requires `pull-requests: write` permission)'
+    required: false
+    default: 'true'
+
+outputs:
+  verdict:
+    description: 'The overall verdict: BLOCK, WARN, INFO, or CLEAN'
+    value: ${{ steps.run.outputs.verdict }}
+  finding-count:
+    description: 'Number of findings emitted'
+    value: ${{ steps.run.outputs.finding-count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Fetch base lockfile
+      shell: bash
+      run: |
+        set -e
+        if [ -f "${{ inputs.before }}.base" ]; then
+          echo "using pre-supplied base lockfile"
+          cp "${{ inputs.before }}.base" /tmp/vetlock-before.json
+        else
+          echo "fetching ${{ inputs.before }} at ${{ inputs.base-ref }}"
+          git fetch --depth=1 origin "${{ inputs.base-ref }}" || true
+          git show "${{ inputs.base-ref }}:${{ inputs.before }}" > /tmp/vetlock-before.json
+        fi
+    - name: Install vetlock
+      shell: bash
+      run: npm install --no-save --no-audit --no-fund --prefix /tmp/vetlock-install vetlock@latest
+    - name: Run vetlock diff (SARIF)
+      id: run
+      shell: bash
+      run: |
+        set +e
+        node /tmp/vetlock-install/node_modules/vetlock/dist/cli.js diff \
+          /tmp/vetlock-before.json "${{ inputs.before }}" \
+          --sarif > "${{ inputs.sarif-out }}"
+        VETLOCK_EXIT=$?
+        set -e
+        # Re-run in JSON mode to extract verdict + count
+        node /tmp/vetlock-install/node_modules/vetlock/dist/cli.js diff \
+          /tmp/vetlock-before.json "${{ inputs.before }}" \
+          --json > /tmp/vetlock.json || true
+        VERDICT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/vetlock.json','utf8')).verdict)")
+        COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/vetlock.json','utf8')).findings.length)")
+        echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
+        echo "finding-count=$COUNT" >> "$GITHUB_OUTPUT"
+        echo "vetlock: verdict=$VERDICT findings=$COUNT"
+        # Preserve fail-on semantics through the composite
+        if [ "$VETLOCK_EXIT" -ne 0 ]; then
+          exit $VETLOCK_EXIT
+        fi
+
+    - name: Comment on PR
+      if: ${{ inputs.comment == 'true' && github.event_name == 'pull_request' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        node /tmp/vetlock-install/node_modules/vetlock/dist/cli.js diff \
+          /tmp/vetlock-before.json "${{ inputs.before }}" \
+          --md > /tmp/vetlock-comment.md || true
+        # Sticky comment — update existing rather than post a new one.
+        BODY=$(cat /tmp/vetlock-comment.md)
+        PR=${{ github.event.pull_request.number }}
+        MARKER='<!-- vetlock-sticky-comment -->'
+        FULL_BODY=$(printf '%s\n\n%s' "$MARKER" "$BODY")
+        # Find an existing comment with the marker.
+        EXISTING=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --jq \
+          ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1)
+        if [ -n "$EXISTING" ]; then
+          echo "updating existing comment $EXISTING"
+          gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING" -f body="$FULL_BODY"
+        else
+          echo "posting new comment"
+          gh api --method POST "repos/${{ github.repository }}/issues/$PR/comments" -f body="$FULL_BODY"
+        fi

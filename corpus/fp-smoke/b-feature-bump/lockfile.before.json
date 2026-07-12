@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": {
+        "requests-lite": "^1"
+      }
+    },
+    "node_modules/requests-lite": {
+      "name": "requests-lite",
+      "version": "2.0.0",
+      "integrity": "sha512-xUNx0TsFtE0TD2bPKxa0+T/ZTHJnC5H7Rm0oaE4BDdlXqypbY5VhDR/iQ92Qrl2XgqqgxpEvPwF/reFrhoR4lA==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/b-feature-bump/requests-lite-old/requests-lite-old.tgz"
+    }
+  }
+}

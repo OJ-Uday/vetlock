@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": {
+        "micro-mitt": "^1"
+      }
+    },
+    "node_modules/micro-mitt": {
+      "name": "micro-mitt",
+      "version": "3.0.0",
+      "integrity": "sha512-57HYNqDzxqExRoljEl8R5Mk3ZZ8t1MnsZcdtPZbCEQIYON1VovKY+uE2eCG4u42ibNxUzda+cCrzab9iXRYF+g==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/c-types-only/micro-mitt-old/micro-mitt-old.tgz"
+    }
+  }
+}

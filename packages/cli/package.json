@@ -34,6 +34,7 @@
     "@vetlock/core": "workspace:*",
     "@vetlock/detectors": "workspace:*",
     "commander": "^12.0.0",
-    "picocolors": "^1.0.0"
+    "picocolors": "^1.0.0",
+    "tar": "^7.0.0"
   }
 }

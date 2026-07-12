@@ -1,0 +1,26 @@
+{
+  "name": "shai-hulud-2025",
+  "threatClass": "T1 maintainer takeover + T3 self-replicating worm",
+  "threatDescription": "Shai-Hulud worm wave (chalk, debug, and 100+ others, Sept 2025). Maintainer account compromised; postinstall harvests NPM_TOKEN, GITHUB_TOKEN, AWS_* to exfil endpoint; uses stolen npm token to republish itself into victim-controlled packages.",
+  "defanged": true,
+  "source": "RECONSTRUCTED from public postmortems",
+  "packages": [
+    {
+      "name": "chalk",
+      "oldVersion": "5.3.0",
+      "newVersion": "5.3.1",
+      "integrityOld": "sha512-Zqr+DxLuYyw3wdOE6iWb0bxNCfgIkX854qFeJrxnTqp8YBxsu83ipJtHhqVA1W8dIYNFIvKbtkICocaHHYVnyw==",
+      "integrityNew": "sha512-BiT1ZoQ5AIFiowgPcqlWjlfMkpUKR3ibrtbgGhj72IqALkV4ffik/GfBRJrrjkMTpxpgsG0RviaJzlSq2n/r3g=="
+    }
+  ],
+  "expectedDetections": [
+    "install.script-added — postinstall was not present in 5.3.0",
+    "env.token-harvest — new reads of NPM_TOKEN, GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY",
+    "net.new-endpoint — https://exfil.example.invalid/collect and /webhook",
+    "net.new-module — https module now imported",
+    "exec.new-module — child_process now imported",
+    "fs.new-hotpath-write — write to $HOME/.npmrc",
+    "code.dynamic-loading-added — (none expected here; the payload uses static imports)",
+    "meta.maintainer-change — attacker email replaced legitimate maintainer"
+  ]
+}
