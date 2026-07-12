@@ -392,6 +392,104 @@ export function extractCapabilities(
     if (FS_MODULES.has(name)) fsMods.add(name);
   }
 
+  /**
+   * REDTEAM L10 helper: reparse a string as JS and route its module-imports
+   * through noteModuleImport. Used for `eval("require('x')")` and
+   * `new Function("return require('x')")()`. Fail-soft — a string that
+   * doesn't parse is not signal, just quiet.
+   *
+   * Depth-limited to prevent runaway recursion. The nested pass is a fresh
+   * `parser.parse` with error-recovery and no traversal — we walk manually
+   * and extract only CallExpression whose callee is 'require' (or
+   * require.call / require.apply / etc via the same rules as the outer
+   * visitor). No fold, no aliases inside the nested source — this is a
+   * best-effort recovery pass, not a full re-analysis.
+   */
+  function scanNestedSource(source: string, forwardImport: (name: string) => void): void {
+    if (!source || source.length < 4 || source.length > 8192) return;
+    let nestedAst: parser.ParseResult<t.File>;
+    try {
+      nestedAst = parser.parse(source, {
+        sourceType: 'unambiguous',
+        errorRecovery: true,
+        allowReturnOutsideFunction: true,
+        allowAwaitOutsideFunction: true,
+        allowImportExportEverywhere: true,
+      });
+    } catch {
+      return;
+    }
+    // Manual walk — depth-first, node.type-driven, no @babel/traverse cost.
+    const stack: unknown[] = [nestedAst];
+    let visited = 0;
+    while (stack.length > 0 && visited < 5000) {
+      const cur = stack.pop();
+      visited++;
+      if (!cur || typeof cur !== 'object') continue;
+      const n = cur as t.Node;
+      // Check CallExpression variants
+      if (n.type === 'CallExpression') {
+        const ce = n as t.CallExpression;
+        const callee = ce.callee;
+        const args = ce.arguments;
+        // Bare require('x')
+        if (t.isIdentifier(callee, { name: 'require' })) {
+          const a = args[0];
+          if (t.isStringLiteral(a)) forwardImport(a.value);
+        }
+        // require.call(null, 'x')
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.object, { name: 'require' }) &&
+          t.isIdentifier(callee.property, { name: 'call' })
+        ) {
+          const modArg = args[1];
+          if (t.isStringLiteral(modArg)) forwardImport(modArg.value);
+        }
+        // require.apply(null, ['x'])
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.object, { name: 'require' }) &&
+          t.isIdentifier(callee.property, { name: 'apply' })
+        ) {
+          const arr = args[1];
+          if (t.isArrayExpression(arr) && t.isStringLiteral(arr.elements[0])) {
+            forwardImport(arr.elements[0].value);
+          }
+        }
+        // process.mainModule.require('x')
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.property, { name: 'require' }) &&
+          t.isMemberExpression(callee.object) &&
+          t.isIdentifier(callee.object.object, { name: 'process' }) &&
+          t.isIdentifier(callee.object.property, { name: 'mainModule' })
+        ) {
+          const a = args[0];
+          if (t.isStringLiteral(a)) forwardImport(a.value);
+        }
+        // module.constructor._load / Module._load
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.property, { name: '_load' })
+        ) {
+          const a = args[0];
+          if (t.isStringLiteral(a)) forwardImport(a.value);
+        }
+      }
+      // Descend into all fields of the current node — brute-force AST walk
+      for (const k of Object.keys(n)) {
+        if (k === 'loc' || k === 'start' || k === 'end') continue;
+        const v = (n as unknown as Record<string, unknown>)[k];
+        if (Array.isArray(v)) {
+          for (const child of v) if (child && typeof child === 'object') stack.push(child);
+        } else if (v && typeof v === 'object') {
+          stack.push(v);
+        }
+      }
+    }
+  }
+
   function lineOf(node: t.Node): number {
     return node.loc?.start.line ?? 0;
   }
@@ -426,19 +524,21 @@ export function extractCapabilities(
         }
       }
     },
-    // CommonJS require(...)
+    // CommonJS require(...) — plus require.call, require.apply,
+    // process.mainModule.require, module.constructor._load, Module._load.
+    // REDTEAM L3 FIX: attackers use `require.call(null, 'child_process')` and
+    // friends to load modules via callee shapes the naive `require` visitor
+    // never fired on. We now match every documented equivalent form.
     CallExpression(path: NodePath<t.CallExpression>) {
       const callee = path.node.callee;
       const args = path.node.arguments;
 
-      // require('x') — try folded value too
+      // Direct: `require('x')`
       if (t.isIdentifier(callee, { name: 'require' })) {
         const a = args[0];
         const asString = nodeValue(a ?? null);
         if (asString !== null) {
           noteModuleImport(asString);
-          // Alias tracking: `const cp = require('child_process')` — the
-          // enclosing VariableDeclarator visitor handles binding cp → module.
         } else if (a) {
           dynamicCode.push({
             line: lineOf(path.node),
@@ -448,13 +548,96 @@ export function extractCapabilities(
         }
       }
 
-      // eval(...)
+      // REDTEAM L3: require.call(null, 'x') and require.apply(null, ['x']).
+      // Callee is a MemberExpression whose object is Identifier 'require' and
+      // property is 'call' or 'apply'. For .call the module name is arg[1];
+      // for .apply it's the first element of the array in arg[1].
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.object, { name: 'require' }) &&
+        t.isIdentifier(callee.property) &&
+        (callee.property.name === 'call' || callee.property.name === 'apply')
+      ) {
+        if (callee.property.name === 'call') {
+          const modArg = args[1];
+          const asString = nodeValue(modArg ?? null);
+          if (asString !== null) noteModuleImport(asString);
+          else if (modArg) {
+            dynamicCode.push({ line: lineOf(path.node), kind: 'dynamic-require', snippet: snippetOf(path.node) });
+          }
+        } else {
+          // .apply — arg[1] is an ArrayExpression whose first element is the module name
+          const arr = args[1];
+          if (t.isArrayExpression(arr)) {
+            const first = arr.elements[0];
+            if (first) {
+              const asString = nodeValue(first as t.Node);
+              if (asString !== null) noteModuleImport(asString);
+            }
+          }
+        }
+      }
+
+      // REDTEAM L3: process.mainModule.require('x') — callee is a nested
+      // MemberExpression whose innermost object is 'process' and innermost
+      // property is 'mainModule', with outer property 'require'.
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.property, { name: 'require' }) &&
+        t.isMemberExpression(callee.object) &&
+        t.isIdentifier(callee.object.object, { name: 'process' }) &&
+        t.isIdentifier(callee.object.property, { name: 'mainModule' })
+      ) {
+        const a = args[0];
+        const asString = nodeValue(a ?? null);
+        if (asString !== null) noteModuleImport(asString);
+      }
+
+      // REDTEAM L3: module.constructor._load('x') and Module._load('x').
+      // Both use ._load as the effective require. Callee: MemberExpression
+      // with property '_load' (any object).
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.property, { name: '_load' })
+      ) {
+        const a = args[0];
+        const asString = nodeValue(a ?? null);
+        if (asString !== null) noteModuleImport(asString);
+      }
+
+      // eval(...) — record the dynamic-code site AND recursively re-parse the
+      // folded argument for hidden require calls.
       if (t.isIdentifier(callee, { name: 'eval' })) {
         dynamicCode.push({
           line: lineOf(path.node),
           kind: 'eval',
           snippet: snippetOf(path.node),
         });
+        // REDTEAM L10 FIX: pull out the eval argument as a string, parse it as
+        // JS, and re-run the module-detection logic on the mini-AST. This
+        // catches `eval("require('child_process')")` and folded variants like
+        // `eval("requ" + "ire('child_process')")`.
+        const argValue = nodeValue(args[0] ?? null);
+        if (argValue !== null && argValue.length < 8192) {
+          scanNestedSource(argValue, noteModuleImport);
+        }
+      }
+
+      // REDTEAM L10 FIX: `new Function("return require('x')")()` — Babel
+      // represents this as a CallExpression whose callee is a NewExpression
+      // of Function. When we detect this shape, parse the function body
+      // string and scan for module imports.
+      if (
+        t.isNewExpression(callee) &&
+        t.isIdentifier(callee.callee, { name: 'Function' })
+      ) {
+        // Last argument of `new Function(...)` is the function body string.
+        const fnArgs = callee.arguments;
+        const bodyNode = fnArgs[fnArgs.length - 1];
+        const bodyText = nodeValue(bodyNode as t.Node ?? null);
+        if (bodyText !== null && bodyText.length < 8192) {
+          scanNestedSource(bodyText, noteModuleImport);
+        }
       }
 
       // dynamic import(...)
@@ -467,6 +650,71 @@ export function extractCapabilities(
           dynamicCode.push({
             line: lineOf(path.node),
             kind: 'dynamic-import',
+            snippet: snippetOf(path.node),
+          });
+        }
+      }
+
+      // REDTEAM L5 FIX: Reflect.get(process.env, 'KEY') and Reflect.get(process, 'env').
+      // Reflect.get is a MemberExpression callee with object 'Reflect' and property 'get'.
+      // First arg is the target; second is the key literal (foldable).
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.object, { name: 'Reflect' }) &&
+        t.isIdentifier(callee.property, { name: 'get' })
+      ) {
+        const target = args[0];
+        const keyNode = args[1];
+        const isEnvTarget =
+          !!target &&
+          t.isMemberExpression(target) &&
+          t.isIdentifier(target.object, { name: 'process' }) &&
+          t.isIdentifier(target.property, { name: 'env' });
+        const isProcessTargetForEnv =
+          !!target &&
+          t.isIdentifier(target, { name: 'process' }) &&
+          nodeValue(keyNode as t.Node ?? null) === 'env';
+        if (isEnvTarget) {
+          const line = lineOf(path.node);
+          const snippet = snippetOf(path.node);
+          const asString = nodeValue(keyNode as t.Node ?? null);
+          if (asString !== null) {
+            envAccesses.push({ line, keys: [asString], snippet });
+          } else {
+            envAccesses.push({ line, keys: null, snippet });
+          }
+        }
+        if (isProcessTargetForEnv) {
+          // Reflect.get(process, 'env') — treat like alias assignment target
+          // when we see the parent VariableDeclarator (handled below), but
+          // also record it as a whole-env enumeration signal in place.
+          envAccesses.push({
+            line: lineOf(path.node),
+            keys: null,
+            snippet: snippetOf(path.node),
+          });
+        }
+      }
+
+      // REDTEAM L2 FIX: Reflect.ownKeys(process.env) — whole-object enumeration.
+      // Existing Object.keys/entries/values/assign are handled in the MemberExpression
+      // visitor; Reflect.ownKeys was uncovered. Recognize it here.
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.object, { name: 'Reflect' }) &&
+        t.isIdentifier(callee.property) &&
+        (callee.property.name === 'ownKeys' || callee.property.name === 'has')
+      ) {
+        const target = args[0];
+        if (
+          target &&
+          t.isMemberExpression(target) &&
+          t.isIdentifier(target.object, { name: 'process' }) &&
+          t.isIdentifier(target.property, { name: 'env' })
+        ) {
+          envAccesses.push({
+            line: lineOf(path.node),
+            keys: null,
             snippet: snippetOf(path.node),
           });
         }
@@ -557,20 +805,38 @@ export function extractCapabilities(
         }
       }
 
-      // Object.keys(process.env) / Object.entries(process.env) — whole-object enumeration
+      // Whole-object enumeration of process.env — many equivalent shapes.
+      // REDTEAM L2 FIX: the old rule only accepted `Object.keys(process.env)`
+      // and similar. Real attackers use spread (`{...process.env}`), for-in
+      // (`for (const k in process.env)`), and rest-in-destructure
+      // (`const { ...rest } = process.env`). These all end up with `process.env`
+      // as the immediate object node whose PARENT is one of:
+      //   - CallExpression with callee.object === Object (existing)
+      //   - CallExpression with callee.object === Reflect (Reflect.ownKeys is handled in the CallExpression visitor above, but this covers the case where we visit process.env before its consuming CallExpression)
+      //   - SpreadElement (spread into array or object)
+      //   - ForInStatement (right side)
+      //   - ForOfStatement (right side — Object.entries loop pattern)
+      //   - AssignmentExpression right side that binds to `{ ...x }` — covered via ObjectPattern below
       if (
         t.isIdentifier(obj, { name: 'process' }) &&
-        t.isIdentifier(prop, { name: 'env' }) &&
-        path.parent &&
-        t.isCallExpression(path.parent) &&
-        t.isMemberExpression(path.parent.callee) &&
-        t.isIdentifier(path.parent.callee.object, { name: 'Object' })
+        t.isIdentifier(prop, { name: 'env' })
       ) {
-        envAccesses.push({
-          line: lineOf(path.node),
-          keys: null,
-          snippet: snippetOf(path.node),
-        });
+        const parent = path.parent;
+        const isObjectKeysCall =
+          parent &&
+          t.isCallExpression(parent) &&
+          t.isMemberExpression(parent.callee) &&
+          t.isIdentifier(parent.callee.object, { name: 'Object' });
+        const isSpread = parent && t.isSpreadElement(parent);
+        const isForIn = parent && t.isForInStatement(parent) && parent.right === path.node;
+        const isForOf = parent && t.isForOfStatement(parent) && parent.right === path.node;
+        if (isObjectKeysCall || isSpread || isForIn || isForOf) {
+          envAccesses.push({
+            line: lineOf(path.node),
+            keys: null,
+            snippet: snippetOf(path.node),
+          });
+        }
       }
     },
     // new Function(...)
@@ -583,12 +849,64 @@ export function extractCapabilities(
         });
       }
     },
-    // Track local variable bindings — for paths, module aliases, and process aliases.
+    // Track local variable bindings — for paths, module aliases, process
+    // aliases, and (REDTEAM L1/L2/L5/L8) destructured env access.
     VariableDeclarator(path: NodePath<t.VariableDeclarator>) {
-      if (!t.isIdentifier(path.node.id)) return;
-      const varName = path.node.id.name;
+      const id = path.node.id;
       const init = path.node.init;
       if (!init) return;
+
+      // REDTEAM L1/L2/L5 FIX — destructure from process.env
+      // ObjectPattern binding never triggers the MemberExpression visitor
+      // for `process.env.X`. We check whether the init resolves to process.env
+      // (directly or via alias or via Reflect.get(process, 'env')) and, if
+      // the id is an ObjectPattern, walk each destructured property.
+      if (t.isObjectPattern(id)) {
+        const initIsProcessEnv =
+          // direct: process.env
+          (t.isMemberExpression(init) &&
+            t.isIdentifier(init.object, { name: 'process' }) &&
+            ((t.isIdentifier(init.property, { name: 'env' }) && !init.computed) ||
+              (t.isStringLiteral(init.property, { value: 'env' }) && init.computed))) ||
+          // aliased: const env = process.env; const { NPM_TOKEN } = env;
+          (t.isIdentifier(init) && processAliases.get(init.name) === 'process.env') ||
+          // Reflect.get(process, 'env')
+          (t.isCallExpression(init) &&
+            t.isMemberExpression(init.callee) &&
+            t.isIdentifier(init.callee.object, { name: 'Reflect' }) &&
+            t.isIdentifier(init.callee.property, { name: 'get' }) &&
+            init.arguments[0] &&
+            t.isIdentifier(init.arguments[0], { name: 'process' }) &&
+            nodeValue(init.arguments[1] as t.Node ?? null) === 'env');
+
+        if (initIsProcessEnv) {
+          const line = lineOf(path.node);
+          const snippet = snippetOf(path.node);
+          for (const prop of id.properties) {
+            if (t.isObjectProperty(prop)) {
+              const key = prop.key;
+              if (t.isIdentifier(key) && !prop.computed) {
+                envAccesses.push({ line, keys: [key.name], snippet });
+              } else if (t.isStringLiteral(key)) {
+                envAccesses.push({ line, keys: [key.value], snippet });
+              } else {
+                const folded = nodeValue(key as t.Node);
+                if (folded !== null) envAccesses.push({ line, keys: [folded], snippet });
+                else envAccesses.push({ line, keys: null, snippet });
+              }
+            } else if (t.isRestElement(prop)) {
+              // `const { ...rest } = process.env` — whole-object enumeration
+              envAccesses.push({ line, keys: null, snippet });
+            }
+          }
+        }
+        // ObjectPattern binding doesn't create a scalar varName for further
+        // alias tracking; stop here.
+        return;
+      }
+
+      if (!t.isIdentifier(id)) return;
+      const varName = id.name;
 
       // Filesystem path binding: `var x = path.join(os.homedir(), '.npmrc')`
       const pathTarget = extractPathTarget(init);
@@ -603,6 +921,50 @@ export function extractCapabilities(
           moduleAliases.set(varName, modName);
         }
       }
+      // REDTEAM L3 — `const cp = require.call(null, 'child_process')` alias binding
+      if (
+        t.isCallExpression(init) &&
+        t.isMemberExpression(init.callee) &&
+        t.isIdentifier(init.callee.object, { name: 'require' }) &&
+        t.isIdentifier(init.callee.property) &&
+        (init.callee.property.name === 'call' || init.callee.property.name === 'apply')
+      ) {
+        if (init.callee.property.name === 'call') {
+          const modArg = init.arguments[1];
+          const modName = nodeValue(modArg ?? null);
+          if (modName !== null) moduleAliases.set(varName, modName);
+        } else {
+          const arr = init.arguments[1];
+          if (t.isArrayExpression(arr)) {
+            const first = arr.elements[0];
+            if (first) {
+              const modName = nodeValue(first as t.Node);
+              if (modName !== null) moduleAliases.set(varName, modName);
+            }
+          }
+        }
+      }
+      // REDTEAM L3 — `const cp = process.mainModule.require('child_process')`
+      if (
+        t.isCallExpression(init) &&
+        t.isMemberExpression(init.callee) &&
+        t.isIdentifier(init.callee.property, { name: 'require' }) &&
+        t.isMemberExpression(init.callee.object) &&
+        t.isIdentifier(init.callee.object.object, { name: 'process' }) &&
+        t.isIdentifier(init.callee.object.property, { name: 'mainModule' })
+      ) {
+        const modName = nodeValue(init.arguments[0] ?? null);
+        if (modName !== null) moduleAliases.set(varName, modName);
+      }
+      // REDTEAM L3 — `const cp = Module._load('child_process')`
+      if (
+        t.isCallExpression(init) &&
+        t.isMemberExpression(init.callee) &&
+        t.isIdentifier(init.callee.property, { name: '_load' })
+      ) {
+        const modName = nodeValue(init.arguments[0] ?? null);
+        if (modName !== null) moduleAliases.set(varName, modName);
+      }
       // Second-level alias: `const spawn = cp.spawn` — spawn inherits cp's module
       if (t.isMemberExpression(init) && t.isIdentifier(init.object)) {
         const parentMod = moduleAliases.get(init.object.name);
@@ -616,14 +978,35 @@ export function extractCapabilities(
         if (parentProc) processAliases.set(varName, parentProc);
       }
 
-      // Process aliases: `const p = process` and `const e = process.env`
+      // Process aliases: `const p = process` and `const e = process.env`.
+      // REDTEAM L8 FIX: also handle computed-property access like
+      // `process["env"]` and `process["e" + "nv"]` (fold-aware).
       if (t.isIdentifier(init, { name: 'process' })) {
         processAliases.set(varName, 'process');
       }
       if (
         t.isMemberExpression(init) &&
-        t.isIdentifier(init.object, { name: 'process' }) &&
-        t.isIdentifier(init.property, { name: 'env' })
+        t.isIdentifier(init.object, { name: 'process' })
+      ) {
+        // Non-computed: process.env
+        if (t.isIdentifier(init.property, { name: 'env' }) && !init.computed) {
+          processAliases.set(varName, 'process.env');
+        }
+        // Computed with string literal or fold-resolvable to 'env'
+        if (init.computed) {
+          const propValue = nodeValue(init.property);
+          if (propValue === 'env') processAliases.set(varName, 'process.env');
+        }
+      }
+      // REDTEAM L5: `const env = Reflect.get(process, 'env')`
+      if (
+        t.isCallExpression(init) &&
+        t.isMemberExpression(init.callee) &&
+        t.isIdentifier(init.callee.object, { name: 'Reflect' }) &&
+        t.isIdentifier(init.callee.property, { name: 'get' }) &&
+        init.arguments[0] &&
+        t.isIdentifier(init.arguments[0], { name: 'process' }) &&
+        nodeValue(init.arguments[1] as t.Node ?? null) === 'env'
       ) {
         processAliases.set(varName, 'process.env');
       }
