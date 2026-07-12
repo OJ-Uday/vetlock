@@ -129,8 +129,16 @@ export function parseLockfile(raw: unknown): LockGraph {
       }
       continue;
     }
-    const name = val.name ?? deriveNameFromKey(key);
-    if (!name) continue;
+    const rawName = val.name ?? deriveNameFromKey(key);
+    if (!rawName) continue;
+    // REDTEAM C5 FIX: npm treats package names as case-insensitive; the
+    // registry always stores them lowercase. But lockfiles preserve whatever
+    // case the JSON author wrote. Attacker: `"node_modules/Lodash"` with
+    // capital L. `BUILTIN_TRUST_STORE['Lodash']` misses, advisories.ts miss,
+    // TOP_SET.has('Lodash') misses — meanwhile npm STILL installs the
+    // lowercase lodash tarball from the same integrity. Fix: canonicalize
+    // the name here so downstream lookups all agree.
+    const name = rawName.toLowerCase();
     const node: LockNode = {
       key,
       name,

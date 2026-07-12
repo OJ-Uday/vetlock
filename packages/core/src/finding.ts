@@ -162,7 +162,7 @@ export interface EnvAccess {
 
 export interface DynamicCodeSite {
   line: number;
-  kind: 'eval' | 'new-function' | 'vm' | 'dynamic-require' | 'dynamic-import';
+  kind: 'eval' | 'new-function' | 'vm' | 'dynamic-require' | 'dynamic-import' | 'char-arithmetic-decoder';
   snippet: string;
 }
 

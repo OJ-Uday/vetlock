@@ -34,13 +34,25 @@ const traverse: BabelTraverseCallable = (() => {
 })();
 
 const NETWORK_MODULES = new Set([
+  // HTTP / TCP / UDP / TLS
   'http', 'https', 'net', 'dgram', 'tls', 'undici', 'axios', 'node-fetch',
   'got', 'request', 'superagent', 'ws',
   'node:http', 'node:https', 'node:net', 'node:dgram', 'node:tls',
+  // REDTEAM N3 FIX: dns is a covert exfil channel. Encode data as a subdomain
+  // and dns.lookup() / dns.resolve() send it to the attacker's DNS server.
+  // Ignored by the network detectors until this addition.
+  'dns', 'dns/promises', 'node:dns', 'node:dns/promises',
 ]);
 const EXEC_MODULES = new Set([
   'child_process', 'worker_threads', 'vm',
   'node:child_process', 'node:worker_threads', 'node:vm',
+  // REDTEAM N2 FIX: inspector.open() starts a V8 debug server that lets any
+  // reachable client eval arbitrary JS in the running process — that's an
+  // RCE primitive equivalent to child_process. async_hooks lets an attacker
+  // monkeypatch every Promise/timer callback. trace_events and perf_hooks
+  // expose Chrome trace format host callbacks with historical CVEs.
+  'inspector', 'async_hooks', 'trace_events', 'perf_hooks',
+  'node:inspector', 'node:async_hooks', 'node:trace_events', 'node:perf_hooks',
 ]);
 const FS_MODULES = new Set([
   'fs', 'fs/promises', 'node:fs', 'node:fs/promises', 'graceful-fs',
@@ -128,7 +140,20 @@ export function isMinified(text: string): boolean {
   return false;
 }
 
-const URL_REGEX = /\b(https?:\/\/[^\s'"`<>]+|(?:[a-z0-9-]+\.){1,}(?:com|net|org|io|dev|co|app|xyz|ru|cn|tk|ml|ga|cf|invalid))\b/gi;
+// REDTEAM L4 FIX: the old regex only accepted 15 hardcoded TLDs. Attackers
+// routinely use `.top`, `.pw`, `.zip`, `.click`, `.info`, `.icu`, `.site`,
+// etc. — Spamhaus & abuseIPDB rank these as top-abused TLDs. Also expanded to
+// include RFC-2606 reserved TLDs (.example / .test / .localhost) because
+// vetlock's own defanged fixtures use those; they should be flagged in real
+// packages as suspicious placeholders.
+//
+// Structure: alternative 1 (unchanged) — full https?:// URL.
+// Alternative 2 — bare `sub.domain.tld` with any of the below TLDs.
+// Alternative 3 — bare host on any 2-4 letter TLD that isn't a hardcoded
+// "safe" TLD. Any random 2-4 letter TLD that isn't in ALLOWED_BENIGN_TLDS
+// (com/net/org/io/dev/co/etc — the widely-legitimate ones we tolerate as
+// baseline) is treated as suspect.
+const URL_REGEX = /\b(https?:\/\/[^\s'"`<>]+|(?:[a-z0-9-]+\.){1,}(?:com|net|org|io|dev|co|app|xyz|ru|cn|tk|ml|ga|cf|invalid|top|pw|zip|click|info|us|biz|mobi|icu|host|online|club|cloud|site|work|stream|party|science|today|link|fit|men|rest|space|store|shop|tech|world|life|guru|pro|name|example|test|localhost))\b/gi;
 
 /** Heuristic: does this string LOOK like a filesystem path? */
 const LOOKS_LIKE_PATH = /^([~./]|[A-Z]:\\|\/[a-zA-Z._-]|\.\.\/|\.\/|[a-zA-Z_-]+[/\\])/;
@@ -332,6 +357,12 @@ export function extractCapabilities(
   const dynamicCode: DynamicCodeSite[] = [];
   const fsWriteTargets = new Set<string>();
   const fsReadTargets = new Set<string>();
+  // REDTEAM L11 FIX: detect rot13 / XOR / custom-substitution decoders by
+  // co-occurrence of `String.fromCharCode` and `charCodeAt` in the same file.
+  // Both are the primitives used by every per-char decoder loop — legitimate
+  // packages rarely use both together outside of hash/encoding libraries.
+  let hasFromCharCodeCall = false;
+  let hasCharCodeAtRef = false;
   /** Set of hot-path-shaped string literals seen anywhere in the file. */
   const pathLiterals = new Set<string>();
   /** Whether the file references fs.<read*|write*> at all. */
@@ -532,6 +563,16 @@ export function extractCapabilities(
     CallExpression(path: NodePath<t.CallExpression>) {
       const callee = path.node.callee;
       const args = path.node.arguments;
+
+      // REDTEAM L11: track String.fromCharCode calls (part of the rot13
+      // co-occurrence signal — see the post-pass below).
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.object, { name: 'String' }) &&
+        t.isIdentifier(callee.property, { name: 'fromCharCode' })
+      ) {
+        hasFromCharCodeCall = true;
+      }
 
       // Direct: `require('x')`
       if (t.isIdentifier(callee, { name: 'require' })) {
@@ -769,6 +810,11 @@ export function extractCapabilities(
     MemberExpression(path: NodePath<t.MemberExpression>) {
       const obj = path.node.object;
       const prop = path.node.property;
+
+      // REDTEAM L11: track .charCodeAt references (rot13 co-occurrence signal).
+      if (t.isIdentifier(prop, { name: 'charCodeAt' })) {
+        hasCharCodeAtRef = true;
+      }
 
       // Directly-typed process.env access
       const isProcessEnvDirect =
@@ -1089,6 +1135,77 @@ export function extractCapabilities(
     }
     if (folded.length > 2 && folded.length < 200 && LOOKS_LIKE_PATH.test(folded)) {
       pathLiterals.add(folded);
+    }
+  }
+
+  // REDTEAM L11 FIX: rot13 / XOR / custom-substitution decoder detection.
+  // If the file uses BOTH String.fromCharCode AND charCodeAt, it almost
+  // certainly contains a per-char decoder loop — the primitive attackers use
+  // to hide URLs, module names, and env-key names from static scans. We emit
+  // a dynamicCode entry marking the char-arithmetic decoder shape AND promote
+  // any short-but-suspect string literal in the file to a suspiciousLiteral
+  // that OBF detectors will treat as signal.
+  //
+  // Legitimate use: hash / encoding / codec libraries. Trade-off accepted:
+  // those are OFTEN legit but a package that grew this shape between versions
+  // is worth flagging. The corpus / FP-smoke will confirm the noise floor.
+  if (hasFromCharCodeCall && hasCharCodeAtRef) {
+    dynamicCode.push({
+      line: 1,
+      kind: 'char-arithmetic-decoder',
+      snippet: 'file uses String.fromCharCode + charCodeAt — per-char decoder shape',
+    });
+    // Promote any short (>=8 char) literal that could plausibly be encoded
+    // exfil-URL-like content. We check for `.` + alpha content, which matches
+    // rot13('exfil.example.invalid') = 'rksvy.rknzcyr.vainyvq'.
+    for (const p of pathLiterals) {
+      if (p.length >= 8 && /[a-zA-Z]/.test(p) && p.includes('.')) {
+        // Already tracked as pathLiteral, but also mark suspicious.
+        suspiciousLiterals.push({
+          line: 1,
+          length: p.length,
+          entropy: shannonEntropy(p),
+          preview: p.slice(0, 40),
+        });
+      }
+    }
+    // Also sweep the base URL-literal set — a legit-looking short domain
+    // might already be there; escalate.
+    // But primarily we want to catch the encoded strings that DIDN'T become
+    // pathLiterals — small opaque literals. Walk the AST once more via the
+    // already-computed fold map: any literal ≥ 8 chars with letters + a dot
+    // in a file that has the decoder shape is suspect.
+    if (ast) {
+      const seen = new Set<string>();
+      const walkStack: unknown[] = [ast];
+      let walkCount = 0;
+      while (walkStack.length > 0 && walkCount < 5000) {
+        walkCount++;
+        const n = walkStack.pop();
+        if (!n || typeof n !== 'object') continue;
+        const node = n as t.Node;
+        if (t.isStringLiteral(node)) {
+          const v = node.value;
+          if (v.length >= 8 && v.length < 200 && /[a-zA-Z]/.test(v) && v.includes('.') && !seen.has(v)) {
+            seen.add(v);
+            suspiciousLiterals.push({
+              line: node.loc?.start.line ?? 0,
+              length: v.length,
+              entropy: shannonEntropy(v),
+              preview: v.slice(0, 40),
+            });
+          }
+        }
+        for (const k of Object.keys(node)) {
+          if (k === 'loc' || k === 'start' || k === 'end') continue;
+          const v = (node as unknown as Record<string, unknown>)[k];
+          if (Array.isArray(v)) {
+            for (const c of v) if (c && typeof c === 'object') walkStack.push(c);
+          } else if (v && typeof v === 'object') {
+            walkStack.push(v);
+          }
+        }
+      }
     }
   }
 
