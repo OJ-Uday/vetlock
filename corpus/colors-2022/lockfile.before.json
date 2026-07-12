@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "colors": "^1"
+      }
+    },
+    "node_modules/colors": {
+      "name": "colors",
+      "version": "1.4.0",
+      "integrity": "sha512-CH5s642xXdhikHvQyV9ceZO6Kj5F2kGe3DWr/4TGSKy1PiDnvi68pD8EEIwgqAeMugPCDm8Nvbg6UgCflkdxHw==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/colors-2022/colors-1.4.0/colors-1.4.0.tgz"
+    }
+  }
+}

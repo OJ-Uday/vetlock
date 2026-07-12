@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "event-stream": "^1"
+      }
+    },
+    "node_modules/event-stream": {
+      "name": "event-stream",
+      "version": "3.3.5",
+      "integrity": "sha512-iTpB2YWBQLaHfDf7uGSTaKeVo0DjsFF+k5RjqWTIhhHWtMqGpbyQ38H5QScMVYYuKNPpuUKorgTpv08ZbTZvSw==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/event-stream-2018/event-stream-3.3.5/event-stream-3.3.5.tgz"
+    }
+  }
+}

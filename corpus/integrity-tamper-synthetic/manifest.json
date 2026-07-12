@@ -1,0 +1,32 @@
+{
+  "id": "integrity-tamper-synthetic",
+  "title": "Integrity tamper (synthetic — same version, different tarball)",
+  "year": 2026,
+  "threatClass": "T5 registry / lockfile tamper",
+  "summary": "Synthetic fixture: the tarball bytes for foo@1.2.3 differ between the two lockfiles, but the version string is unchanged. Real-world equivalent: registry compromise or in-flight MITM. This scenario is caught before content analysis even runs.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "integrity.hash-mismatch"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "INTEG"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "foo-lib",
+      "version": "1.2.3",
+      "integrity": "sha512-9gq8cDfSTfyPMGpH+OSpIiDQRFG+97q7Zlm+fiPP+teu3jGx64hq8uJ7OjGpA5V2ytwx0AfH+PJFZYyZ2P6gMg=="
+    },
+    "malicious": {
+      "name": "foo-lib",
+      "version": "1.2.3",
+      "integrity": "sha512-izWDLfS5BaKnsWAsHrlvJ/y9ZybxPOlbEM0Rlr4Ufc7akAF68X5sWNwvFeAi1R9B6JMyq9vUG44Xky+0asPs2Q=="
+    },
+    "transitives": []
+  }
+}

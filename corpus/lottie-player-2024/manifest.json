@@ -1,0 +1,34 @@
+{
+  "id": "lottie-player-2024",
+  "title": "@lottiefiles/lottie-player 2.0.5-2.0.7 (Oct 2024)",
+  "year": 2024,
+  "threatClass": "T1 maintainer takeover (org level)",
+  "summary": "Attackers took over the LottieFiles GitHub org and published malicious lottie-player versions. The payload injected a Web3Modal-lookalike drainer into pages using the player; base64-encoded eval was the loader.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "code.dynamic-loading-added",
+      "net.encoded-endpoint"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "CODE",
+      "NET"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "@lottiefiles/lottie-player",
+      "version": "2.0.4",
+      "integrity": "sha512-GE5d0BudPR/BxAjAPMNNZlyZHuIL3/2sgQMAg6A8XPI1W3ztEMKDW3VFYJrwEMN0bv9LuK/sDGzQ7x/nDaqXaA=="
+    },
+    "malicious": {
+      "name": "@lottiefiles/lottie-player",
+      "version": "2.0.5",
+      "integrity": "sha512-vanZVQOMN1PNVkk70mfdz2BDaWr+0aBOS1KW0EwWVdG9vBp6CoLaQAsdVonpDAziaO0jAIl3KLPhdWQwoc2oXA=="
+    },
+    "transitives": []
+  }
+}

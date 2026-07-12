@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "foo-lib": "^1"
+      }
+    },
+    "node_modules/foo-lib": {
+      "name": "foo-lib",
+      "version": "1.2.3",
+      "integrity": "sha512-9gq8cDfSTfyPMGpH+OSpIiDQRFG+97q7Zlm+fiPP+teu3jGx64hq8uJ7OjGpA5V2ytwx0AfH+PJFZYyZ2P6gMg==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/integrity-tamper-synthetic/foo-lib-1.2.3/foo-lib-1.2.3.tgz"
+    }
+  }
+}

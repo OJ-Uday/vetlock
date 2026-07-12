@@ -18,6 +18,7 @@ import {
   PackageSnapshot,
   PackageManifest,
   FileCapabilities,
+  NativeArtifact,
   EnvAccess,
   DynamicCodeSite,
   SuspiciousLiteral,
@@ -46,9 +47,20 @@ export async function analyzeTarball(
   try {
     const manifest = await readManifest(extracted.destDir);
     const files: FileCapabilities[] = [];
+    const nativeArtifacts: NativeArtifact[] = [];
     for (const entry of extracted.entries) {
       const rel = entry.relPath;
-      if (isBinaryPath(rel)) continue;
+      const nativeKind = binaryKind(rel);
+      if (nativeKind) {
+        nativeArtifacts.push({
+          path: rel,
+          bytes: entry.bytes,
+          sha256: entry.sha256,
+          kind: nativeKind,
+        });
+        continue;
+      }
+      if (isMediaPath(rel)) continue;
       if (!isAnalyzableSource(rel)) continue;
       const abs = path.join(extracted.destDir, rel);
       const buf = await fs.readFile(abs);
@@ -62,6 +74,7 @@ export async function analyzeTarball(
       integrity: opts.integrity ?? '',
       manifest,
       files,
+      nativeArtifacts,
       formatVersion: SNAPSHOT_FORMAT_VERSION,
       builtAt: new Date().toISOString(),
     };
@@ -84,8 +97,16 @@ function isAnalyzableSource(rel: string): boolean {
   return /\.(m?js|cjs|jsx|ts|tsx|json)$/i.test(rel) && !rel.startsWith('node_modules/');
 }
 
-function isBinaryPath(rel: string): boolean {
-  return /\.(node|so|dylib|dll|exe|bin|wasm|jpg|jpeg|png|gif|webp|ttf|woff|woff2)$/i.test(rel);
+/** Media/font files we don't analyze but also don't flag. */
+function isMediaPath(rel: string): boolean {
+  return /\.(jpg|jpeg|png|gif|webp|ttf|woff|woff2|svg|ico)$/i.test(rel);
+}
+
+/** Native binary artifacts we DO flag — return the artifact kind if any. */
+function binaryKind(rel: string): NativeArtifact['kind'] | null {
+  const m = rel.match(/\.(node|so|dylib|dll|exe|wasm|bin)$/i);
+  if (!m) return null;
+  return m[1]!.toLowerCase() as NativeArtifact['kind'];
 }
 
 // Placeholder used only if capabilities.ts hasn't been built yet. Real

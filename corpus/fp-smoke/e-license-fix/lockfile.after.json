@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": {
+        "tiny-util": "^1"
+      }
+    },
+    "node_modules/tiny-util": {
+      "name": "tiny-util",
+      "version": "0.9.1",
+      "integrity": "sha512-IUZ5ewrFjoI4+I2hi6jkhlt2DYk/0rI7ZoLN83XQpvEMiLNcXmxm/2qyNljIzgA15oQxCtPOxBrRxJk8S3MReA==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/e-license-fix/tiny-util-new/tiny-util-new.tgz"
+    }
+  }
+}

@@ -173,10 +173,134 @@ export function post(url, body) {
     },
   );
 
+  // Case D: internal refactor. Same public API, code shape changes; nothing new externally.
+  await writeCase(
+    path.join(OUT_DIR, 'd-refactor'),
+    'small-parser',
+    {
+      pkg: { name: 'small-parser', version: '1.5.0', main: 'index.js', license: 'MIT' },
+      files: {
+        'index.js':
+`'use strict';
+function parse(input) {
+  return input.split(',').map(s => s.trim());
+}
+module.exports = { parse };
+`,
+      },
+    },
+    {
+      pkg: { name: 'small-parser', version: '1.5.1', main: 'index.js', license: 'MIT' },
+      files: {
+        'index.js':
+`'use strict';
+function trim(x) { return x.trim(); }
+function parse(input) {
+  const parts = input.split(',');
+  return parts.map(trim);
+}
+module.exports = { parse };
+`,
+      },
+    },
+  );
+
+  // Case E: license correction — repo/license fields updated in manifest only.
+  await writeCase(
+    path.join(OUT_DIR, 'e-license-fix'),
+    'tiny-util',
+    {
+      pkg: { name: 'tiny-util', version: '0.9.0', main: 'index.js', license: 'MIT-CMU' },
+      files: {
+        'index.js': 'module.exports = { identity: (x) => x };\n',
+      },
+    },
+    {
+      pkg: {
+        name: 'tiny-util',
+        version: '0.9.1',
+        main: 'index.js',
+        license: 'MIT',
+        repository: { type: 'git', url: 'https://github.com/example/tiny-util.git' },
+      },
+      files: {
+        'index.js': 'module.exports = { identity: (x) => x };\n',
+      },
+    },
+  );
+
+  // Case F: tests-only additions. Real code unchanged; author adds test files that ARE
+  // in the tarball because they didn't set 'files' in package.json.
+  await writeCase(
+    path.join(OUT_DIR, 'f-added-tests'),
+    'query-helper',
+    {
+      pkg: { name: 'query-helper', version: '2.1.0', main: 'index.js', license: 'MIT' },
+      files: {
+        'index.js': "exports.qs = (obj) => new URLSearchParams(obj).toString();\n",
+      },
+    },
+    {
+      pkg: { name: 'query-helper', version: '2.1.1', main: 'index.js', license: 'MIT' },
+      files: {
+        'index.js': "exports.qs = (obj) => new URLSearchParams(obj).toString();\n",
+        'test/index.test.js': "const { qs } = require('..');\nconsole.log(qs({ a: 1 }));\n",
+      },
+    },
+  );
+
+  // Case G: minor bugfix — one function body changed to fix an edge case.
+  await writeCase(
+    path.join(OUT_DIR, 'g-bugfix'),
+    'clamp-fn',
+    {
+      pkg: { name: 'clamp-fn', version: '1.0.0', main: 'index.js', license: 'MIT' },
+      files: {
+        'index.js': "module.exports = (x, lo, hi) => Math.min(hi, Math.max(lo, x));\n",
+      },
+    },
+    {
+      pkg: { name: 'clamp-fn', version: '1.0.1', main: 'index.js', license: 'MIT' },
+      files: {
+        'index.js':
+`module.exports = function clamp(x, lo, hi) {
+  if (Number.isNaN(x)) return lo;   // bugfix: preserve NaN handling
+  return Math.min(hi, Math.max(lo, x));
+};
+`,
+      },
+    },
+  );
+
+  // Case H: new peerDep only — dep-metadata change without shipped code change.
+  await writeCase(
+    path.join(OUT_DIR, 'h-peerdep-added'),
+    'ui-toolkit',
+    {
+      pkg: { name: 'ui-toolkit', version: '4.0.0', main: 'index.js', license: 'MIT' },
+      files: { 'index.js': "exports.Button = () => 'button';\n" },
+    },
+    {
+      pkg: {
+        name: 'ui-toolkit',
+        version: '4.0.1',
+        main: 'index.js',
+        license: 'MIT',
+        peerDependencies: { react: '>=18' },
+      },
+      files: { 'index.js': "exports.Button = () => 'button';\n" },
+    },
+  );
+
   console.log('FP smoke corpus built:');
   console.log(`  ${path.join(OUT_DIR, 'a-docs-only')}`);
   console.log(`  ${path.join(OUT_DIR, 'b-feature-bump')}`);
   console.log(`  ${path.join(OUT_DIR, 'c-types-only')}`);
+  console.log(`  ${path.join(OUT_DIR, 'd-refactor')}`);
+  console.log(`  ${path.join(OUT_DIR, 'e-license-fix')}`);
+  console.log(`  ${path.join(OUT_DIR, 'f-added-tests')}`);
+  console.log(`  ${path.join(OUT_DIR, 'g-bugfix')}`);
+  console.log(`  ${path.join(OUT_DIR, 'h-peerdep-added')}`);
 }
 
 main().catch((err) => {

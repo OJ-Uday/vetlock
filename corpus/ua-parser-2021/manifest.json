@@ -1,0 +1,38 @@
+{
+  "id": "ua-parser-2021",
+  "title": "ua-parser-js 0.7.29 (Oct 2021)",
+  "year": 2021,
+  "threatClass": "T1 maintainer takeover",
+  "summary": "ua-parser-js maintainer's npm credentials were phished. The attacker published 0.7.29 / 0.8.0 / 1.0.0 with a preinstall script that downloaded and executed a native crypto miner and password stealer. Millions of downloads before de-list.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "install.script-added",
+      "exec.new-module",
+      "net.new-module",
+      "net.new-endpoint",
+      "bin.new-native-artifact"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "INSTALL",
+      "EXEC",
+      "NET"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "ua-parser-js",
+      "version": "0.7.28",
+      "integrity": "sha512-sLiQEr63mezqQHtCxIil0AKmjG6L9Cp+fltigOBMiB+kxZ/G0vyI5C3EJ3SRGTi2Rz50VpfROg7ownFldyykbA=="
+    },
+    "malicious": {
+      "name": "ua-parser-js",
+      "version": "0.7.29",
+      "integrity": "sha512-o+DNQDzBqVq1dl5PpUB2c6YUw93O1sL/F7VGzF0seQbZroBjlbrgnpAmi9AogpTK8Dd9xrMX3Tc238FYCp94eA=="
+    },
+    "transitives": []
+  }
+}

@@ -63,10 +63,23 @@ export interface PackageSnapshot {
    * parseError set — never dropped silently.
    */
   files: FileCapabilities[];
+  /**
+   * Native binary artifacts shipped in the tarball: `.node`, `.so`, `.dylib`,
+   * `.dll`, `.exe`, `.wasm`, bare `.bin`. Populated by the analyzer; the
+   * bin.new-native-artifact detector reads this.
+   */
+  nativeArtifacts: NativeArtifact[];
   /** Cache-format version; increment on breaking taxonomy changes. */
   formatVersion: number;
   /** When this snapshot was built (ISO). */
   builtAt: string;
+}
+
+export interface NativeArtifact {
+  path: string;
+  bytes: number;
+  sha256: string;
+  kind: 'node' | 'so' | 'dylib' | 'dll' | 'exe' | 'wasm' | 'bin';
 }
 
 export interface PackageManifest {
@@ -103,14 +116,31 @@ export interface FileCapabilities {
   fsModules: string[];
   /** Distinct string literals reaching URL/domain shape. */
   urlLiterals: string[];
+  /**
+   * URLs recovered from base64/hex decoding of long high-entropy string
+   * literals. These are structurally suspect: real code rarely encodes URLs.
+   */
+  encodedUrls: EncodedUrl[];
   /** process.env access sites (whole-object enumeration or specific keys). */
   envAccesses: EnvAccess[];
   /** Dynamic code sinks (eval, new Function, vm, dynamic require). */
   dynamicCode: DynamicCodeSite[];
   /** File paths reached via literal-string args to fs writes. */
   fsWriteTargets: string[];
+  /** File paths reached via literal-string args to fs reads (secret files). */
+  fsReadTargets: string[];
   /** Very long string literals with high entropy — obfuscation candidates. */
   suspiciousLiterals: SuspiciousLiteral[];
+}
+
+export interface EncodedUrl {
+  /** The URL that was recovered from the encoding. */
+  url: string;
+  /** Which encoding this was decoded from. */
+  encoding: 'base64' | 'hex';
+  line: number;
+  /** The literal we decoded (truncated to 60 chars). */
+  encodedPreview: string;
 }
 
 export interface EnvAccess {

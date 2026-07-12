@@ -1,0 +1,36 @@
+{
+  "id": "typosquat-synthetic",
+  "title": "Typosquat (synthetic — `crossenv` for cross-env)",
+  "year": 2026,
+  "threatClass": "T6 typosquat adoption",
+  "summary": "A developer adds `crossenv` thinking it's cross-env (real 2017 typosquat family). The package is brand-new, has a fresh publisher, and imports child_process + https on first version. vetlock flags via the new direct dep + immediate BLOCK-tier capabilities.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "deps.typosquat-candidate",
+      "exec.new-module",
+      "net.new-endpoint"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "DEPS",
+      "EXEC",
+      "NET"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "integrity": "sha512-GavhZxjEDlYPuN2uV8i57H8Kv0WZse659DFRWPa0s12GDJakWqRMzytWr6p28wd1ipDV98yAvlYg7Vq435L14g=="
+    },
+    "malicious": {
+      "name": "crossenv",
+      "version": "1.0.0",
+      "integrity": "sha512-JmqyXwXH4EKO0sZU33jJsEAgPgSdB/Mr5ms5YNLjuKaPb3VA54Z4BGVu6ocR7pZFJYtDoqkcMmnYXC4Yc+HdHg=="
+    },
+    "transitives": []
+  }
+}

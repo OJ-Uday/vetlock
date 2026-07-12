@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": {
+        "clamp-fn": "^1"
+      }
+    },
+    "node_modules/clamp-fn": {
+      "name": "clamp-fn",
+      "version": "1.0.0",
+      "integrity": "sha512-ykMcP4j35LkH04iEni9yqBYdeNCIjwSd5QUepZr5TNaRTyR5N/7C3nTedSL1QYfRuJ2MJlHND++opICzZjYrRA==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/g-bugfix/clamp-fn-old/clamp-fn-old.tgz"
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "coa-rc-2021",
+  "title": "coa 2.0.3 / rc 1.2.9 (Nov 2021)",
+  "year": 2021,
+  "threatClass": "T1 maintainer takeover",
+  "summary": "Two popular packages (coa and rc) were hijacked simultaneously by an attacker who published patch versions with a postinstall that downloaded and ran a Windows password-stealer.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "install.script-added",
+      "exec.new-module",
+      "net.new-module",
+      "net.new-endpoint"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "INSTALL",
+      "EXEC",
+      "NET"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "coa",
+      "version": "2.0.2",
+      "integrity": "sha512-M5EsGfXlTxn9L63SKkgf+ZUc2IxRthpuKnBMir5EwbLRGSoPTFTDlKPnQF2ewA6O08Y0dGeW3hODvvfl19ddSA=="
+    },
+    "malicious": {
+      "name": "coa",
+      "version": "2.0.3",
+      "integrity": "sha512-bh6kDJhifX3wQPDr/8wrf/R5LyFaVb0Eavj8XAXlUnP8nNeBLs9+hTnziGdCypWm6Fl4iP1fWbMV/VJZul1bww=="
+    },
+    "transitives": []
+  }
+}

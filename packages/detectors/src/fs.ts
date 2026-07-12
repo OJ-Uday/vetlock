@@ -6,19 +6,7 @@
 
 import type { Detector, Finding, SnapshotPair } from '@vetlock/core';
 import { directionFor } from './direction.js';
-
-const HOT_PATH_PATTERNS: RegExp[] = [
-  /\.ssh(\/|$)/i,
-  /(^|\/)\.npmrc$/i,
-  /(^|\/)\.git\/config$/i,
-  /wallet/i,
-  /keychain/i,
-  /id_rsa/i,
-  /\.aws\/credentials/i,
-  /^~/,
-  /^\/etc\//,
-  /^\/root\//,
-];
+import { HOT_PATH_PATTERNS } from './fs-hotpaths.js';
 
 function isHotpath(target: string): boolean {
   return HOT_PATH_PATTERNS.some((r) => r.test(target));

@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "node-ipc": "^1"
+      }
+    },
+    "node_modules/node-ipc": {
+      "name": "node-ipc",
+      "version": "10.1.1",
+      "integrity": "sha512-FGhb6/IvhcLm3tVhxvljzqPCMRHJ4pvjcthFOtfiNuUq18xH5ePUJAOg5RONgCszTqGw8QFQ0whH7W9cfVn9Yg==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/node-ipc-2022/node-ipc-10.1.1/node-ipc-10.1.1.tgz"
+    }
+  }
+}

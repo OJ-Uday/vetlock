@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "rand-user-agent": "^1"
+      }
+    },
+    "node_modules/rand-user-agent": {
+      "name": "rand-user-agent",
+      "version": "2.0.1",
+      "integrity": "sha512-HPduiOX6n3nV4j+5iSzwk8BfaTufB/ZtRneWUdq/GmiFAzx4L29wkAORsfbS9vsn7OaEJwJe+JdFIdcWcrHdwg==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/rand-user-agent-2025/rand-user-agent-2.0.1/rand-user-agent-2.0.1.tgz"
+    }
+  }
+}

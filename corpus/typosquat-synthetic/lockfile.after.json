@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.1",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.1",
+      "dependencies": {
+        "crossenv": "^1"
+      }
+    },
+    "node_modules/crossenv": {
+      "name": "crossenv",
+      "version": "1.0.0",
+      "integrity": "sha512-JmqyXwXH4EKO0sZU33jJsEAgPgSdB/Mr5ms5YNLjuKaPb3VA54Z4BGVu6ocR7pZFJYtDoqkcMmnYXC4Yc+HdHg==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/typosquat-synthetic/crossenv-1.0.0/crossenv-1.0.0.tgz"
+    }
+  }
+}

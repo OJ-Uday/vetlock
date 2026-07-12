@@ -1,0 +1,35 @@
+{
+  "id": "rand-user-agent-2025",
+  "title": "rand-user-agent (May 2025)",
+  "year": 2025,
+  "threatClass": "T1 maintainer takeover",
+  "summary": "Malicious version of rand-user-agent opened a reverse shell (net.connect) to a C2 host and executed remote commands via new Function(). Payload used base64 layers of obfuscation.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "net.new-module",
+      "code.dynamic-loading-added",
+      "net.new-endpoint"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "NET",
+      "CODE"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "rand-user-agent",
+      "version": "2.0.0",
+      "integrity": "sha512-dExjqkQjcmjgxt5p6T188rFjZy7owW+q6Qb1S3ou5gwTWV5dwxW5aUUntV/yCgZugxyMErQeRZv2PjEJ6//TrA=="
+    },
+    "malicious": {
+      "name": "rand-user-agent",
+      "version": "2.0.1",
+      "integrity": "sha512-HPduiOX6n3nV4j+5iSzwk8BfaTufB/ZtRneWUdq/GmiFAzx4L29wkAORsfbS9vsn7OaEJwJe+JdFIdcWcrHdwg=="
+    },
+    "transitives": []
+  }
+}

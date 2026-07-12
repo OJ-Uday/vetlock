@@ -1,0 +1,38 @@
+{
+  "id": "eslint-scope-2018",
+  "title": "eslint-scope 3.7.2 (July 2018)",
+  "year": 2018,
+  "threatClass": "T1 maintainer takeover",
+  "summary": "Attacker used stolen npm publish credentials to publish eslint-scope 3.7.2. The build.js payload read ~/.npmrc at require-time and exfiltrated the _authToken to an attacker endpoint. First widely-noticed npm supply-chain compromise.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "fs.new-hotpath-read",
+      "net.new-endpoint",
+      "net.new-module",
+      "obf.entropy-jump",
+      "meta.maintainer-change"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "NET",
+      "OBF",
+      "FS"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "eslint-scope",
+      "version": "3.7.1",
+      "integrity": "sha512-nDkoqLlmINPRjVir2Wx586DgXrvv84HRh+79HS1ognaT1/AxqPkMfFf0X+f30IQJgW/haBV+BGsEN7ykLt9s+A=="
+    },
+    "malicious": {
+      "name": "eslint-scope",
+      "version": "3.7.2",
+      "integrity": "sha512-ejndy+7bXp2TUjHpjITX1VVNmJqFcf0PVjsj7hu9YCpq5gZOqXQu4GfaD9fnrfcW2SWLm/ovKbQrGx4OhZtE8w=="
+    },
+    "transitives": []
+  }
+}

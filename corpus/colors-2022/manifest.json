@@ -1,0 +1,28 @@
+{
+  "id": "colors-2022",
+  "title": "colors 1.4.44-liberty-2 (Jan 2022)",
+  "year": 2022,
+  "threatClass": "T4 protestware / maintainer sabotage",
+  "summary": "Maintainer intentionally published a version of colors that printed \"LIBERTY LIBERTY LIBERTY\" in an infinite console.log loop, breaking every downstream that used colors for CLI output. Similar sabotage in faker.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [],
+    "verdict": "CLEAN",
+    "known_limitation": "Protestware / logic sabotage using ONLY capabilities the package already had. No new network, no new install script, no new fs write, no obfuscation. vetlock is designed as a behavioral DIFFER — this is why we publish this attack as a MISS. Manual code review is still the only line of defense here."
+  },
+  "packages": {
+    "clean": {
+      "name": "colors",
+      "version": "1.4.0",
+      "integrity": "sha512-CH5s642xXdhikHvQyV9ceZO6Kj5F2kGe3DWr/4TGSKy1PiDnvi68pD8EEIwgqAeMugPCDm8Nvbg6UgCflkdxHw=="
+    },
+    "malicious": {
+      "name": "colors",
+      "version": "1.4.44",
+      "integrity": "sha512-h+2ZZI/xQA5jmopf+sxpV/Ccls9eVbaOEeDVtxttbYz9zBgDoxm2HrpkN2cTdIoYlyir0Zacg/yIlpAhBaD8FQ=="
+    },
+    "transitives": []
+  }
+}

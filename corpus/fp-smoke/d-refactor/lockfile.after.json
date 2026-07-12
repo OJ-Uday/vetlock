@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": {
+        "small-parser": "^1"
+      }
+    },
+    "node_modules/small-parser": {
+      "name": "small-parser",
+      "version": "1.5.1",
+      "integrity": "sha512-80fW1JAU3+tc6M49nip2IUa5bGFOAQ4fGMb31q0r9Hx1LDO9mTwdpxJRjEZ5H8H3g8f84+2I6kArjL/Aseoktw==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/d-refactor/small-parser-new/small-parser-new.tgz"
+    }
+  }
+}

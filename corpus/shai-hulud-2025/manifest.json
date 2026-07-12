@@ -1,26 +1,40 @@
 {
-  "name": "shai-hulud-2025",
+  "id": "shai-hulud-2025",
+  "title": "Shai-Hulud worm wave (Sept 2025)",
+  "year": 2025,
   "threatClass": "T1 maintainer takeover + T3 self-replicating worm",
-  "threatDescription": "Shai-Hulud worm wave (chalk, debug, and 100+ others, Sept 2025). Maintainer account compromised; postinstall harvests NPM_TOKEN, GITHUB_TOKEN, AWS_* to exfil endpoint; uses stolen npm token to republish itself into victim-controlled packages.",
+  "summary": "Shai-Hulud worm wave (chalk, debug, and 100+ others, Sept 2025). Maintainer accounts compromised; postinstall harvests NPM_TOKEN, GITHUB_TOKEN, AWS_* to exfil endpoint; uses stolen npm token to republish itself into victim-controlled packages.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
   "defanged": true,
-  "source": "RECONSTRUCTED from public postmortems",
-  "packages": [
-    {
+  "expect": {
+    "mustFire": [
+      "install.script-added",
+      "env.token-harvest",
+      "net.new-endpoint",
+      "net.new-module",
+      "exec.new-module",
+      "meta.maintainer-change"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "INSTALL",
+      "ENV",
+      "NET",
+      "EXEC",
+      "META"
+    ]
+  },
+  "packages": {
+    "clean": {
       "name": "chalk",
-      "oldVersion": "5.3.0",
-      "newVersion": "5.3.1",
-      "integrityOld": "sha512-Zqr+DxLuYyw3wdOE6iWb0bxNCfgIkX854qFeJrxnTqp8YBxsu83ipJtHhqVA1W8dIYNFIvKbtkICocaHHYVnyw==",
-      "integrityNew": "sha512-BiT1ZoQ5AIFiowgPcqlWjlfMkpUKR3ibrtbgGhj72IqALkV4ffik/GfBRJrrjkMTpxpgsG0RviaJzlSq2n/r3g=="
+      "version": "5.3.0",
+      "integrity": "sha512-LtsXd8/P2C7WO0PEAnn2RCmAbFX8e3I788Ehih8Ty+MhsZYV/Q1UGPnJGGaHoEW5kyHuurHuxCtzBJmOnqhXlg=="
+    },
+    "malicious": {
+      "name": "chalk",
+      "version": "5.3.1",
+      "integrity": "sha512-n0VeF0woDxnv73zV/JRtYmRqt/343w+0dL09y54CbhApmkun/Cgxvd8ckuarcEnKc8SfDay5GFzyMZREwcynFQ=="
     }
-  ],
-  "expectedDetections": [
-    "install.script-added — postinstall was not present in 5.3.0",
-    "env.token-harvest — new reads of NPM_TOKEN, GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY",
-    "net.new-endpoint — https://exfil.example.invalid/collect and /webhook",
-    "net.new-module — https module now imported",
-    "exec.new-module — child_process now imported",
-    "fs.new-hotpath-write — write to $HOME/.npmrc",
-    "code.dynamic-loading-added — (none expected here; the payload uses static imports)",
-    "meta.maintainer-change — attacker email replaced legitimate maintainer"
-  ]
+  }
 }

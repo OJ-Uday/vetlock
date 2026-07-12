@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "eslint-scope": "^1"
+      }
+    },
+    "node_modules/eslint-scope": {
+      "name": "eslint-scope",
+      "version": "3.7.2",
+      "integrity": "sha512-ejndy+7bXp2TUjHpjITX1VVNmJqFcf0PVjsj7hu9YCpq5gZOqXQu4GfaD9fnrfcW2SWLm/ovKbQrGx4OhZtE8w==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/eslint-scope-2018/eslint-scope-3.7.2/eslint-scope-3.7.2.tgz"
+    }
+  }
+}

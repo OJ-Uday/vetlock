@@ -1,0 +1,35 @@
+{
+  "id": "solana-web3-2024",
+  "title": "@solana/web3.js 1.95.5-1.95.7 (Dec 2024)",
+  "year": 2024,
+  "threatClass": "T1 maintainer takeover",
+  "summary": "Phished credentials let attackers publish malicious patch versions of @solana/web3.js that hooked keypair APIs to exfiltrate seed material. ~$160k drained across affected dApps in ~5 hours.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "net.new-module",
+      "net.encoded-endpoint",
+      "meta.maintainer-change"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "NET"
+    ],
+    "known_limitation": "Real attack encoded its exfil URL in base64. net.encoded-endpoint catches the decoded URL. The OBF entropy-jump detector would ALSO fire IF the b64 blob were long enough (>200 chars) — for shorter blobs like this real fixture, net.encoded-endpoint alone is the reliable path."
+  },
+  "packages": {
+    "clean": {
+      "name": "@solana/web3.js",
+      "version": "1.95.4",
+      "integrity": "sha512-9ZYEYFGxWIGzZpzzfaFUV7Xx0Clo2GSHa09MjFKrtBG79ZMPkw5esHd0NAlH0zxzfiAV5XZNDBR3E1prODQfZg=="
+    },
+    "malicious": {
+      "name": "@solana/web3.js",
+      "version": "1.95.5",
+      "integrity": "sha512-ekdE+cRl4AFPsPpMraPc5BmgOJR5F/uny+jFkmiKqi/ggMRQpfJ+3mQX65F11qzQzkiNbu0b8IVTE7JSwFkzrg=="
+    },
+    "transitives": []
+  }
+}

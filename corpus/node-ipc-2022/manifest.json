@@ -1,0 +1,35 @@
+{
+  "id": "node-ipc-2022",
+  "title": "node-ipc 10.1.1 (Mar 2022, peacenotwar)",
+  "year": 2022,
+  "threatClass": "T4 protestware",
+  "summary": "Maintainer weaponized node-ipc to overwrite files on hosts whose geoIP resolved to Russia or Belarus. Later versions dropped a WITH-LOVE-FROM-AMERICA.txt on the desktop.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "net.new-module",
+      "net.new-endpoint",
+      "fs.new-hotpath-write"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "NET",
+      "FS"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "node-ipc",
+      "version": "10.1.0",
+      "integrity": "sha512-CyX/CU/Z0a/TSdDwGroEPj0gpezTXd4gknZiKd4KcsB/JCCuAl8EEPdjGoLC1QnRhRwbWHfn93Q91U2bAcOSPQ=="
+    },
+    "malicious": {
+      "name": "node-ipc",
+      "version": "10.1.1",
+      "integrity": "sha512-FGhb6/IvhcLm3tVhxvljzqPCMRHJ4pvjcthFOtfiNuUq18xH5ePUJAOg5RONgCszTqGw8QFQ0whH7W9cfVn9Yg=="
+    },
+    "transitives": []
+  }
+}

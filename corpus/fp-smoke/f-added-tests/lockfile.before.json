@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": {
+        "query-helper": "^1"
+      }
+    },
+    "node_modules/query-helper": {
+      "name": "query-helper",
+      "version": "2.1.0",
+      "integrity": "sha512-kN1S8bO70Q7nLXA1pR4V14IgdJry6WDPsN4TNdCjjrLva4OdBYw7aHgDdikQFbcOSB1F/Qygz1UvEEqadQHJjg==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/f-added-tests/query-helper-old/query-helper-old.tgz"
+    }
+  }
+}

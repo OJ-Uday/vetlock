@@ -24,26 +24,40 @@ async function run(caseDir: string) {
   });
 }
 
-describe('FP smoke — benign bumps must not fire WARN/BLOCK', () => {
-  it('A. docs-only bump → CLEAN', async () => {
-    const r = await run(path.join(CORPUS_DIR, 'a-docs-only'));
-    expect(r.verdict).toBe('CLEAN');
-    expect(r.findings).toHaveLength(0);
-  });
+const CASES: Array<{ dir: string; description: string; allowed: 'CLEAN' | 'INFO' }> = [
+  { dir: 'a-docs-only',      description: 'docs-only bump',                       allowed: 'CLEAN' },
+  { dir: 'b-feature-bump',   description: 'feature bump on a package that already used NET', allowed: 'CLEAN' },
+  { dir: 'c-types-only',     description: 'type-only bump',                       allowed: 'CLEAN' },
+  { dir: 'd-refactor',       description: 'internal refactor — same public API',  allowed: 'CLEAN' },
+  { dir: 'e-license-fix',    description: 'license/repository field correction',  allowed: 'CLEAN' },
+  { dir: 'f-added-tests',    description: 'tests-only additions to tarball',      allowed: 'CLEAN' },
+  { dir: 'g-bugfix',         description: 'minor bugfix — NaN edge case',         allowed: 'CLEAN' },
+  { dir: 'h-peerdep-added',  description: 'peerDependency added in manifest',     allowed: 'CLEAN' },
+];
 
-  it('B. feature bump on a package that already used NET → no NET findings', async () => {
-    const r = await run(path.join(CORPUS_DIR, 'b-feature-bump'));
-    expect(r.verdict).toMatch(/CLEAN|INFO/);
-    // No BLOCK / WARN — diff-framing must suppress "https already used" noise.
-    for (const f of r.findings) {
-      expect(f.severity).not.toBe('BLOCK');
-      expect(f.severity).not.toBe('WARN');
-    }
-  });
+describe('FP smoke — 8 benign bumps must not fire WARN/BLOCK', () => {
+  it.each(CASES)(
+    '$dir — $description → verdict at most $allowed',
+    async ({ dir, allowed }) => {
+      const r = await run(path.join(CORPUS_DIR, dir));
+      // Never BLOCK or WARN.
+      for (const f of r.findings) {
+        expect(
+          f.severity,
+          `${dir}: unexpected ${f.severity} — ${f.detector}: ${f.message}`,
+        ).not.toBe('BLOCK');
+        expect(f.severity).not.toBe('WARN');
+      }
+      if (allowed === 'CLEAN') {
+        expect(r.verdict, `${dir}: verdict should be CLEAN`).toBe('CLEAN');
+      } else {
+        // 'INFO' is the loosest allowed verdict.
+        expect(['CLEAN', 'INFO']).toContain(r.verdict);
+      }
+    },
+  );
 
-  it('C. type-only bump → CLEAN', async () => {
-    const r = await run(path.join(CORPUS_DIR, 'c-types-only'));
-    expect(r.verdict).toBe('CLEAN');
-    expect(r.findings).toHaveLength(0);
+  it('at least 8 FP cases in the corpus', () => {
+    expect(CASES.length).toBeGreaterThanOrEqual(8);
   });
 });

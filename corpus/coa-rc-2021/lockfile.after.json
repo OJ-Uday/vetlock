@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "coa": "^1"
+      }
+    },
+    "node_modules/coa": {
+      "name": "coa",
+      "version": "2.0.3",
+      "integrity": "sha512-bh6kDJhifX3wQPDr/8wrf/R5LyFaVb0Eavj8XAXlUnP8nNeBLs9+hTnziGdCypWm6Fl4iP1fWbMV/VJZul1bww==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/coa-rc-2021/coa-2.0.3/coa-2.0.3.tgz"
+    }
+  }
+}

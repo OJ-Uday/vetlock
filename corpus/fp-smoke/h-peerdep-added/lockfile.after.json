@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "app",
+      "version": "1.0.0",
+      "dependencies": {
+        "ui-toolkit": "^1"
+      }
+    },
+    "node_modules/ui-toolkit": {
+      "name": "ui-toolkit",
+      "version": "4.0.1",
+      "integrity": "sha512-oEI73VoDV6dPfhjzXvWzu1K2dBRqI7duL0yU83odv+zMGW+MwbWX4IjrGBh68NcqJ0z5TOKb4sfIyIXJezdrpQ==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/h-peerdep-added/ui-toolkit-new/ui-toolkit-new.tgz"
+    }
+  }
+}

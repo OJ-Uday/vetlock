@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "ua-parser-js": "^1"
+      }
+    },
+    "node_modules/ua-parser-js": {
+      "name": "ua-parser-js",
+      "version": "0.7.29",
+      "integrity": "sha512-o+DNQDzBqVq1dl5PpUB2c6YUw93O1sL/F7VGzF0seQbZroBjlbrgnpAmi9AogpTK8Dd9xrMX3Tc238FYCp94eA==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/ua-parser-2021/ua-parser-js-0.7.29/ua-parser-js-0.7.29.tgz"
+    }
+  }
+}

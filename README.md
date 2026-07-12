@@ -101,19 +101,23 @@ a new domain in this update."*
 |---|---|---|---|
 | INSTALL | `install.script-added` | BLOCK | Lifecycle script (pre/post/install/prepare) added |
 | INSTALL | `install.script-changed` | BLOCK | Existing lifecycle script body changed |
-| ENV | `env.token-harvest` | BLOCK | New reads of `NPM_TOKEN`, `GITHUB_TOKEN`, `AWS_*`, etc; or whole-object `process.env` enumeration |
+| INSTALL | `bin.new-native-artifact` | BLOCK | New `.node`/`.exe`/`.dll`/`.so`/`.wasm` binary shipped in tarball |
+| ENV | `env.token-harvest` | BLOCK | New reads of `NPM_TOKEN`, `GITHUB_TOKEN`, `AWS_*`, `HOME`, `.ssh` — or whole-object `process.env` enumeration |
 | NET | `net.new-endpoint` | BLOCK | New URL literal appeared in source |
+| NET | `net.encoded-endpoint` | BLOCK | New URL recovered by base64/hex-decoding a suspicious string literal |
 | NET | `net.new-module` | WARN | New http/https/net/fetch/websocket module imported |
 | EXEC | `exec.new-module` | BLOCK | New `child_process`/`worker_threads`/`vm` import |
-| FS | `fs.new-hotpath-write` | BLOCK | New fs.write targeting `.ssh`, `.npmrc`, `.git/config`, wallet paths, `/etc/*`, etc |
+| FS | `fs.new-hotpath-write` | BLOCK | New fs.write to `.ssh`, `.npmrc`, `.git/config`, wallet paths, `~/Desktop/*`, `/etc/*`, etc. |
+| FS | `fs.new-hotpath-read` | BLOCK | New fs.read of the same sensitive paths (secret-file exfil) |
 | INTEG | `integrity.hash-mismatch` | BLOCK | Same version, different tarball hash (registry tamper / MITM) |
 | CODE | `code.dynamic-loading-added` | WARN | New `eval`, `new Function`, dynamic `require`/`import`, `vm` sink |
-| OBF | `obf.entropy-jump` | WARN → BLOCK\* | Entropy jump, minification regression, or new high-entropy literals |
+| OBF | `obf.entropy-jump` | WARN → BLOCK\* | Entropy jump, minification regression, or new high-entropy literals in an existing file |
+| OBF | `obf.new-obfuscated-file` | WARN → BLOCK\* | New file that ships minified or with suspicious literals |
 | META | `meta.maintainer-change` | WARN | Publisher/maintainer emails changed between versions |
 | DEPS | `deps.new-direct-dep` | INFO | New direct dependency added |
+| DEPS | `deps.typosquat-candidate` | WARN → BLOCK\* | New dep whose name is edit-distance ≤ 2 from a popular npm package |
 
-\* OBF escalates to BLOCK when co-occurring with NET or INSTALL findings in the same package
-(the classic worm co-occurrence).
+\* OBF and typosquat findings escalate to BLOCK when the same package also has a NET/INSTALL/EXEC/ENV/FS BLOCK-tier finding — the classic worm + supply-chain co-occurrence.
 
 ## Design invariants (each a named test)
 
@@ -138,14 +142,22 @@ a new domain in this update."*
 
 ## Status
 
-**v0.0.0 — early alpha.** Detector coverage is deliberately narrow-and-tested rather than
-broad-and-hopeful. 76 tests currently green across the workspace, including a corpus-acceptance
-test that catches the defanged Shai-Hulud 2025 worm with 13 findings across 5 detector
-categories. FP smoke on 3 realistic benign version bumps: 0 findings, verdict CLEAN.
+**v0.1.0 — alpha.** 96 tests green across the workspace, including a data-driven
+corpus-replay test that runs vetlock against **12 npm supply-chain attack fixtures**
+(10 real, 2 synthetic) and asserts each hits its expected detectors with correct triage.
+
+**Coverage:** 11 of 12 attacks caught (91.7%). One published honest miss (`colors 2022`
+protestware — logic sabotage using only capabilities the package already had). Full
+per-attack detail with evidence: [docs/DETECTIONS.md](docs/DETECTIONS.md), regenerated
+from live replays on every corpus rebuild.
+
+**False positives:** 8 realistic benign version bumps (docs-only, feature-add, types-only,
+refactor, license fix, tests-only, bugfix, peer-dep-add) — all yield CLEAN verdict, 0
+findings.
 
 Known limitations, published honestly (also in DETECTIONS.md):
 
-- Logic bombs using capabilities the package already had are our hardest case.
+- Logic bombs using capabilities the package already had (protestware) are our hardest case.
 - Fully dynamic loading chains where every string is computed at runtime are flagged, not
   followed.
 - Baseline-scan mode (single lockfile, no diff frame) is not yet implemented.

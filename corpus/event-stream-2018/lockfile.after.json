@@ -1,0 +1,29 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "event-stream": "^1"
+      }
+    },
+    "node_modules/event-stream": {
+      "name": "event-stream",
+      "version": "3.3.6",
+      "integrity": "sha512-iskAq6ffoMU4awTbt0uZ0he2BJDAL0k28SLuYOb1NH3532QW5oZtDHqHP0BAtE72iIqi/odzMYrQaK6Ob+xwig==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/event-stream-2018/event-stream-3.3.6/event-stream-3.3.6.tgz",
+      "dependencies": {
+        "flatmap-stream": "^0.1"
+      }
+    },
+    "node_modules/flatmap-stream": {
+      "name": "flatmap-stream",
+      "version": "0.1.1",
+      "integrity": "sha512-ErcORlxmKNd6kghJ2jQkdOLxyELJ7zvqz3AaYtlFb6vjrL+pRK3QNech/gqd9/9P3AZdURkrCOLZGqcTPZSR/g==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/event-stream-2018/flatmap-stream-0.1.1/flatmap-stream-0.1.1.tgz"
+    }
+  }
+}

@@ -194,27 +194,33 @@ async function main() {
     path.join(OUT_DIR, 'manifest.json'),
     JSON.stringify(
       {
-        name: 'shai-hulud-2025',
+        id: 'shai-hulud-2025',
+        title: 'Shai-Hulud worm wave (Sept 2025)',
+        year: 2025,
         threatClass: 'T1 maintainer takeover + T3 self-replicating worm',
-        threatDescription:
+        summary:
           'Shai-Hulud worm wave (chalk, debug, and 100+ others, Sept 2025). ' +
-          'Maintainer account compromised; postinstall harvests NPM_TOKEN, GITHUB_TOKEN, AWS_* to exfil endpoint; ' +
+          'Maintainer accounts compromised; postinstall harvests NPM_TOKEN, GITHUB_TOKEN, AWS_* to exfil endpoint; ' +
           'uses stolen npm token to republish itself into victim-controlled packages.',
+        provenance: 'RECONSTRUCTED',
+        topology: 'direct',
         defanged: true,
-        source: 'RECONSTRUCTED from public postmortems',
-        packages: [
-          { name: 'chalk', oldVersion: '5.3.0', newVersion: '5.3.1', integrityOld: clean.integrity, integrityNew: mal.integrity },
-        ],
-        expectedDetections: [
-          'install.script-added — postinstall was not present in 5.3.0',
-          'env.token-harvest — new reads of NPM_TOKEN, GITHUB_TOKEN, AWS_SECRET_ACCESS_KEY',
-          'net.new-endpoint — https://exfil.example.invalid/collect and /webhook',
-          'net.new-module — https module now imported',
-          'exec.new-module — child_process now imported',
-          'fs.new-hotpath-write — write to $HOME/.npmrc',
-          'code.dynamic-loading-added — (none expected here; the payload uses static imports)',
-          'meta.maintainer-change — attacker email replaced legitimate maintainer',
-        ],
+        expect: {
+          mustFire: [
+            'install.script-added',
+            'env.token-harvest',
+            'net.new-endpoint',
+            'net.new-module',
+            'exec.new-module',
+            'meta.maintainer-change',
+          ],
+          verdict: 'BLOCK',
+          minCategories: ['INSTALL', 'ENV', 'NET', 'EXEC', 'META'],
+        },
+        packages: {
+          clean: { name: 'chalk', version: '5.3.0', integrity: clean.integrity },
+          malicious: { name: 'chalk', version: '5.3.1', integrity: mal.integrity },
+        },
       },
       null,
       2,

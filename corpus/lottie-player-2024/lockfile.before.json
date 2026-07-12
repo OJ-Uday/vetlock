@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "@lottiefiles/lottie-player": "^1"
+      }
+    },
+    "node_modules/@lottiefiles/lottie-player": {
+      "name": "@lottiefiles/lottie-player",
+      "version": "2.0.4",
+      "integrity": "sha512-GE5d0BudPR/BxAjAPMNNZlyZHuIL3/2sgQMAg6A8XPI1W3ztEMKDW3VFYJrwEMN0bv9LuK/sDGzQ7x/nDaqXaA==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/lottie-player-2024/_lottiefiles_lottie-player-2.0.4/_lottiefiles_lottie-player-2.0.4.tgz"
+    }
+  }
+}

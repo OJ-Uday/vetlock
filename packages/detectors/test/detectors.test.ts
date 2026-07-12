@@ -274,8 +274,8 @@ describe('runAll — escalation + validation', () => {
     expect(a.length).toBe(2);
   });
 
-  it('registers exactly nine built-in detectors', () => {
-    expect(ALL_DETECTORS.length).toBe(9);
+  it('registers all built-in detectors (thirteen after hardening pass)', () => {
+    expect(ALL_DETECTORS.length).toBe(13);
   });
 
   it('stablesort exported', () => {
