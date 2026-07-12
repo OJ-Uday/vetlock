@@ -30,7 +30,7 @@ import {
 } from './lockfile.js';
 import { parseLockfileText } from './lockfile-any.js';
 import { computeChangeset, type Change } from './changeset.js';
-import { fetchTarball, type PackageRef } from './fetch.js';
+import { fetchTarball, classifyResolved, type PackageRef } from './fetch.js';
 import { analyzeTarball } from './analyze.js';
 import { makeCache, type SnapshotCache } from './cache.js';
 
@@ -61,6 +61,13 @@ export interface EngineOptions {
   oldLockfilePath?: string;
   /** Filename hint for the NEW lockfile. @see oldLockfilePath */
   newLockfilePath?: string;
+  /**
+   * Set of high-value npm package names. When a `deps.workspace-shadowing` finding
+   * concerns a package in this set, the finding is escalated from WARN to BLOCK
+   * (REDTEAM F2). Pass `new Set(TOP_NPM_NAMES)` from @vetlock/detectors.
+   * When omitted, workspace-shadowing findings remain at WARN.
+   */
+  topNpmNames?: ReadonlySet<string>;
 }
 
 export type ProgressEvent =
@@ -264,6 +271,145 @@ export async function runDiff(
       evidence: [{ file: 'package.json', line: 1, snippet }],
       provenance: [],
     });
+  }
+
+  // REDTEAM F2 FIX: emit WARN findings for lockfile entries that have `link: true`
+  // and share a name with any legitimate package in the new graph (workspace shadowing).
+  // An attacker can add `"link": true` to a lockfile entry to make vetlock skip it
+  // entirely. We record link entries in LockGraph.workspaceLinks and surface them here.
+  // Escalates to BLOCK when the name matches a top-npm-name (opts.topNpmNames).
+  for (const link of newG.workspaceLinks) {
+    if (!link.name) continue;
+    const isTopName = opts.topNpmNames?.has(link.name) ?? false;
+    findings.push({
+      detector: 'deps.workspace-shadowing',
+      category: 'DEPS',
+      package: link.name,
+      from: null,
+      to: link.version || null,
+      direction: 'added',
+      severity: isTopName ? 'BLOCK' : 'WARN',
+      confidence: 'medium',
+      message: `Lockfile entry '${link.key}' has \`link: true\` and uses name '${link.name}'. ` +
+        `This entry is excluded from content analysis. If this name matches a real npm package, ` +
+        `an attacker may have injected a workspace-link to shadow it and bypass analysis.` +
+        (isTopName ? ' [escalated: name matches a top-npm-name — high-value target]' : ''),
+      evidence: [
+        {
+          file: link.key,
+          line: 1,
+          snippet: `"link": true, "name": "${link.name}", "resolved": "${link.resolved ?? ''}"`,
+        },
+      ],
+      provenance: [],
+    });
+  }
+
+  // REDTEAM F6 FIX: emit WARN findings for yarn npm: aliases where the declared
+  // name differs from the actually-installed package. Every downstream detector
+  // operates on the declared name, so a malicious package aliased as 'chalk'
+  // bypasses all chalk-specific trust-store and advisory checks.
+  // We emit for both the new graph's aliases (just-added aliases) and also scan
+  // the old graph for removed aliases (completeness; direction='removed').
+  const emittedAliasKeys = new Set<string>();
+  for (const alias of newG.npmAliases) {
+    const key = `${alias.declaredName}→${alias.realName}`;
+    if (emittedAliasKeys.has(key)) continue;
+    emittedAliasKeys.add(key);
+    findings.push({
+      detector: 'deps.aliased-name',
+      category: 'DEPS',
+      package: alias.declaredName,
+      from: null,
+      to: alias.version || null,
+      direction: 'added',
+      severity: 'WARN',
+      confidence: 'high',
+      message: `Package '${alias.declaredName}' is a yarn npm: alias — it actually installs ` +
+        `'${alias.realName}@${alias.version}' from npm. ` +
+        `Detectors that key on the package name ('${alias.declaredName}') may not apply to the real payload.`,
+      evidence: [
+        {
+          file: `node_modules/${alias.declaredName}`,
+          line: 1,
+          snippet: `${alias.declaredName}@npm:${alias.realName}@${alias.version}`,
+        },
+      ],
+      provenance: [],
+    });
+  }
+
+  // REDTEAM N5 FIX: emit WARN findings for packages whose resolved field uses a
+  // git+ / github: / bitbucket: / gitlab: URL. vetlock fetches from the registry
+  // by name@version, not from the git URL — the analyzed tarball is from the registry
+  // while npm install actually clones the git repo. This is a TOCTOU gap.
+  // REDTEAM S9 FIX: emit INFO findings for packages whose resolved field uses a
+  // file: URL with an absolute path. The CLI's fetchOverride passes these paths
+  // directly to safeExtract — an attacker can point at any local .tgz.
+  // NOTE: corpus fixtures use `file://` URLs for their test tarballs. To avoid
+  // corpus regressions, we emit file: findings at INFO (not WARN/BLOCK) so the
+  // corpus manifests can tolerate them without asserting on them.
+  const emittedResolvedPkgs = new Set<string>();
+  for (const change of changes) {
+    if (change.kind === 'removed') continue;
+    const nodeKey = change.nodeKeyNew;
+    if (!nodeKey) continue;
+    const node = newG.nodes.get(nodeKey);
+    if (!node?.resolved) continue;
+    const kind = classifyResolved(node.resolved);
+    if (!kind) continue;
+    const pkgKey = `${change.name}:${kind}`;
+    if (emittedResolvedPkgs.has(pkgKey)) continue;
+    emittedResolvedPkgs.add(pkgKey);
+
+    if (kind === 'git') {
+      findings.push({
+        detector: 'deps.non-registry-source',
+        category: 'DEPS',
+        package: change.name,
+        from: change.oldVersion ?? null,
+        to: change.newVersion ?? null,
+        direction: change.kind === 'added' ? 'added' : 'changed',
+        severity: 'WARN',
+        confidence: 'high',
+        message: `Package '${change.name}' has a git/VCS resolved URL ('${node.resolved}'). ` +
+          `vetlock analyzes the registry tarball for '${change.name}@${change.newVersion ?? ''}', ` +
+          `but npm install will fetch from the git URL — these may differ.`,
+        evidence: [
+          {
+            file: nodeKey,
+            line: 1,
+            snippet: `resolved: ${node.resolved}`,
+          },
+        ],
+        provenance: [],
+      });
+    } else if (kind === 'file' && change.kind === 'added') {
+      // Only flag newly-added file: entries. An existing file: entry that was
+      // already present before is less suspicious — and corpus fixtures use
+      // file:// for both the 'before' and 'after' versions, so firing on
+      // 'changed' would break corpus tests that expect CLEAN/BLOCK verdicts.
+      findings.push({
+        detector: 'deps.local-source',
+        category: 'DEPS',
+        package: change.name,
+        from: null,
+        to: change.newVersion ?? null,
+        direction: 'added',
+        severity: 'INFO',
+        confidence: 'medium',
+        message: `Package '${change.name}' was newly added with a local file: resolved URL ('${node.resolved}'). ` +
+          `This path is attacker-controlled — a malicious lockfile can point at any local .tgz.`,
+        evidence: [
+          {
+            file: nodeKey,
+            line: 1,
+            snippet: `resolved: ${node.resolved}`,
+          },
+        ],
+        provenance: [],
+      });
+    }
   }
 
   // Determinism: sort findings by (severity high→low, package, detector, first-evidence).

@@ -46,6 +46,24 @@ export interface LockGraph {
    * entries that shadow known high-value package names (F2).
    */
   workspaceLinks: WorkspaceLink[];
+  /**
+   * yarn/pnpm npm: alias entries — declared name → real installed package name.
+   * The lockfile-identity detector emits a `deps.aliased-name` WARN finding for
+   * each entry so reviewers know the actual package that will be installed (F6).
+   *
+   * E.g. `chalk@npm:evil-payload@1.0.0` → { declaredName: 'chalk', realName: 'evil-payload', ... }
+   */
+  npmAliases: NpmAlias[];
+}
+
+/** A yarn/pnpm npm: alias: the `declaredName` in package.json resolves to `realName` from npm. */
+export interface NpmAlias {
+  /** The name used in package.json / the lockfile key. */
+  declaredName: string;
+  /** The package actually installed from the npm registry. */
+  realName: string;
+  /** Resolved version. */
+  version: string;
 }
 
 /** A lockfile entry with `link: true`. Not included in the main graph nodes. */
@@ -182,6 +200,7 @@ export function parseLockfile(raw: unknown): LockGraph {
     nodes,
     byName,
     workspaceLinks,
+    npmAliases: [],
   };
 }
 
