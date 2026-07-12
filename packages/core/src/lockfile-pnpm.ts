@@ -159,6 +159,10 @@ export function parsePnpmLockText(yamlText: string): LockGraph {
     // appear in `importers:` but we don't extract them here yet. Empty array
     // satisfies the LockGraph contract added for the npm-parser F2 fix.
     workspaceLinks: [],
+    // pnpm npm: alias handling is not yet implemented in the pnpm parser;
+    // npm: aliases would appear as `custom-name@npm:real-name@ver` package keys.
+    // For now we emit no aliases — future work.
+    npmAliases: [],
   };
 }
 
