@@ -66,10 +66,26 @@ function loadManifestsSync(): CorpusManifest[] {
 
 const MANIFESTS = loadManifestsSync();
 
-const localFetch = async (ref: { resolved?: string | null; name: string; version: string }) => {
-  if (ref.resolved?.startsWith('file://')) return new URL(ref.resolved).pathname;
-  throw new Error(`corpus replay should not need to fetch ${ref.name}@${ref.version}`);
-};
+/**
+ * Resolve a lockfile's `resolved: file:...` URL to an absolute tarball path.
+ * Corpus fixtures use RELATIVE (`file:./...`) refs for portability + to avoid
+ * baking the builder's home directory into shipped fixtures — see
+ * build-all.ts::relativeFileResolved. Absolute `file:///...` refs are still
+ * accepted (legacy shape, or hand-rolled test fixtures).
+ */
+function resolveFileRef(resolved: string, fixtureDir: string): string {
+  const raw = resolved.slice('file:'.length);
+  if (raw.startsWith('///')) return raw.slice(2); // canonical file:/// → /abs
+  if (raw.startsWith('//')) return raw.slice(raw.indexOf('/', 2)); // file://host/path
+  // Relative form (file:./x, file:../x, file:x): resolve against the fixture dir.
+  return path.resolve(fixtureDir, raw.replace(/^\.\//, ''));
+}
+
+const makeLocalFetch = (fixtureDir: string) =>
+  async (ref: { resolved?: string | null; name: string; version: string }) => {
+    if (ref.resolved?.startsWith('file:')) return resolveFileRef(ref.resolved, fixtureDir);
+    throw new Error(`corpus replay should not need to fetch ${ref.name}@${ref.version}`);
+  };
 
 describe('CORPUS REPLAY — 10+ known npm supply-chain attacks', () => {
   it('has at least 10 fixtures loaded', () => {
@@ -84,7 +100,7 @@ describe('CORPUS REPLAY — 10+ known npm supply-chain attacks', () => {
       const after = await fs.readFile(path.join(dir, 'lockfile.after.json'), 'utf8');
       const result = await runDiff(before, after, {
         runDetectors: (pair) => runAll(pair),
-        fetchOverride: localFetch,
+        fetchOverride: makeLocalFetch(dir),
       });
 
       const detectors = new Set(result.findings.map((f) => f.detector));

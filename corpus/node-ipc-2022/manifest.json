@@ -23,12 +23,12 @@
     "clean": {
       "name": "node-ipc",
       "version": "10.1.0",
-      "integrity": "sha512-Pkzk7dx+1qD+/mB1f+VEtEQrr6YIrIqmir9MfXXrppQwvyL8QOqy8qFdTcePwwrlIy423Je68+nfaINgr6n1iw=="
+      "integrity": "sha512-aqlQBl5GzeMC049+rznufgACofqJFhESrp9kC/ylxII9WbciHh8dEp9Y7ttaQWkFybmaKgP8E+EWv71FCVKPgA=="
     },
     "malicious": {
       "name": "node-ipc",
       "version": "10.1.1",
-      "integrity": "sha512-lsPWNzmWblnaUCuqwTbUslZAhYfU6AfwDJ9KPkh+lgyOXAfpjX1cG55OjMye0+6eOiENlUe3LgS3Kd6iF4RRlQ=="
+      "integrity": "sha512-k+NOnoUjxbLU+8A+uXJtmVLZjt6QwHVUf2mjz48xlr8TchMZYdVkCXYdHHxp2LibAS/qYOb9goPO6i0VomPW7A=="
     },
     "transitives": []
   }

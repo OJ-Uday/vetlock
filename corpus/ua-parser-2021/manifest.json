@@ -26,12 +26,12 @@
     "clean": {
       "name": "ua-parser-js",
       "version": "0.7.28",
-      "integrity": "sha512-ASnb7d6cKBM36qK0XRzHpk4psPEn6lraBWrDZzFCQHeKKOb/ptijd1hkHB/6HTDsOPSxRH5Z/iJIc4/LejNqqA=="
+      "integrity": "sha512-EgkTxZUVDnYKcz6bh75oHT+mBlzIRRE/GdlH/tTriqOKj/fyQ7QIbqweIOtAyWKBJVnG+U4E75pVXzGF+zKFoA=="
     },
     "malicious": {
       "name": "ua-parser-js",
       "version": "0.7.29",
-      "integrity": "sha512-/EPzp62zSq2tyGYNoIWat3gCU/EuNJhKnZ8h4L806EKvTxduhyD1QGfSRytqEH/cZSvCTYs8e4V47FZdpUOMag=="
+      "integrity": "sha512-GHSIIUR6MY1AqGZYu5vrkBal/3+NlN9fykJVCCH8uPSKxnLVjRFdxgcDaeP1aCAxqrA/CSGRZBAzdcRyYygrhg=="
     },
     "transitives": []
   }

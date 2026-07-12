@@ -111,8 +111,15 @@ program
   .option('--md', 'emit Markdown')
   .option('--no-progress', 'suppress the progress spinner')
   .action(async (opts: CliFlags) => {
+    // Two possible fixture locations:
+    //   - dist/demo-fixture/           (published npm tarball; ships alongside cli.js)
+    //   - <repo-root>/corpus/shai-hulud-2025/  (dev-repo run)
     const here = path.dirname(new URL(import.meta.url).pathname);
-    const fixtureDir = path.resolve(here, '..', '..', '..', 'corpus', 'shai-hulud-2025');
+    const shippedFixture = path.resolve(here, 'demo-fixture');
+    const devFixture = path.resolve(here, '..', '..', '..', 'corpus', 'shai-hulud-2025');
+    const fixtureDir = fsSync.existsSync(path.join(shippedFixture, 'lockfile.before.json'))
+      ? shippedFixture
+      : devFixture;
     try {
       const [before, after] = await Promise.all([
         fs.readFile(path.join(fixtureDir, 'lockfile.before.json'), 'utf8'),
@@ -126,7 +133,18 @@ program
         findings: [],
         blocked: false,
       };
-      await runAndPrint(before, after, opts, decision);
+      // Point the CLI's fetchOverride at the fixture dir so its relative
+      // `file:./...` refs resolve correctly.
+      await runAndPrint(
+        before,
+        after,
+        opts,
+        decision,
+        {
+          beforePath: path.join(fixtureDir, 'lockfile.before.json'),
+          afterPath: path.join(fixtureDir, 'lockfile.after.json'),
+        },
+      );
     } catch (err) {
       writeErr(opts, `vetlock demo: ${err instanceof Error ? err.message : String(err)}`);
       writeErr(opts, `(demo fixtures at ${fixtureDir})`);
@@ -309,12 +327,25 @@ async function runAndPrint(
 
   let result;
   try {
+    // Base directory used to resolve any `file:./relative` refs in the AFTER
+    // lockfile (corpus fixtures and demo mode use these — see build-all.ts).
+    // For stdin diffs we fall back to cwd.
+    const afterBaseDir = files?.afterPath
+      ? path.dirname(path.resolve(files.afterPath))
+      : process.cwd();
     result = await runDiff(beforeText, afterText, {
       runDetectors: (pair) => runAll(pair),
       onProgress,
       fetchOverride: async (ref) => {
-        if (ref.resolved && ref.resolved.startsWith('file://')) {
-          return new URL(ref.resolved).pathname;
+        if (ref.resolved && ref.resolved.startsWith('file:')) {
+          const raw = ref.resolved.slice('file:'.length);
+          // Absolute forms first (canonical + host + non-standard single-slash).
+          if (raw.startsWith('///')) return raw.slice(2);
+          if (raw.startsWith('//')) return raw.slice(raw.indexOf('/', 2));
+          if (raw.startsWith('/')) return raw;
+          // Relative form: `file:./x`, `file:../x`, `file:x` — resolve against
+          // the after-lockfile's directory.
+          return path.resolve(afterBaseDir, raw.replace(/^\.\//, ''));
         }
         const { fetchTarball } = await import('@vetlock/core');
         return await fetchTarball(ref);

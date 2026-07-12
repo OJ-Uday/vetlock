@@ -1,6 +1,6 @@
 {
   "name": "vetlock",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "Behavioral diff for npm dependency updates. What does this update DO now that it didn't before?",
   "keywords": ["security", "supply-chain", "npm", "dependencies", "audit", "sast", "lockfile", "sbom"],
@@ -18,7 +18,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsc -p . && node scripts/copy-demo-fixture.js",
     "typecheck": "tsc -p . --noEmit",
     "test": "vitest run"
   },
@@ -27,6 +27,7 @@
   },
   "files": [
     "dist",
+    "scripts",
     "README.md",
     "LICENSE"
   ],

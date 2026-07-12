@@ -23,18 +23,18 @@
     "clean": {
       "name": "event-stream",
       "version": "3.3.5",
-      "integrity": "sha512-AjVJ+0HwXl7gRmTCY6BZb4kXNfOT1kd1a77Y3cxitzeJn5gEiYwSfzTVVTnZgq4+4fY5MqNdd9+AZh4shFDkwQ=="
+      "integrity": "sha512-do+KV1KIFH2LamDo+KeGtpPF0BgsrnaUgRwBAHBcWCf7HcJihpmZQViBS405A5QhmZ1XkrMAXtiA8TFp/uE3MQ=="
     },
     "malicious": {
       "name": "event-stream",
       "version": "3.3.6",
-      "integrity": "sha512-VHNET1/uC988j0MpXnqVDwftpa2zL4BZ1ztDXGHHyUx3kj5adbA3gGWGxPpg6bkGFLRbaQjDTyZ+il1HN3YVcQ=="
+      "integrity": "sha512-s6DjvE4jb7efbXAMCD5srnjqskIm2MP8BxD9/siGBJZ37UoWwqR0wON1lHjkzXYWbdjREC1VEnN62R6Y0Fi3HA=="
     },
     "transitives": [
       {
         "name": "flatmap-stream",
         "version": "0.1.1",
-        "integrity": "sha512-Pi27rRZkO+YA73cInYxSQqcVYpl0LMTpN9bIqd+2zHk0JM2yV6Eql3EoY4ge4zAXdlrz/aLaAPH1i8OYDkvi9w=="
+        "integrity": "sha512-NuNy7SIs3/2VZTjBJKYwHUoGJ7nWU26CzO46yFNzb5CloxI27r7yIs0bIg02cyLyV0QRYDFrBsWu2A3DnwVgLg=="
       }
     ]
   }

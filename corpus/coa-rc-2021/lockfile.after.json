@@ -13,8 +13,8 @@
     "node_modules/coa": {
       "name": "coa",
       "version": "2.0.3",
-      "integrity": "sha512-BKD2J2l35/s2gcMPsXW571whVWfyTsuF8zKHki9urSGqxkt9Y1SKT67B32CmhY/kUzJB73znooUM6u7PN8pU7g==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/coa-rc-2021/coa-2.0.3/coa-2.0.3.tgz"
+      "integrity": "sha512-cUPrnCAsGh6LhVdWjDDWTTHVyPAGE6u4FLPtHmK8GUBhcz4YtuzNrnCSoTjP0YQ55Arjrf+imsS25lkRJc40tw==",
+      "resolved": "file:./coa-2.0.3/coa-2.0.3.tgz"
     }
   }
 }

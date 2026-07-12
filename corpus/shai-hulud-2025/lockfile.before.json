@@ -13,8 +13,8 @@
     "node_modules/chalk": {
       "name": "chalk",
       "version": "5.3.0",
-      "integrity": "sha512-69TPZG0c4mwGyzRHz7nuv24gazPgwxxFCJT8oZcPKhtN2ig5BcA35pd75Oi9EH+WePqZEw3xt1lq4OLDciCYfQ==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/shai-hulud-2025/chalk-5.3.0/chalk-5.3.0.tgz"
+      "integrity": "sha512-Bwoy2v18yzJYTzo+m0qasCBLAXgDV8Rq20O3H4WvYrQCt4kNOGZ6TRMWEU4S95sLldRww4rgmYq45eckdpv0jg==",
+      "resolved": "file:./chalk-5.3.0/chalk-5.3.0.tgz"
     }
   }
 }

@@ -20,12 +20,12 @@
     "clean": {
       "name": "foo-lib",
       "version": "1.2.3",
-      "integrity": "sha512-p2PxDIB8M4L0XGfwBmNLECiNe7qEzvPTL2Ci2c+hZZX1ACpXYGAwFOIt8F0YcI6CREmFV6vxc6fNX1EjBUYBRA=="
+      "integrity": "sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw=="
     },
     "malicious": {
       "name": "foo-lib",
       "version": "1.2.3",
-      "integrity": "sha512-KZe6Ff2DPM3ikn3Z82b0YRbNLmah67cFi9DtQ364A5jOWA3zS1qCNB+9zPhnpio0s6/VHe9mAOjUoVDx3gtQug=="
+      "integrity": "sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw=="
     },
     "transitives": []
   }

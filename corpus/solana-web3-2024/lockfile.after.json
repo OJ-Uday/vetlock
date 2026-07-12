@@ -13,8 +13,8 @@
     "node_modules/@solana/web3.js": {
       "name": "@solana/web3.js",
       "version": "1.95.5",
-      "integrity": "sha512-wUvlYCzJE72m7eRRZI0ehQybNd1oeU1qs4N/OcJ7B4PUh+IF0E9XbVV2TB5FJumyj+qynHM9XvDcrhN2SupxAg==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/solana-web3-2024/_solana_web3.js-1.95.5/_solana_web3.js-1.95.5.tgz"
+      "integrity": "sha512-aXB7abvZZZCbZ1b6yUdBmW2n1PlbkYBUG14ajWM0LpZPenZmWtSB8qo/emM6YiWpKU30mZGNFxWqoDzLIC2rmg==",
+      "resolved": "file:./_solana_web3.js-1.95.5/_solana_web3.js-1.95.5.tgz"
     }
   }
 }

@@ -16,12 +16,12 @@
     "clean": {
       "name": "colors",
       "version": "1.4.0",
-      "integrity": "sha512-jZHzGQDdy/FXRps4sJ7WAN0oMVr6OBBy1stup7GU1AbwFFZmZf/c/7CTCZqgIOrRABkOW2xEwaFQn86gw7sO0g=="
+      "integrity": "sha512-UEoOldMqAy1jGy/cF9b047PLPgUmGC6Vrhxgj2EsFDgBCRswxIuGu479pgt9t2hQACXSuvsHne9tjLwsSXEVkA=="
     },
     "malicious": {
       "name": "colors",
       "version": "1.4.44",
-      "integrity": "sha512-XlcaeXVJv+HicLzeH23hLCPQj6eBulVcuai+AIZmcj/6m6y7oJa2OinGtdjtuydyJ1fABqhl7qH74tyVZ0EBVw=="
+      "integrity": "sha512-HIzjoNtoics5lUbW3fOMqnK/4J22d+b3g8N7COhaB/Jj0vvHI2P1b6tm0NjZWsSzCnQ+BqhtXN/AW9ZCMJkhQg=="
     },
     "transitives": []
   }

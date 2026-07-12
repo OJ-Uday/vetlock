@@ -30,20 +30,18 @@ Out of **13** corpus fixtures: **12 caught** (verdict ≠ CLEAN), **1 honest mis
 
 Two popular packages (coa and rc) were hijacked simultaneously by an attacker who published patch versions with a postinstall that downloaded and ran a Windows password-stealer.
 
-vetlock output: **BLOCK** — 5 findings, 26ms.
+vetlock output: **BLOCK** — 5 findings, 8ms.
 
-**BLOCK (3)**
+**BLOCK (5)**
 - `exec.new-module` — Package started using process/execution module "child_process". [GHSA: GHSA-mh6f-8j2x-4483]
   - _`postinstall.js:1`_: `imports child_process`
 - `install.script-added` — Lifecycle script "postinstall" was added. [GHSA: GHSA-mh6f-8j2x-4483]
   - _`package.json:1`_: `postinstall: node postinstall.js`
+- `meta.maintainer-change` — Publisher/maintainer set changed between versions. [escalated: package 'coa' has 2 WARN findings across 2 categories] [GHSA: GHSA-mh6f-8j2x-4483]
+  - _`package.json:1`_: `maintainers: [orig@example] → [orig@example, takeover@example.invalid]`
 - `net.new-endpoint` — New network endpoint appeared: https://loader.example.invalid [GHSA: GHSA-mh6f-8j2x-4483]
   - _`postinstall.js:1`_: `https://loader.example.invalid`
-
-**WARN (2)**
-- `meta.maintainer-change` — Publisher/maintainer set changed between versions. [GHSA: GHSA-mh6f-8j2x-4483]
-  - _`package.json:1`_: `maintainers: [orig@example] → [orig@example, takeover@example.invalid]`
-- `net.new-module` — Package started using network module "https". [GHSA: GHSA-mh6f-8j2x-4483]
+- `net.new-module` — Package started using network module "https". [escalated: package 'coa' has 2 WARN findings across 2 categories] [GHSA: GHSA-mh6f-8j2x-4483]
   - _`postinstall.js:1`_: `imports https`
 
 ## colors 1.4.44-liberty-2 (Jan 2022)
@@ -62,23 +60,21 @@ vetlock output: **✅ CLEAN — honest miss.**
 
 Attacker used stolen npm publish credentials to publish eslint-scope 3.7.2. The build.js payload read ~/.npmrc at require-time and exfiltrated the _authToken to an attacker endpoint. First widely-noticed npm supply-chain compromise.
 
-vetlock output: **BLOCK** — 6 findings, 12ms.
+vetlock output: **BLOCK** — 6 findings, 1ms.
 
-**BLOCK (4)**
+**BLOCK (6)**
 - `fs.new-hotpath-read` — New file-system read of sensitive path: .npmrc [GHSA: GHSA-5qgm-9j92-h5g5]
   - _`build.js:1`_: `fs.readFile(".npmrc", …)`
 - `fs.new-hotpath-read` — New file-system read of sensitive path: ~/.npmrc [GHSA: GHSA-5qgm-9j92-h5g5]
   - _`build.js:1`_: `fs.readFile("~/.npmrc", …)`
+- `meta.maintainer-change` — Publisher/maintainer set changed between versions. [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]
+  - _`package.json:1`_: `maintainers: [nzakas@eslint.example] → [attacker@example.invalid, nzakas@eslint.example]`
 - `net.new-endpoint` — New network endpoint appeared: exfil.example.invalid [GHSA: GHSA-5qgm-9j92-h5g5]
   - _`build.js:1`_: `exfil.example.invalid`
-- `obf.entropy-jump` — Obfuscation indicators appeared in lib/index.js: source was not minified before, is now [escalated: co-occurring NET/INSTALL findings in this package] [GHSA: GHSA-5qgm-9j92-h5g5]
-  - _`lib/index.js:1`_: `source was not minified before, is now`
-
-**WARN (2)**
-- `meta.maintainer-change` — Publisher/maintainer set changed between versions. [GHSA: GHSA-5qgm-9j92-h5g5]
-  - _`package.json:1`_: `maintainers: [nzakas@eslint.example] → [attacker@example.invalid, nzakas@eslint.example]`
-- `net.new-module` — Package started using network module "http". [GHSA: GHSA-5qgm-9j92-h5g5]
+- `net.new-module` — Package started using network module "http". [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]
   - _`build.js:1`_: `imports http`
+- `obf.entropy-jump` — Obfuscation indicators appeared in lib/index.js: source was not minified before, is now [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS findings in this package] [GHSA: GHSA-5qgm-9j92-h5g5]
+  - _`lib/index.js:1`_: `source was not minified before, is now`
 
 ## event-stream 3.3.6 → flatmap-stream (Nov 2018)
 
@@ -86,14 +82,14 @@ vetlock output: **BLOCK** — 6 findings, 12ms.
 
 A new maintainer took over event-stream and added a tiny dep, flatmap-stream 0.1.1, which they controlled. flatmap-stream carried an AES-encrypted payload targeting the Copay Bitcoin wallet. The attack was invisible at depth 0 — event-stream itself was clean; the poison was one level down, in a package that had never existed before. The recursive-engine showcase.
 
-vetlock output: **BLOCK** — 6 findings, 10ms.
+vetlock output: **BLOCK** — 6 findings, 2ms.
 
 **BLOCK (3)**
 - `net.encoded-endpoint` — New network endpoint concealed via base64 encoding: exfil.example.invalid
   - _`index.js:6`_: `base64("aG9zdG5hbWU9ZXhmaWwuZXhhbXBsZS5pbnZhbGlkO3BhdGg9L2NvbGxlY3Q7") → exfil.example.invalid`
 - `net.new-endpoint` — Newly-installed package contacts network endpoint: http://exfil.example.invalid/collect
   - _`index.js:1`_: `http://exfil.example.invalid/collect`
-- `obf.new-obfuscated-file` — Newly-installed package ships obfuscated file index.js: 1 suspicious high-entropy literal(s) [escalated: co-occurring NET/INSTALL findings in this package]
+- `obf.new-obfuscated-file` — Newly-installed package ships obfuscated file index.js: 1 suspicious high-entropy literal(s) [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS findings in this package]
   - _`index.js:1`_: `1 suspicious high-entropy literal(s)`
 
 **WARN (2)**
@@ -112,7 +108,7 @@ vetlock output: **BLOCK** — 6 findings, 10ms.
 
 Synthetic fixture that combines four documented evasion classes: process/env aliasing, computed-string require, charCode/hex/atob URL encoding, and payload distribution across multiple files. Locks in that hardening improvements do not regress. Ships as CLEAN in v0.1.0; expected BLOCK in v0.2.0.
 
-vetlock output: **BLOCK** — 4 findings, 21ms.
+vetlock output: **BLOCK** — 4 findings, 1ms.
 
 **BLOCK (3)**
 - `env.token-harvest` — Package started reading sensitive env: NPM_TOKEN
@@ -132,11 +128,11 @@ vetlock output: **BLOCK** — 4 findings, 21ms.
 
 Synthetic fixture: the tarball bytes for foo@1.2.3 differ between the two lockfiles, but the version string is unchanged. Real-world equivalent: registry compromise or in-flight MITM. This scenario is caught before content analysis even runs.
 
-vetlock output: **BLOCK** — 1 finding, 7ms.
+vetlock output: **BLOCK** — 1 finding, 0ms.
 
 **BLOCK (1)**
-- `integrity.hash-mismatch` — Same version, different integrity: sha512-p2PxDIB8M4L0XGfwBmNLECiNe7qEzvPTL2Ci2c+hZZX1ACpXYGAwFOIt8F0YcI6CREmFV6vxc6fNX1EjBUYBRA== → sha512-KZe6Ff2DPM3ikn3Z82b0YRbNLmah67cFi9DtQ364A5jOWA3zS1qCNB+9zPhnpio0s6/VHe9mAOjUoVDx3gtQug==. Registry-side or in-flight tamper.
-  - _`package.json:1`_: `integrity sha512-p2PxDIB8M4L0XGfwBmNLECiNe7qEzvPTL2Ci2c+hZZX1ACpXYGAwFOIt8F0YcI6CREmFV6vxc6fNX1EjBUYBRA== → sha512-KZe6Ff2DPM3ikn3Z82b0YRbNLmah67cFi9DtQ364A5jOW`
+- `integrity.hash-mismatch` — Same version, different integrity: sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== → sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw==. Registry-side or in-flight tamper.
+  - _`package.json:1`_: `integrity sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== → sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTu`
 
 ## @lottiefiles/lottie-player 2.0.5-2.0.7 (Oct 2024)
 
@@ -144,7 +140,7 @@ vetlock output: **BLOCK** — 1 finding, 7ms.
 
 Attackers took over the LottieFiles GitHub org and published malicious lottie-player versions. The payload injected a Web3Modal-lookalike drainer into pages using the player; base64-encoded eval was the loader.
 
-vetlock output: **BLOCK** — 3 findings, 24ms.
+vetlock output: **BLOCK** — 3 findings, 0ms.
 
 **BLOCK (2)**
 - `net.encoded-endpoint` — New network endpoint concealed via base64 encoding: https://wallet-drain.example.invalid/inject.js [GHSA: GHSA-cwfw-4gq5-mrqx]
@@ -162,7 +158,7 @@ vetlock output: **BLOCK** — 3 findings, 24ms.
 
 Maintainer weaponized node-ipc to overwrite files on hosts whose geoIP resolved to Russia or Belarus. Later versions dropped a WITH-LOVE-FROM-AMERICA.txt on the desktop.
 
-vetlock output: **BLOCK** — 3 findings, 4ms.
+vetlock output: **BLOCK** — 3 findings, 1ms.
 
 **BLOCK (2)**
 - `fs.new-hotpath-write` — New file-system write to sensitive path: ~/Desktop/WITH-LOVE-FROM-AMERICA.txt [GHSA: GHSA-8v38-pw62-9cw2]
@@ -180,7 +176,7 @@ vetlock output: **BLOCK** — 3 findings, 4ms.
 
 Malicious version of rand-user-agent opened a reverse shell (net.connect) to a C2 host and executed remote commands via new Function(). Payload used base64 layers of obfuscation.
 
-vetlock output: **BLOCK** — 4 findings, 4ms.
+vetlock output: **BLOCK** — 4 findings, 1ms.
 
 **BLOCK (4)**
 - `code.dynamic-loading-added` — Dynamic code sink introduced (new-function). [escalated: package 'rand-user-agent' has 3 WARN findings across 3 categories]
@@ -198,9 +194,9 @@ vetlock output: **BLOCK** — 4 findings, 4ms.
 
 Shai-Hulud worm wave (chalk, debug, and 100+ others, Sept 2025). Maintainer accounts compromised; postinstall harvests NPM_TOKEN, GITHUB_TOKEN, AWS_* to exfil endpoint; uses stolen npm token to republish itself into victim-controlled packages.
 
-vetlock output: **BLOCK** — 13 findings, 5ms.
+vetlock output: **BLOCK** — 13 findings, 1ms.
 
-**BLOCK (11)**
+**BLOCK (13)**
 - `env.token-harvest` — Package started reading sensitive env: NPM_TOKEN
   - _`index.js:14`_: `const token = process.env.NPM_TOKEN;`
 - `env.token-harvest` — Package started reading sensitive env: GITHUB_TOKEN
@@ -219,15 +215,13 @@ vetlock output: **BLOCK** — 13 findings, 5ms.
   - _`index.js:1`_: `fs.writeFile("/.npmrc", ...)`
 - `install.script-added` — Lifecycle script "postinstall" was added.
   - _`package.json:1`_: `postinstall: node postinstall.js`
+- `meta.maintainer-change` — Publisher/maintainer set changed between versions. [escalated: package 'chalk' has 2 WARN findings across 2 categories]
+  - _`package.json:1`_: `maintainers: [team@chalk.example] → [attacker@example.invalid]`
 - `net.new-endpoint` — New network endpoint appeared: https://exfil.example.invalid/collect
   - _`index.js:1`_: `https://exfil.example.invalid/collect`
 - `net.new-endpoint` — New network endpoint appeared: https://exfil.example.invalid/webhook
   - _`postinstall.js:1`_: `https://exfil.example.invalid/webhook`
-
-**WARN (2)**
-- `meta.maintainer-change` — Publisher/maintainer set changed between versions.
-  - _`package.json:1`_: `maintainers: [team@chalk.example] → [attacker@example.invalid]`
-- `net.new-module` — Package started using network module "https".
+- `net.new-module` — Package started using network module "https". [escalated: package 'chalk' has 2 WARN findings across 2 categories]
   - _`index.js:1`_: `imports https`
 
 ## @solana/web3.js 1.95.5-1.95.7 (Dec 2024)
@@ -236,18 +230,16 @@ vetlock output: **BLOCK** — 13 findings, 5ms.
 
 Phished credentials let attackers publish malicious patch versions of @solana/web3.js that hooked keypair APIs to exfiltrate seed material. ~$160k drained across affected dApps in ~5 hours.
 
-vetlock output: **BLOCK** — 4 findings, 17ms.
+vetlock output: **BLOCK** — 4 findings, 1ms.
 
-**BLOCK (2)**
+**BLOCK (4)**
+- `meta.maintainer-change` — Publisher/maintainer set changed between versions. [escalated: package '@solana/web3.js' has 2 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]
+  - _`package.json:1`_: `maintainers: [solana-labs@example] → [phish@example.invalid, solana-labs@example]`
 - `net.encoded-endpoint` — New network endpoint concealed via base64 encoding: https://exfil.example.invalid/wallet-drain [GHSA: GHSA-jj35-jhw9-vp4q]
   - _`index.js:3`_: `base64("aHR0cHM6Ly9leGZpbC5leGFtcGxlLmludmFsaWQvd2FsbGV0LWRyYWlu") → https://exfil.example.invalid/wallet-drain`
 - `net.new-endpoint` — New network endpoint appeared: https://exfil.example.invalid/wallet-drain [GHSA: GHSA-jj35-jhw9-vp4q]
   - _`index.js:1`_: `https://exfil.example.invalid/wallet-drain`
-
-**WARN (2)**
-- `meta.maintainer-change` — Publisher/maintainer set changed between versions. [GHSA: GHSA-jj35-jhw9-vp4q]
-  - _`package.json:1`_: `maintainers: [solana-labs@example] → [phish@example.invalid, solana-labs@example]`
-- `net.new-module` — Package started using network module "https". [GHSA: GHSA-jj35-jhw9-vp4q]
+- `net.new-module` — Package started using network module "https". [escalated: package '@solana/web3.js' has 2 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]
   - _`index.js:1`_: `imports https`
 
 > **Known limitation:** Real attack encoded its exfil URL in base64. net.encoded-endpoint catches the decoded URL. The OBF entropy-jump detector would ALSO fire IF the b64 blob were long enough (>200 chars) — for shorter blobs like this real fixture, net.encoded-endpoint alone is the reliable path.
@@ -258,7 +250,7 @@ vetlock output: **BLOCK** — 4 findings, 17ms.
 
 A developer adds `crossenv` thinking it's cross-env (real 2017 typosquat family). The package is brand-new, has a fresh publisher, and imports child_process + https on first version. vetlock flags via the new direct dep + immediate BLOCK-tier capabilities.
 
-vetlock output: **BLOCK** — 4 findings, 2ms.
+vetlock output: **BLOCK** — 4 findings, 0ms.
 
 **BLOCK (3)**
 - `deps.typosquat-candidate` — Package name "crossenv" is edit-distance 1 from popular package "cross-env" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: added package also ships BLOCK-tier capabilities]
@@ -278,7 +270,7 @@ vetlock output: **BLOCK** — 4 findings, 2ms.
 
 ua-parser-js maintainer's npm credentials were phished. The attacker published 0.7.29 / 0.8.0 / 1.0.0 with a preinstall script that downloaded and executed a native crypto miner and password stealer. Millions of downloads before de-list.
 
-vetlock output: **BLOCK** — 5 findings, 8ms.
+vetlock output: **BLOCK** — 5 findings, 0ms.
 
 **BLOCK (4)**
 - `bin.new-native-artifact` — New native binary artifact shipped in tarball: bin/jsextension.node (node, 512 bytes) [GHSA: GHSA-fh58-9fw3-vf2v]

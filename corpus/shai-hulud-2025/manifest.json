@@ -29,12 +29,12 @@
     "clean": {
       "name": "chalk",
       "version": "5.3.0",
-      "integrity": "sha512-69TPZG0c4mwGyzRHz7nuv24gazPgwxxFCJT8oZcPKhtN2ig5BcA35pd75Oi9EH+WePqZEw3xt1lq4OLDciCYfQ=="
+      "integrity": "sha512-Bwoy2v18yzJYTzo+m0qasCBLAXgDV8Rq20O3H4WvYrQCt4kNOGZ6TRMWEU4S95sLldRww4rgmYq45eckdpv0jg=="
     },
     "malicious": {
       "name": "chalk",
       "version": "5.3.1",
-      "integrity": "sha512-n6JaoK0auvq+9CX3+d7CUyZl9Yt2307+L45IBgNtXSR0JL4CoO2cAwPWsCvVZFEYwKA7m4Z50/OGGOUT5gfoPg=="
+      "integrity": "sha512-ogJcJF1EER/72MKyH8yab5552DxL76Wxu3qBmA5FbKvCl3cBGpIrPuju4iWXYZuuH5n1VaQNpuPLUEt8PXiehg=="
     }
   }
 }
