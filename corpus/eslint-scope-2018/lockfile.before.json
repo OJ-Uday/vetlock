@@ -13,7 +13,7 @@
     "node_modules/eslint-scope": {
       "name": "eslint-scope",
       "version": "3.7.1",
-      "integrity": "sha512-nDkoqLlmINPRjVir2Wx586DgXrvv84HRh+79HS1ognaT1/AxqPkMfFf0X+f30IQJgW/haBV+BGsEN7ykLt9s+A==",
+      "integrity": "sha512-/Xd6hLRLBvHysJdDUmq6XEZq65GhzuoHUjZPvFkxe/YLQhMBrudOvNNHqT7loyjgdvX2iuQ62vv+3bYNB/n++g==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/eslint-scope-2018/eslint-scope-3.7.1/eslint-scope-3.7.1.tgz"
     }
   }

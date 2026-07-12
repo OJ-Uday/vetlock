@@ -32,6 +32,7 @@ import { spec as lottiePlayer } from './fixtures/lottie-player-2024.js';
 import { spec as randUserAgent } from './fixtures/rand-user-agent-2025.js';
 import { spec as integrityTamper } from './fixtures/integrity-tamper-synthetic.js';
 import { spec as typosquat } from './fixtures/typosquat-synthetic.js';
+import { spec as hardenedEvader } from './fixtures/hardened-evader-2026.js';
 
 // The Shai-Hulud fixture predates the DSL — it's still built by its own script.
 // The replay runner picks up ALL corpus/<id>/manifest.json entries so it's
@@ -49,6 +50,7 @@ export const ALL_FIXTURES: FixtureSpec[] = [
   randUserAgent,
   integrityTamper,
   typosquat,
+  hardenedEvader,
 ];
 
 const CORPUS_ROOT = path.resolve(

@@ -13,7 +13,7 @@
     "node_modules/rand-user-agent": {
       "name": "rand-user-agent",
       "version": "2.0.1",
-      "integrity": "sha512-HPduiOX6n3nV4j+5iSzwk8BfaTufB/ZtRneWUdq/GmiFAzx4L29wkAORsfbS9vsn7OaEJwJe+JdFIdcWcrHdwg==",
+      "integrity": "sha512-CNOXBIlI089mR+st2Q3jfMRKQblQ1780uBaAyQeSxGs78LkTjdTlNWqu6EDYC+c/0oDyyg/Z8IcfNCXi8Ufl0w==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/rand-user-agent-2025/rand-user-agent-2.0.1/rand-user-agent-2.0.1.tgz"
     }
   }

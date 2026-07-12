@@ -13,7 +13,7 @@
     "node_modules/colors": {
       "name": "colors",
       "version": "1.4.44",
-      "integrity": "sha512-h+2ZZI/xQA5jmopf+sxpV/Ccls9eVbaOEeDVtxttbYz9zBgDoxm2HrpkN2cTdIoYlyir0Zacg/yIlpAhBaD8FQ==",
+      "integrity": "sha512-XlcaeXVJv+HicLzeH23hLCPQj6eBulVcuai+AIZmcj/6m6y7oJa2OinGtdjtuydyJ1fABqhl7qH74tyVZ0EBVw==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/colors-2022/colors-1.4.44/colors-1.4.44.tgz"
     }
   }

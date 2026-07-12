@@ -13,7 +13,7 @@
     "node_modules/tiny-util": {
       "name": "tiny-util",
       "version": "0.9.0",
-      "integrity": "sha512-KBL+ReslE3uVFBWkLbawey34wV4nHraZnlq02Ru0RIsmHn3N/CsPU53xL/8PobiVml1uTZmZZSohg2f6e5nM1g==",
+      "integrity": "sha512-2Begn7mIbYIfh9jNaLIPMBrdt1P9UEIwsZPuMvQq4v4UuFV+X56qJ8In8bUt6YLsMcEVstk4xL1V31X9I1NLOA==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/e-license-fix/tiny-util-old/tiny-util-old.tgz"
     }
   }

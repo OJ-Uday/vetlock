@@ -13,7 +13,7 @@
     "node_modules/@solana/web3.js": {
       "name": "@solana/web3.js",
       "version": "1.95.4",
-      "integrity": "sha512-9ZYEYFGxWIGzZpzzfaFUV7Xx0Clo2GSHa09MjFKrtBG79ZMPkw5esHd0NAlH0zxzfiAV5XZNDBR3E1prODQfZg==",
+      "integrity": "sha512-IBifYRSRw1vzr0EyLMBd/v/et4QNd6QwrUWEIgioLPEeeopUtE+yyQdRJ3+leceYMKAeE1JRrz6AoGEG7E9GXQ==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/solana-web3-2024/_solana_web3.js-1.95.4/_solana_web3.js-1.95.4.tgz"
     }
   }

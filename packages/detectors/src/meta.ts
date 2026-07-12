@@ -1,10 +1,21 @@
 /**
  * META detector — maintainer / publisher changes on the package manifest.
- * Fires when the set of maintainer emails or the publisher (`_npmUser.email`)
- * changed between old and new. WARN, medium.
+ *
+ * Behavior (v0.2, with trust store):
+ *
+ *   - Old and new both fully within the built-in trust store → INFO
+ *     (routine team rotation on well-known packages)
+ *   - Old was a trusted publisher, new one is NOT → BLOCK (takeover shape)
+ *   - Neither is on trust store → WARN (unknown package or unfamiliar org)
+ *   - New is trusted, old wasn't → INFO (a maintainer joined a trusted org;
+ *     unusual but not an attack shape)
+ *
+ * The runAll() layer additionally correlates with the user's .vetlock.json
+ * `trustedPublishers` config for per-repo customization.
  */
 
-import type { Detector, Finding, SnapshotPair } from '@vetlock/core';
+import type { Detector, Finding, SnapshotPair, Severity } from '@vetlock/core';
+import { BUILTIN_TRUST_STORE, isTrustedPublisher } from './publishers.js';
 
 export const maintainerDetector: Detector = {
   id: 'meta',
@@ -21,6 +32,48 @@ export const maintainerDetector: Detector = {
     const added = newEmails.filter((e) => !oldSet.has(e));
     if (removed.length === 0 && added.length === 0) return [];
 
+    const trustList = BUILTIN_TRUST_STORE[pair.new.name] ?? [];
+    const oldTrusted = trustList.length > 0 && oldEmails.every(
+      (e) => isTrustedPublisher(e, trustList),
+    );
+    const newTrusted = trustList.length > 0 && newEmails.every(
+      (e) => isTrustedPublisher(e, trustList),
+    );
+    const anyNewTrusted = trustList.length > 0 && newEmails.some(
+      (e) => isTrustedPublisher(e, trustList),
+    );
+
+    let severity: Severity = 'WARN';
+    let confidence: 'high' | 'medium' | 'low' = 'medium';
+    let note = '';
+
+    if (trustList.length === 0) {
+      // Package not in the built-in trust store — vanilla WARN.
+      severity = 'WARN';
+      confidence = 'medium';
+    } else if (oldTrusted && !anyNewTrusted) {
+      // Trusted publisher entirely replaced by unknown emails — classic takeover.
+      severity = 'BLOCK';
+      confidence = 'high';
+      note = ` [takeover pattern: trusted publisher(s) replaced by unknown]`;
+    } else if (oldTrusted && !newTrusted && anyNewTrusted) {
+      // Some trusted stayed, an unknown was added. Still a WARN — could be
+      // a legitimate new team member OR an added attacker account.
+      severity = 'WARN';
+      confidence = 'medium';
+      note = ` [new publisher added alongside trusted team]`;
+    } else if (newTrusted && oldTrusted) {
+      // Rotation within trust — INFO.
+      severity = 'INFO';
+      confidence = 'high';
+      note = ` [rotation within trusted publishers]`;
+    } else if (!oldTrusted && newTrusted) {
+      // Odd but not an attack shape.
+      severity = 'INFO';
+      confidence = 'medium';
+      note = ` [publisher moved TO a trusted publisher list]`;
+    }
+
     return [
       {
         detector: 'meta.maintainer-change',
@@ -29,9 +82,9 @@ export const maintainerDetector: Detector = {
         from: pair.old.version,
         to: pair.new.version,
         direction: 'changed',
-        severity: 'WARN',
-        confidence: 'medium',
-        message: 'Publisher/maintainer set changed between versions.',
+        severity,
+        confidence,
+        message: 'Publisher/maintainer set changed between versions.' + note,
         evidence: [
           {
             file: 'package.json',

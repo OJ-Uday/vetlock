@@ -42,9 +42,19 @@ describe('capability extraction', () => {
     expect(c.dynamicCode.some((d) => d.kind === 'new-function')).toBe(true);
   });
 
-  it('flags dynamic require', () => {
-    const c = cap(`const m = 'child_' + 'process'; require(m);`);
+  it('flags dynamic require (with UNRESOLVABLE arg)', () => {
+    // A runtime-computed require whose argument the folder can't resolve.
+    const c = cap(`const m = someRuntimeFn(); require(m);`);
     expect(c.dynamicCode.some((d) => d.kind === 'dynamic-require')).toBe(true);
+  });
+
+  it('resolves fold-able require arg to the actual module (NEW in v0.2)', () => {
+    // Constant folding turns `'child_' + 'process'` into `'child_process'` so
+    // this looks like a normal require rather than a dynamic one.
+    const c = cap(`const m = 'child_' + 'process'; require(m);`);
+    expect(c.execModules).toContain('child_process');
+    // NOT flagged as dynamic — the resolvable case is a win, not a miss.
+    expect(c.dynamicCode.some((d) => d.kind === 'dynamic-require')).toBe(false);
   });
 
   it('extracts URL literals from strings', () => {

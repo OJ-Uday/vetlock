@@ -5,10 +5,14 @@
  *   1. OBF findings in a package that also has NET or INSTALL findings are
  *      upgraded from WARN to BLOCK — the classic obfuscated-blob + exfil-URL
  *      + install-hook worm signature.
- *   2. typosquat candidates (DEPS WARN) are upgraded to BLOCK if the newly-
- *      added package also has any BLOCK-tier capability (NET/INSTALL/EXEC/ENV/FS).
- *      A named package next to a top-download that IMMEDIATELY spawns processes
- *      is the malicious-typosquat shape.
+ *   2. Typosquat candidates (DEPS WARN) upgrade to BLOCK when the added
+ *      package also ships any BLOCK-tier capability. A lookalike name next to
+ *      a top-download that immediately spawns processes is the malicious-
+ *      typosquat shape.
+ *   3. Compound-suspicion: a package accumulating 3+ WARN findings across 2+
+ *      categories has its WARN findings promoted to BLOCK. Closes the
+ *      "spread the attack thin across N files to avoid tripping any single
+ *      detector's threshold" evasion.
  */
 
 import type {
@@ -32,6 +36,9 @@ import { obfDetector } from './obf.js';
 import { depsManifestDetector } from './manifest-deps.js';
 import { binDetector } from './bin.js';
 import { typosquatDetector } from './typo.js';
+import { firstVersionClusterDetector } from './first-version-cluster.js';
+import { wasmDetector } from './wasm.js';
+import { advisoriesForVersion } from './advisories.js';
 
 export const ALL_DETECTORS: readonly Detector[] = [
   installDetector,
@@ -47,6 +54,8 @@ export const ALL_DETECTORS: readonly Detector[] = [
   depsManifestDetector,
   binDetector,
   typosquatDetector,
+  firstVersionClusterDetector,
+  wasmDetector,
 ];
 
 export {
@@ -63,6 +72,8 @@ export {
   depsManifestDetector,
   binDetector,
   typosquatDetector,
+  firstVersionClusterDetector,
+  wasmDetector,
 };
 
 /**
@@ -102,6 +113,39 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
       f.severity = 'BLOCK';
       f.message += ' [escalated: added package also ships BLOCK-tier capabilities]';
     }
+  }
+
+  // Escalation 3: compound-suspicion. Per-package: if the package has 3+ WARN
+  // findings AND those findings span 2+ distinct categories, promote all its
+  // WARN findings to BLOCK. Closes cross-file / cross-category evasion.
+  const warnFindingsByPkg = new Map<string, Finding[]>();
+  for (const f of all) {
+    if (f.severity !== 'WARN') continue;
+    (warnFindingsByPkg.get(f.package) ?? warnFindingsByPkg.set(f.package, []).get(f.package)!).push(f);
+  }
+  for (const [pkg, warns] of warnFindingsByPkg) {
+    if (warns.length < 3) continue;
+    const cats = new Set(warns.map((w) => w.category));
+    if (cats.size < 2) continue;
+    for (const w of warns) {
+      w.severity = 'BLOCK';
+      w.message += ` [escalated: package '${pkg}' has ${warns.length} WARN findings across ${cats.size} categories]`;
+    }
+  }
+
+  // GHSA correlation: for every finding, if the (package, version) has known
+  // advisories, annotate the finding. This gives a second-source citation.
+  // Findings that match an advisory get their confidence bumped to 'high'.
+  for (const f of all) {
+    const version = f.to ?? f.from;
+    if (!version) continue;
+    const matches = advisoriesForVersion(f.package, version);
+    if (matches.length === 0) continue;
+    const cite = matches
+      .map((a) => `${a.ghsa}${a.cve ? ` (${a.cve})` : ''}`)
+      .join(', ');
+    f.message += ` [GHSA: ${cite}]`;
+    f.confidence = 'high';
   }
 
   for (const f of all) {

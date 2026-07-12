@@ -13,7 +13,7 @@
     "node_modules/lodash-lite": {
       "name": "lodash-lite",
       "version": "1.2.0",
-      "integrity": "sha512-ULZY88tHMlb33VTX9U2F/7SdtOmtCarXYLMmubbHGwwXUAINaTLpFgFHZrHFJNAn3Zx5eG416kHz4BCSXiwHpA==",
+      "integrity": "sha512-bR/VrpLjEctVnSobjyMqMcRKfUOec0PTRrE0aQd6BStc6I2HNkDeMEqolErGuGR5Pf1SVtxzReJMnvjj+ZOb7A==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/a-docs-only/lodash-lite-old/lodash-lite-old.tgz"
     }
   }

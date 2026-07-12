@@ -23,12 +23,12 @@
     "clean": {
       "name": "@solana/web3.js",
       "version": "1.95.4",
-      "integrity": "sha512-9ZYEYFGxWIGzZpzzfaFUV7Xx0Clo2GSHa09MjFKrtBG79ZMPkw5esHd0NAlH0zxzfiAV5XZNDBR3E1prODQfZg=="
+      "integrity": "sha512-IBifYRSRw1vzr0EyLMBd/v/et4QNd6QwrUWEIgioLPEeeopUtE+yyQdRJ3+leceYMKAeE1JRrz6AoGEG7E9GXQ=="
     },
     "malicious": {
       "name": "@solana/web3.js",
       "version": "1.95.5",
-      "integrity": "sha512-ekdE+cRl4AFPsPpMraPc5BmgOJR5F/uny+jFkmiKqi/ggMRQpfJ+3mQX65F11qzQzkiNbu0b8IVTE7JSwFkzrg=="
+      "integrity": "sha512-wUvlYCzJE72m7eRRZI0ehQybNd1oeU1qs4N/OcJ7B4PUh+IF0E9XbVV2TB5FJumyj+qynHM9XvDcrhN2SupxAg=="
     },
     "transitives": []
   }

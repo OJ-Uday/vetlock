@@ -13,7 +13,7 @@
     "node_modules/chalk": {
       "name": "chalk",
       "version": "5.3.0",
-      "integrity": "sha512-LtsXd8/P2C7WO0PEAnn2RCmAbFX8e3I788Ehih8Ty+MhsZYV/Q1UGPnJGGaHoEW5kyHuurHuxCtzBJmOnqhXlg==",
+      "integrity": "sha512-69TPZG0c4mwGyzRHz7nuv24gazPgwxxFCJT8oZcPKhtN2ig5BcA35pd75Oi9EH+WePqZEw3xt1lq4OLDciCYfQ==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/shai-hulud-2025/chalk-5.3.0/chalk-5.3.0.tgz"
     }
   }

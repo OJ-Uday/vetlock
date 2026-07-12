@@ -22,12 +22,12 @@
     "clean": {
       "name": "@lottiefiles/lottie-player",
       "version": "2.0.4",
-      "integrity": "sha512-GE5d0BudPR/BxAjAPMNNZlyZHuIL3/2sgQMAg6A8XPI1W3ztEMKDW3VFYJrwEMN0bv9LuK/sDGzQ7x/nDaqXaA=="
+      "integrity": "sha512-mIHV9vhLNKu0uWZqUS7yo7P+/SZuqRaX9eDnsP1ARIRZMTztm3b/oAj8qr982wbOKinPVPjPSixRurk5nV4Hog=="
     },
     "malicious": {
       "name": "@lottiefiles/lottie-player",
       "version": "2.0.5",
-      "integrity": "sha512-vanZVQOMN1PNVkk70mfdz2BDaWr+0aBOS1KW0EwWVdG9vBp6CoLaQAsdVonpDAziaO0jAIl3KLPhdWQwoc2oXA=="
+      "integrity": "sha512-P1KUFDk/Xdx0KL3b6KcgW1wyx9kHwfQCtyUdNaZAFY8eVaI4ah3NxIsZpBwmbuu6Jt2F2Ac1MaUATmRe2jUUhg=="
     },
     "transitives": []
   }

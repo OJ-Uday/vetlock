@@ -80,6 +80,16 @@ export interface NativeArtifact {
   bytes: number;
   sha256: string;
   kind: 'node' | 'so' | 'dylib' | 'dll' | 'exe' | 'wasm' | 'bin';
+  /** For WASM artifacts: the imports it declares. Empty on non-WASM. */
+  wasmImports?: WasmImportSummary[];
+  /** For WASM artifacts that failed to parse — the reason. */
+  wasmParseError?: string;
+}
+
+export interface WasmImportSummary {
+  module: string;
+  name: string;
+  kind: 'func' | 'table' | 'memory' | 'global' | 'unknown';
 }
 
 export interface PackageManifest {

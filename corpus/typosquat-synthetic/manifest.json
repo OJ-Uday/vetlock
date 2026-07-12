@@ -24,12 +24,12 @@
     "clean": {
       "name": "my-app",
       "version": "1.0.0",
-      "integrity": "sha512-GavhZxjEDlYPuN2uV8i57H8Kv0WZse659DFRWPa0s12GDJakWqRMzytWr6p28wd1ipDV98yAvlYg7Vq435L14g=="
+      "integrity": "sha512-VEo/TqfSpVT1+WVeWDmREol5wM6wXSEU+LNbFMFOzWhEQHV9gj7bnhB+Uj9H1ptBQmLCHPsKxHMqSZ3YJ7QGsw=="
     },
     "malicious": {
       "name": "crossenv",
       "version": "1.0.0",
-      "integrity": "sha512-JmqyXwXH4EKO0sZU33jJsEAgPgSdB/Mr5ms5YNLjuKaPb3VA54Z4BGVu6ocR7pZFJYtDoqkcMmnYXC4Yc+HdHg=="
+      "integrity": "sha512-luOyKGkNGPBJeBnMPwqmIsK00f1WE3o2rkO2zo5K3T5mACGN6O4P5fJmEBtQ/jM6w21SAKTvWIbHsCLvO+ypEA=="
     },
     "transitives": []
   }

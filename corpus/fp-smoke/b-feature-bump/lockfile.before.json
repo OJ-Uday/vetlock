@@ -13,7 +13,7 @@
     "node_modules/requests-lite": {
       "name": "requests-lite",
       "version": "2.0.0",
-      "integrity": "sha512-SyaEsSqDxEkTFs/hETwpxXmusvGTSQH5fzVSLmO+7B7nKH4vkRgk9hfQrabShN3CJLABzKRT98FJtkAvYSU/YA==",
+      "integrity": "sha512-vzaog3H+cwAvk+W6fPyPYmgxpQwNdXjdx+lnyLMpc71K4rXlPoCPNHsTSo6J302RnVt+wxXDDHYv/KnbjDQlZw==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/b-feature-bump/requests-lite-old/requests-lite-old.tgz"
     }
   }

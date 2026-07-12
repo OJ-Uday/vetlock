@@ -13,7 +13,7 @@
     "node_modules/ui-toolkit": {
       "name": "ui-toolkit",
       "version": "4.0.0",
-      "integrity": "sha512-pBFyF3RrooLxJ5VUF/NZjooMOnx5kVlofMsE54lvdev/nfxBNVxqXENuCIdTo/W7NQy6HWwBWumOl5xZ+f03Ew==",
+      "integrity": "sha512-88p3RfpDbXvFFkFX0gwpgi/zd5N35yHewNID0hoU5wKUpRtbwSBs85v/5xJjxdpnbLYqwy6K4eNFfXCAwM3NdA==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/h-peerdep-added/ui-toolkit-old/ui-toolkit-old.tgz"
     }
   }

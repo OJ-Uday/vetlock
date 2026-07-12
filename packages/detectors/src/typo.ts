@@ -2,66 +2,49 @@
  * TYPO detector — new direct or transitive dep whose name is a very-near
  * typosquat of a popular npm package.
  *
- * WARN by default; BLOCK when the added package also has BLOCK-tier
- * capabilities in the same snapshot (the classic typosquat-with-payload
- * signature). Escalation is applied by the runAll() layer.
+ * WARN by default; escalates to BLOCK when the added package also has
+ * BLOCK-tier capabilities (escalation lives in runAll()).
  *
- * Implementation: we ship a small curated hot-list of ~200 top-download
- * packages (see TOP_NPM_NAMES) and compute Damerau-Levenshtein distance
- * against it for every ADDED package. A dep whose name is 1-2 edits away
- * from a top package is a typosquat candidate.
+ * Uses `damerau-levenshtein` — the correct algorithm for typo detection.
+ * Damerau-Levenshtein counts adjacent-character transposition as ONE edit,
+ * catching cases like:
+ *   - `debgu`   vs `debug`    (steps: 1)
+ *   - `axois`   vs `axios`    (steps: 1)
+ *   - `chlak`   vs `chalk`    (steps: 1)
+ *   - `expresss` vs `express`  (steps: 1)
+ *
+ * Plain Levenshtein would score all four as distance-2 (delete + insert),
+ * pushing them above the maxDist threshold and missing every one. We do NOT
+ * pick "fast Levenshtein" here — the perf difference is microseconds per
+ * added package, and the correctness difference is the entire class of
+ * transposition typosquats. This detector runs at most a few dozen times per
+ * PR check; the algorithm choice is a security decision, not a perf decision.
+ *
+ * npm's own security researchers have documented transposition typosquats
+ * ("nodeemailer" for "nodemailer", "expreess" for "express") as one of the
+ * most common attack shapes — the algorithm has to see them.
  */
 
+import dl from 'damerau-levenshtein';
 import type { Detector, Finding, SnapshotPair } from '@vetlock/core';
+import { TOP_NPM_NAMES } from './top-npm-names.js';
 
-// Curated slice of npm's top-1000 by download count (2025). Kept small to
-// avoid ballooning the artifact; extend from an external list in a P0.2 pass.
-const TOP_NPM_NAMES: readonly string[] = [
-  'react', 'react-dom', 'lodash', 'axios', 'express', 'chalk', 'debug', 'commander',
-  'cross-env', 'dotenv', 'ejs', 'eslint', 'esbuild', 'fs-extra', 'glob',
-  'handlebars', 'http-proxy', 'inquirer', 'jest', 'js-yaml', 'jsdom', 'jsonwebtoken',
-  'jquery', 'moment', 'mocha', 'mongoose', 'next', 'node-fetch', 'nodemon', 'ora',
-  'passport', 'pg', 'prettier', 'querystring', 'react-native', 'react-router',
-  'react-router-dom', 'redux', 'request', 'rimraf', 'sass', 'semver', 'sequelize',
-  'sharp', 'shelljs', 'sinon', 'socket.io', 'styled-components', 'superagent',
-  'ts-node', 'typescript', 'uuid', 'vite', 'vue', 'webpack', 'winston', 'ws',
-  'yargs', 'zod', '@babel/core', '@types/node', 'ansi-styles', 'strip-ansi',
-];
+const TOP_SET = new Set<string>(TOP_NPM_NAMES);
 
-/** Damerau-Levenshtein distance (edit distance with adjacent transposition). */
-function damerauLevenshtein(a: string, b: string): number {
-  const la = a.length, lb = b.length;
-  if (la === 0) return lb;
-  if (lb === 0) return la;
-  const dp: number[][] = Array.from({ length: la + 1 }, () => new Array(lb + 1).fill(0));
-  for (let i = 0; i <= la; i++) dp[i]![0] = i;
-  for (let j = 0; j <= lb; j++) dp[0]![j] = j;
-  for (let i = 1; i <= la; i++) {
-    for (let j = 1; j <= lb; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      dp[i]![j] = Math.min(
-        dp[i - 1]![j]! + 1,       // deletion
-        dp[i]![j - 1]! + 1,       // insertion
-        dp[i - 1]![j - 1]! + cost, // substitution
-      );
-      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
-        dp[i]![j] = Math.min(dp[i]![j]!, dp[i - 2]![j - 2]! + cost);
-      }
-    }
-  }
-  return dp[la]![lb]!;
-}
-
-/** Return the closest top-name (if within max-distance) and its distance. */
-function closestTop(name: string, maxDist = 2): { target: string; distance: number } | null {
-  if (TOP_NPM_NAMES.includes(name)) return null; // it IS a top package, not a typo of one
+/**
+ * Return the closest top-name if within `maxDist` Damerau-Levenshtein edits.
+ * The `dl(a, b)` call returns `{ steps, relative, similarity }`; we use
+ * `steps` — the integer edit count, treating adjacent transposition as one.
+ */
+export function closestTop(name: string, maxDist = 2): { target: string; distance: number } | null {
+  if (TOP_SET.has(name)) return null; // it IS a top package, not a squat of one
   let best: { target: string; distance: number } | null = null;
   for (const top of TOP_NPM_NAMES) {
-    // Skip pairs where the length difference alone exceeds maxDist
+    // Cheap prune: length difference alone can rule out.
     if (Math.abs(top.length - name.length) > maxDist) continue;
-    const d = damerauLevenshtein(name, top);
-    if (d <= maxDist && (!best || d < best.distance)) {
-      best = { target: top, distance: d };
+    const { steps } = dl(name, top);
+    if (steps > 0 && steps <= maxDist && (!best || steps < best.distance)) {
+      best = { target: top, distance: steps };
     }
   }
   return best;
@@ -86,7 +69,7 @@ export const typosquatDetector: Detector = {
         direction: 'added',
         severity: 'WARN', // escalated to BLOCK in runAll if package also has BLOCK-tier capability
         confidence: near.distance === 1 ? 'high' : 'medium',
-        message: `Package name "${pair.new.name}" is edit-distance ${near.distance} from popular package "${near.target}". Typosquat candidate.`,
+        message: `Package name "${pair.new.name}" is edit-distance ${near.distance} from popular package "${near.target}" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate.`,
         evidence: [
           {
             file: 'package.json',
@@ -100,5 +83,5 @@ export const typosquatDetector: Detector = {
   },
 };
 
-// Exposed for tests
-export { damerauLevenshtein, closestTop, TOP_NPM_NAMES };
+// Re-exports for tests
+export { TOP_NPM_NAMES };

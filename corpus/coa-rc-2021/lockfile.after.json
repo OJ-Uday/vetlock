@@ -13,7 +13,7 @@
     "node_modules/coa": {
       "name": "coa",
       "version": "2.0.3",
-      "integrity": "sha512-bh6kDJhifX3wQPDr/8wrf/R5LyFaVb0Eavj8XAXlUnP8nNeBLs9+hTnziGdCypWm6Fl4iP1fWbMV/VJZul1bww==",
+      "integrity": "sha512-BKD2J2l35/s2gcMPsXW571whVWfyTsuF8zKHki9urSGqxkt9Y1SKT67B32CmhY/kUzJB73znooUM6u7PN8pU7g==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/coa-rc-2021/coa-2.0.3/coa-2.0.3.tgz"
     }
   }

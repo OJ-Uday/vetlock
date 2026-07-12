@@ -13,7 +13,7 @@
     "node_modules/micro-mitt": {
       "name": "micro-mitt",
       "version": "3.0.0",
-      "integrity": "sha512-iahW6spx/Of4MK8qyw6XFYxRgSmBMCnLov0oCcNtqzZf7eT+DEtti48b3PEIUOA39jFSub2BDrzWiEG6d0HQyg==",
+      "integrity": "sha512-qSny11BpFKIKcFEC/4f7ObO53sc6m79+eeFoJOmijJOvzz1gnFNDTbylmOIm5VlOgVtGmsXx9OmajRVOQPS8dw==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/c-types-only/micro-mitt-old/micro-mitt-old.tgz"
     }
   }

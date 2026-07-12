@@ -1,0 +1,20 @@
+{
+  "name": "my-app",
+  "version": "1.0.0",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {
+      "name": "my-app",
+      "version": "1.0.0",
+      "dependencies": {
+        "evader-lib": "^1"
+      }
+    },
+    "node_modules/evader-lib": {
+      "name": "evader-lib",
+      "version": "1.0.1",
+      "integrity": "sha512-Dt0KyKIIQTb/AkYmvrh6mkLmJ8/RGVZgGYRe39pyhSGLpnzwWay2Mn23mbEmInhCnUE3PORDJ9KD7O/3+Bgp3Q==",
+      "resolved": "file:///Users/L122472/personal/vetlock/corpus/hardened-evader-2026/evader-lib-1.0.1/evader-lib-1.0.1.tgz"
+    }
+  }
+}

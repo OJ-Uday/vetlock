@@ -13,7 +13,7 @@
     "node_modules/node-ipc": {
       "name": "node-ipc",
       "version": "10.1.0",
-      "integrity": "sha512-CyX/CU/Z0a/TSdDwGroEPj0gpezTXd4gknZiKd4KcsB/JCCuAl8EEPdjGoLC1QnRhRwbWHfn93Q91U2bAcOSPQ==",
+      "integrity": "sha512-Pkzk7dx+1qD+/mB1f+VEtEQrr6YIrIqmir9MfXXrppQwvyL8QOqy8qFdTcePwwrlIy423Je68+nfaINgr6n1iw==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/node-ipc-2022/node-ipc-10.1.0/node-ipc-10.1.0.tgz"
     }
   }

@@ -25,6 +25,7 @@ import {
 } from './finding.js';
 import { SNAPSHOT_FORMAT_VERSION } from './cache.js';
 import { extractCapabilities } from './capabilities.js';
+import { summarizeWasm } from './wasm.js';
 
 export interface AnalyzeOptions {
   integrity?: string;
@@ -52,12 +53,30 @@ export async function analyzeTarball(
       const rel = entry.relPath;
       const nativeKind = binaryKind(rel);
       if (nativeKind) {
-        nativeArtifacts.push({
+        const abs = path.join(extracted.destDir, rel);
+        const artifact: NativeArtifact = {
           path: rel,
           bytes: entry.bytes,
           sha256: entry.sha256,
           kind: nativeKind,
-        });
+        };
+        // For WASM specifically, parse the import section so downstream
+        // detectors can see what the binary can talk to. Non-WASM native
+        // artifacts still record the sha256 for the BIN detector.
+        if (nativeKind === 'wasm') {
+          try {
+            const buf = await fs.readFile(abs);
+            const summary = summarizeWasm(buf);
+            if (summary.parsed) {
+              artifact.wasmImports = summary.imports;
+            } else if (summary.parseError) {
+              artifact.wasmParseError = summary.parseError;
+            }
+          } catch (err) {
+            artifact.wasmParseError = err instanceof Error ? err.message.slice(0, 240) : String(err);
+          }
+        }
+        nativeArtifacts.push(artifact);
         continue;
       }
       if (isMediaPath(rel)) continue;

@@ -13,7 +13,7 @@
     "node_modules/small-parser": {
       "name": "small-parser",
       "version": "1.5.0",
-      "integrity": "sha512-mKVDQOxThvR08BY6aMPICvpX82HLfp55YLZKofO2jZ7kYJJ9XJPJfOEuiv5+Aq5YEgKyIFT7GbnN3y2ErFN8Rw==",
+      "integrity": "sha512-bmBNwTV6swC4wVY0thQnV10bh1y7nxZ5IFNTopGH3WC5DmdqY5GvHs0JFDpH3MuuohrAcvVQjUmtABDA3klnsw==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/d-refactor/small-parser-old/small-parser-old.tgz"
     }
   }

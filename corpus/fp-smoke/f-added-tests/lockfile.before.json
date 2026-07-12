@@ -13,7 +13,7 @@
     "node_modules/query-helper": {
       "name": "query-helper",
       "version": "2.1.0",
-      "integrity": "sha512-kN1S8bO70Q7nLXA1pR4V14IgdJry6WDPsN4TNdCjjrLva4OdBYw7aHgDdikQFbcOSB1F/Qygz1UvEEqadQHJjg==",
+      "integrity": "sha512-9VpYoKLzMtrLx7iz7mcDOvf3/sc8OCFzXDQm9MkpiBQioR9HTfZ4aQiVcs9AV3RFWnWHgKweJk5fzx1ruZTfSg==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/f-added-tests/query-helper-old/query-helper-old.tgz"
     }
   }

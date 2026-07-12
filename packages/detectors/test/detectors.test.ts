@@ -274,8 +274,8 @@ describe('runAll — escalation + validation', () => {
     expect(a.length).toBe(2);
   });
 
-  it('registers all built-in detectors (thirteen after hardening pass)', () => {
-    expect(ALL_DETECTORS.length).toBe(13);
+  it('registers all built-in detectors (fifteen after wave-4 wasm)', () => {
+    expect(ALL_DETECTORS.length).toBe(15);
   });
 
   it('stablesort exported', () => {

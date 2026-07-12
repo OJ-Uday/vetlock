@@ -11,6 +11,7 @@
  */
 
 import type { LockGraph } from './lockfile.js';
+import semver from 'semver';
 
 export type ChangeKind = 'added' | 'removed' | 'upgraded' | 'integrity-changed';
 
@@ -167,8 +168,29 @@ export function computeChangeset(oldG: LockGraph, newG: LockGraph): Change[] {
 
 function pickClosest(candidates: string[], target: string): string | null {
   if (candidates.length === 0) return null;
-  // If any candidate < target, return the max such. Else return min.
-  const less = candidates.filter((c) => c < target);
-  if (less.length > 0) return less.sort().at(-1)!;
-  return candidates.sort()[0]!;
+  // Use semver comparison rather than lexical (1.10.0 vs 1.9.0). Fall back
+  // to lexical only when a candidate/target isn't parseable — better than crashing.
+  const targetCoerced = semver.coerce(target);
+  if (!targetCoerced) {
+    const less = candidates.filter((c) => c < target);
+    if (less.length > 0) return less.sort().at(-1)!;
+    return candidates.sort()[0]!;
+  }
+  const parsed = candidates
+    .map((v) => ({ v, sv: semver.coerce(v) }))
+    .filter((x): x is { v: string; sv: NonNullable<ReturnType<typeof semver.coerce>> } => x.sv !== null);
+  if (parsed.length === 0) {
+    const less = candidates.filter((c) => c < target);
+    if (less.length > 0) return less.sort().at(-1)!;
+    return candidates.sort()[0]!;
+  }
+  // Candidates <= target: pick the max.
+  const lte = parsed.filter((x) => semver.compare(x.sv, targetCoerced) <= 0);
+  if (lte.length > 0) {
+    lte.sort((a, b) => semver.compare(a.sv, b.sv));
+    return lte[lte.length - 1]!.v;
+  }
+  // Else return the min > target.
+  parsed.sort((a, b) => semver.compare(a.sv, b.sv));
+  return parsed[0]!.v;
 }

@@ -13,7 +13,7 @@
     "node_modules/ua-parser-js": {
       "name": "ua-parser-js",
       "version": "0.7.28",
-      "integrity": "sha512-sLiQEr63mezqQHtCxIil0AKmjG6L9Cp+fltigOBMiB+kxZ/G0vyI5C3EJ3SRGTi2Rz50VpfROg7ownFldyykbA==",
+      "integrity": "sha512-ASnb7d6cKBM36qK0XRzHpk4psPEn6lraBWrDZzFCQHeKKOb/ptijd1hkHB/6HTDsOPSxRH5Z/iJIc4/LejNqqA==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/ua-parser-2021/ua-parser-js-0.7.28/ua-parser-js-0.7.28.tgz"
     }
   }

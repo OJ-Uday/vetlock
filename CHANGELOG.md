@@ -5,89 +5,149 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/).
 
-## [0.1.0] — 2026-07-12
+## [0.2.0] — 2026-07-12
 
-### Corpus hardening
+**Security-first pass.** This release closes the four evasion classes named in
+the v0.1.0 self-critique + adds four new capability surfaces + establishes
+formal principles preventing the class of mistake that shipped in v0.1.
 
-Extended the historical-attack corpus from 1 fixture (Shai-Hulud 2025) to **12** covering
-seven years of npm supply-chain incidents. All fixtures defanged: exfil URLs point to
-RFC-2606 reserved TLDs, payload bodies are inert (`if (false) { … }`), and a hygiene test
-greps every corpus file for banned live-endpoint patterns.
+### Established principles
 
-New fixtures (each declaratively specified as a FixtureSpec, materialized to tarballs +
-lockfile pairs by `build-all.js`):
+- **`docs/SECURITY-DECISIONS.md`** codifies the rule that killed a
+  fastest-levenshtein regression before it merged: when correctness and
+  performance conflict on a security decision boundary, correctness wins.
+  Every subsequent detector choice has been audited against this.
 
-- **eslint-scope 3.7.2 (2018)** — T1 maintainer takeover, first widely-noticed npm compromise
-- **event-stream / flatmap-stream (2018)** — T2 transitive injection (the recursive-engine showcase)
-- **ua-parser-js 0.7.29 (2021)** — T1 takeover with native binary drop + preinstall crypto miner
-- **coa / rc (2021)** — T1 dual-hijack, postinstall password stealer
-- **colors 1.4.44-liberty (2022)** — T4 protestware (published as HONEST MISS)
-- **node-ipc 10.1.1 peacenotwar (2022)** — T4 geo-targeted file wipe
-- **@solana/web3.js 1.95.5 (2024)** — T1 wallet-stealer via base64-encoded exfil URL
-- **@lottiefiles/lottie-player (2024)** — T1 with eval-based Web3Modal drainer
-- **rand-user-agent (2025)** — T1 with RAT via net.connect + new Function
-- **integrity-tamper (synthetic)** — T5 registry / lockfile tamper
-- **typosquat (synthetic)** — T6 `crossenv` for `cross-env`
+### Evasion classes closed
 
-Result: **11 of 12 attacks caught** (verdict ≠ CLEAN), 1 honest miss (colors protestware).
+- **String obfuscation** — a real constant-folding pass (`packages/core/src/fold.ts`)
+  now resolves `String.fromCharCode`, `Buffer.from(x, 'base64').toString()`,
+  `Buffer.from([codes]).toString()`, `atob()`, `decodeURIComponent()`,
+  `unescape()`, array-join, template literals with folded expressions, and
+  same-file variable references. Fixed-point iteration handles chains-of-chains.
+  Detectors read folded values transparently — no per-detector plumbing.
+- **Alias tracking** — `const cp = require('child_process'); const spawn = cp.spawn; spawn(...)`
+  now correctly recognizes `spawn` as invoking `child_process`. Same for
+  `const e = process.env; e.NPM_TOKEN` — the ENV detector sees through the
+  alias. Two-level chains supported.
+- **First-version malicious packages** — new detector `deps.first-version-cluster`
+  fires BLOCK on ADDED packages that ship 3+ capability categories on first
+  version (net + exec + env, etc). This is the shape almost no legit package
+  has and every RAT/wallet-drainer does.
+- **Cross-file compound attacks** — new escalation rule promotes 3+ WARN
+  findings across 2+ categories on the same package to BLOCK. Kills the
+  "split the payload thin to duck each detector's threshold" evasion.
 
-### New detectors
+### New capability surfaces
 
-- `bin.new-native-artifact` — BLOCK. Fires when a new `.node`/`.exe`/`.dll`/`.so`/`.wasm` binary
-  ships in the tarball. Catches the ua-parser-2021 pattern.
-- `fs.new-hotpath-read` — BLOCK. Reads of `~/.npmrc`, `~/.ssh/id_rsa`, `.aws/credentials`,
-  keychain / wallet paths. Catches the eslint-scope-2018 signature (`fs.readFileSync(~/.npmrc)`).
-- `net.encoded-endpoint` — BLOCK. URLs recovered from base64/hex decoding of long string
-  literals. Catches the solana-web3-2024 and lottie-player-2024 evasion.
-- `obf.new-obfuscated-file` — WARN → BLOCK. New file that ships minified or contains
-  suspicious high-entropy literals. Catches ua-parser-shape drops.
-- `deps.typosquat-candidate` — WARN → BLOCK. Package name is Damerau-Levenshtein ≤ 2 from a
-  top-N npm package. Catches lookalike-adoption typosquats.
+- **WASM import extraction** via `@webassemblyjs/wasm-parser` (webpack's parser).
+  New detector `wasm.suspicious-import` catches WASM binaries that import
+  `env.eval`, `env.fetch`, or WASI file/socket/exec capabilities. Fail-soft
+  on malformed WASM (`wasm.unparseable` WARN). 20 MB parse cap.
+- **Publisher trust store** (`packages/detectors/src/publishers.ts`) with a
+  curated list of well-known maintainers per popular package. The meta detector
+  now escalates to BLOCK when a trusted publisher is replaced by an unknown
+  (the classic T1 takeover pattern) and downgrades to INFO on rotation within
+  trusted publishers.
+- **GHSA advisory correlation** — every finding gets annotated with the matching
+  GHSA advisory ID and CVE when the (package, version) tuple matches a known
+  advisory. Curated list of ~11 corpus + high-download entries; refresh script
+  on roadmap. Findings with GHSA matches auto-upgrade to confidence: 'high'.
+- **pnpm-lock.yaml and yarn.lock support** via `js-yaml`, `@yarnpkg/lockfile`
+  (yarn classic v1), and `@yarnpkg/parsers` (yarn berry v2+). Universal
+  `parseLockfileText` dispatcher auto-detects format from filename or content.
+
+### Config
+
+- **`.vetlock.json`** with `zod` schema validation. Fields: allowlist,
+  severityOverride, ignorePackages, ignorePathsInside, trustedPublishers,
+  failOn. Strict-mode schema — typos in keys are rejected loudly.
+- CLI reads from `./.vetlock.json` by default; `--config <path>` overrides.
+
+### CLI improvements
+
+- **Progress reporting** via `ora` spinner. `--no-progress` disables; `--quiet`
+  suppresses all stderr for scripting.
+- Lockfile format detected from filename OR content — `vetlock diff yarn.lock.old yarn.lock`
+  works out of the box.
+- Findings pass through `applyConfig` before rendering — allowlists apply.
 
 ### Detector hardening
 
-- FS hot-path list expanded (browser Local Storage, IndexedDB, Ethereum/Solana keystores,
-  bash/zsh history, Windows AppData, user Desktop/Documents).
-- EXEC / NET / OBF / ENV detectors now fire on ADDED packages (not just diff-mode) with
-  downgraded confidence — catches typosquats and net-new-dep malicious first-versions.
-- Local variable binding tracking: `var x = path.join(os.homedir(), 'Desktop', 'X')` followed
-  by `fs.writeFileSync(x, …)` now resolves to the extracted target path.
-- `isMinified()` heuristic tightened: catches short-and-packed one-liners (like the
-  eslint-scope 2018 payload) that the original threshold missed.
-- Escalation rules: OBF/WARN → BLOCK when co-occurring with NET or INSTALL; typosquat WARN
-  → BLOCK when the added package also ships any BLOCK-tier capability.
-- `package.json` no longer scanned for URL literals — repository/homepage/bugs URLs were a
-  systematic FP source. Real network endpoints live in code, not manifest metadata.
+- **Damerau-Levenshtein** typosquat distance via the `damerau-levenshtein`
+  package. Transposition typosquats (`debgu`/`debug`, `axois`/`axios`,
+  `chlak`/`chalk`, `expreess`/`express`) now count as distance-1 and are
+  caught. Regression-locked with named tests in
+  `packages/detectors/test/typo.test.ts`.
+- **Top-npm-names list expanded** from ~60 to ~200 entries.
+- **SENSITIVE_ENV_KEYS list expanded** from ~15 to ~55, covering Stripe,
+  Heroku, Supabase, Cloudflare, Slack/Discord/Telegram tokens, wallet seed
+  phrases (`MNEMONIC`, `PRIVATE_KEY`, `SEED_PHRASE`), OpenAI/Anthropic API keys,
+  database URLs, and mail service credentials.
+- **Lifecycle hook list expanded** from 6 to 15 hooks: adds `prepublish`,
+  `prepublishOnly`, `publish`, `postpublish`, `prepack`, `pack`, `postpack`,
+  `preuninstall`, `uninstall`, `postuninstall`, `preversion`, `version`,
+  `postversion`, `test`, `preinstalled`.
+- **Semver-aware `pickClosest`** — `1.10.0 > 1.9.0` now compares correctly
+  using the `semver` npm package.
+
+### Fuzz coverage
+
+- **Property-based fuzz suite** (`packages/core/test/fuzz.test.ts`) — 12 test
+  properties across `parseConfig`, `parseLockfileText`, `parseLockfile`
+  (npm), `parsePnpmLockText`, `parseYarnLockText`, `extractCapabilities`,
+  and `summarizeWasm`. Each property runs 100-200 random examples via
+  `fast-check` (2400+ input samples per run). Invariant: no uncaught throw
+  on any input; parseError set instead.
+
+### FP study infrastructure
+
+- **`packages/cli/src/corpus/fp-study.js`** — takes `pkg@old..new` triples,
+  runs vetlock, produces per-detector FP-rate report. Docs at `studies/README.md`
+  explain the workflow. Not yet run (requires live-npm network access; blocked
+  by dev env's corporate proxy). Ready to run in any environment with public
+  npm access. Documented as still-open launch blocker.
+
+### Corpus
+
+- Added `hardened-evader-2026.ts` — synthetic fixture that combines all four
+  evasion classes above. Locked in as a corpus-replay test that fails if
+  future refactors regress detection.
+- 13 corpus fixtures total (was 12). 12 caught, 1 honest miss (colors 2022
+  protestware — logic sabotage using pre-existing capabilities).
+- Corpus DEFANGED-hygiene test still passes across all fixtures.
+
+### Dependency additions (all battle-tested, all justified)
+
+- `js-yaml` — YAML parsing for pnpm-lock.yaml
+- `@yarnpkg/lockfile` + `@yarnpkg/parsers` — yarn.lock parsing (yarn's own libs)
+- `semver` — semver-aware version comparison (npm's own lib)
+- `damerau-levenshtein` — transposition-catching edit distance
+- `zod` — config schema validation
+- `ora` — CLI progress spinner
+- `@webassemblyjs/wasm-parser` — WASM binary parsing (webpack's parser)
+- `fast-check` — property-based fuzzing (devDep)
+
+Each library was chosen as "the boring correct one" per the SECURITY-DECISIONS
+principle. No fastest-X. No premature perf trade-offs.
 
 ### Tests
 
-- Data-driven corpus-replay test iterates over every `corpus/<id>/manifest.json` and asserts
-  the required detectors fire with the required verdict. Adding an 11th attack is now a
-  one-file change with no new test code.
-- FP smoke corpus extended from 3 to **8** realistic benign version bumps. All 8 → CLEAN.
-- DETECTIONS.md is now AUTO-GENERATED from live replay output. Kills documentation drift.
+- **203 tests green** across the workspace (was 96 in v0.1.0).
+  - core: 108 (was 47)  — +61 for fold, config, lockfile-parsers, wasm, fuzz
+  - detectors: 68 (was 23) — +45 for wave1-hardening, typo D-L, wasm, publishers-ghsa
+  - cli: 27 (was 26) — corpus-replay covers all 13 fixtures + defanged check
 
-### Fixed
+### Detector count
 
-- `@babel/traverse` NodeNext ESM/CJS interop cast (was breaking under strict `moduleResolution`).
-- Extractor drains in-flight file writes on error before removing destDir (was racing with
-  the temp-dir cleanup and leaving stale directories).
-- Verdict computation narrowing (was flagged by TS as impossible-comparison).
+- 15 built-in detectors (was 13):
+  - Added: `deps.first-version-cluster`, `wasm.suspicious-import`, `wasm.unparseable`
+  - Enhanced: `meta.maintainer-change` (trust-store aware), `deps.typosquat-candidate` (D-L)
 
-### Total
+## [0.1.0] — 2026-07-12 (10-attack corpus + hardening)
 
-- **96 tests** green across the workspace (was 76 in 0.0.0).
-- **13 detectors** built-in (was 9).
-- **96%** direct-attack coverage on the historical corpus (was 100% but on 1 attack).
+Prior release. See prior CHANGELOG entries.
 
 ## [0.0.0] — 2026-07-12 (foundations)
 
-- Monorepo scaffold (packages/core, packages/detectors, packages/cli).
-- ADRs 0001–0005 (name → vetlock, TypeScript, @babel/parser, pacote, NEVER-EXECUTE).
-- Safe extract with zip-slip/tarbomb/symlink/hardlink rejection.
-- NEVER-EXECUTE canary test (`@critical`) — the repo's soul test.
-- Recursive lockfile engine (closure-completeness, new-node full-scan, provenance).
-- 9 initial detectors: install, meta, net, exec, fs, env, code, obf, deps-manifest.
-- CLI with TTY / JSON / SARIF 2.1.0 / Markdown output; `--fail-on` filter.
-- GitHub Action (composite) with sticky PR comments + SARIF upload; dogfood workflow.
-- Corpus: Shai-Hulud 2025 defanged fixture + acceptance test.
+Initial scaffold.

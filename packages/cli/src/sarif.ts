@@ -67,7 +67,7 @@ export function renderSARIF(result: RunResult): string {
           driver: {
             name: 'vetlock',
             informationUri: 'https://github.com/OJ-Uday/vetlock',
-            version: '0.1.0',
+            version: '0.2.0',
             rules,
           },
         },

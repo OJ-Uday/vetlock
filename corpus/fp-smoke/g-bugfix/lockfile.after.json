@@ -13,7 +13,7 @@
     "node_modules/clamp-fn": {
       "name": "clamp-fn",
       "version": "1.0.1",
-      "integrity": "sha512-CfEvmDoCszTUJPEaT560ViimVOhHGJtwuSf6XJdM7bwm+0pNBEJBTI54pgKNkk6WV/HgMg+lmpGHIAUGMs3kyg==",
+      "integrity": "sha512-UCWT4kEjfy+bPRnExUvJ+xf+DIj/plAhmxuRW4NZgeAmc2Upz1fNSUMErA/Wc02G12jkIheuTNJw6xtF9tJUNg==",
       "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/g-bugfix/clamp-fn-new/clamp-fn-new.tgz"
     }
   }

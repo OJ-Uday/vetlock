@@ -1,0 +1,36 @@
+{
+  "id": "hardened-evader-2026",
+  "title": "Hardened evader (synthetic — proves defense-in-depth against known evasions)",
+  "year": 2026,
+  "threatClass": "T1/T3 hybrid — evasion research fixture",
+  "summary": "Synthetic fixture that combines four documented evasion classes: process/env aliasing, computed-string require, charCode/hex/atob URL encoding, and payload distribution across multiple files. Locks in that hardening improvements do not regress. Ships as CLEAN in v0.1.0; expected BLOCK in v0.2.0.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "env.token-harvest",
+      "exec.new-module",
+      "net.encoded-endpoint"
+    ],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "ENV",
+      "EXEC",
+      "NET"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "evader-lib",
+      "version": "1.0.0",
+      "integrity": "sha512-NtrwueXvKFUFq4mxyC5ra6kbmEdCKv0lr44qq+6OtqnQIHIeDxgMTXF6G2+lhbHA5dJToOhbsG+miSZa8sxxnQ=="
+    },
+    "malicious": {
+      "name": "evader-lib",
+      "version": "1.0.1",
+      "integrity": "sha512-Dt0KyKIIQTb/AkYmvrh6mkLmJ8/RGVZgGYRe39pyhSGLpnzwWay2Mn23mbEmInhCnUE3PORDJ9KD7O/3+Bgp3Q=="
+    },
+    "transitives": []
+  }
+}

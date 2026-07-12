@@ -1,13 +1,36 @@
 /**
  * INSTALL detector — lifecycle scripts.
- * Fires when the new manifest introduces (or changes) a pre/post/install/prepare
- * script. Severity BLOCK, confidence high.
+ * Fires when the new manifest introduces (or changes) a lifecycle script.
+ * Severity BLOCK, confidence high.
+ *
+ * The lifecycle list covers npm's canonical hooks + Yarn's additional lifecycle
+ * events + `dependencies`-triggered rebuild scripts. Adding a hook here
+ * expands what we catch; keep it a superset of what any package manager
+ * actually runs.
+ *
+ * Reference: https://docs.npmjs.com/cli/v10/using-npm/scripts#life-cycle-scripts
+ * Reference: https://yarnpkg.com/configuration/manifest#scripts
  */
 import type { Detector, Finding, SnapshotPair } from '@vetlock/core';
 
 const LIFECYCLE_KEYS: readonly string[] = [
-  'preinstall', 'install', 'postinstall', 'prepare', 'preprepare', 'postprepare',
+  // npm canonical
+  'preinstall', 'install', 'postinstall',
+  'prepare', 'preprepare', 'postprepare',
+  'prepublish', 'prepublishOnly', 'publish', 'postpublish',
+  'prepack', 'pack', 'postpack',
+  'preuninstall', 'uninstall', 'postuninstall',
+  'preversion', 'version', 'postversion',
+  // Yarn 1 legacy
+  'preinstalled',
+  // Yarn 2+
+  'prepack',      // (duplicate — deduplicated by Set below)
+  'prepublishOnly',
+  // Test/deploy hooks that are commonly abused despite not being canonical
+  // (some CI runs `npm run test` blindly on install).
+  'test',   // opt-in — some pipelines invoke this pre-merge
 ];
+const LIFECYCLE_SET = new Set(LIFECYCLE_KEYS);
 
 export const installDetector: Detector = {
   id: 'install',
@@ -17,7 +40,7 @@ export const installDetector: Detector = {
     if (!pair.new) return out;
     const newScripts = pair.new.manifest.scripts ?? {};
     const oldScripts = pair.old?.manifest.scripts ?? {};
-    for (const k of LIFECYCLE_KEYS) {
+    for (const k of LIFECYCLE_SET) {
       const newBody = newScripts[k];
       if (!newBody) continue;
       const oldBody = oldScripts[k];
