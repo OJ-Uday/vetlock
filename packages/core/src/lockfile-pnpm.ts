@@ -155,6 +155,10 @@ export function parsePnpmLockText(yamlText: string): LockGraph {
     rootVersion: '',
     nodes,
     byName,
+    // pnpm-lock.yaml has no `link: true` shape today; workspace projects
+    // appear in `importers:` but we don't extract them here yet. Empty array
+    // satisfies the LockGraph contract added for the npm-parser F2 fix.
+    workspaceLinks: [],
   };
 }
 

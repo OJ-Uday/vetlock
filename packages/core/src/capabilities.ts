@@ -360,7 +360,22 @@ export function extractCapabilities(
   // ---- CONSTANT-FOLDING PASS (v0.2) ----
   // Resolve as many strings as possible so subsequent detector logic can
   // treat charCode/base64/hex-encoded values the same as literals.
-  const folds = foldConstants(ast, traverse as unknown as (n: t.Node, opts: unknown) => void);
+  //
+  // REDTEAM L6 FIX: wrap foldConstants in try/catch. A file with deeply
+  // nested AST structures (e.g. 15000 backticks → ~7500-deep TemplateLiteral
+  // chain) parses fine under errorRecovery but then overflows @babel/traverse's
+  // recursive descent, raising a RangeError.  Fail-soft into a parseError
+  // result so the run continues and the file is flagged, not crashed.
+  let folds: ReturnType<typeof foldConstants>;
+  try {
+    folds = foldConstants(ast, traverse as unknown as (n: t.Node, opts: unknown) => void);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      ...base,
+      parseError: `traverse failed: ${msg.slice(0, 200)}`,
+    };
+  }
 
   /** Prefer the folded value of a node; fall back to `.value` for direct literals. */
   function nodeValue(node: t.Node | undefined | null): string | null {
@@ -391,6 +406,11 @@ export function extractCapabilities(
     return (lines[start.line - 1] ?? '').slice(0, 240).trim();
   }
 
+  // REDTEAM L6 FIX: wrap the main traverse visitor in try/catch. Any traversal
+  // crash (stack overflow, unexpected node shape, etc.) that slips through the
+  // foldConstants guard above is caught here and fails-soft so vetlock never
+  // re-throws from extractCapabilities.
+  try {
   traverse(ast, {
     // Static ES module imports
     ImportDeclaration(path: NodePath<t.ImportDeclaration>) {
@@ -655,6 +675,13 @@ export function extractCapabilities(
       }
     },
   });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      ...base,
+      parseError: `traverse failed: ${msg.slice(0, 200)}`,
+    };
+  }
 
   // ---- POST-FOLD SWEEP ----
   // Every node the fold pass resolved to a string is a candidate for URL /

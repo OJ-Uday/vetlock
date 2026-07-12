@@ -2,17 +2,19 @@
  * Registry of all built-in detectors + escalation + a runAll helper.
  *
  * Escalation rules (§3):
- *   1. OBF findings in a package that also has NET or INSTALL findings are
- *      upgraded from WARN to BLOCK — the classic obfuscated-blob + exfil-URL
- *      + install-hook worm signature.
+ *   1. OBF findings in a package that also has NET, INSTALL, EXEC, ENV, or FS
+ *      findings are upgraded from WARN to BLOCK — the obfuscated-blob worm
+ *      signature regardless of whether the exfil channel is a URL/hook/exec/
+ *      env-harvest/hotpath-write (REDTEAM L9, S8).
  *   2. Typosquat candidates (DEPS WARN) upgrade to BLOCK when the added
- *      package also ships any BLOCK-tier capability. A lookalike name next to
- *      a top-download that immediately spawns processes is the malicious-
- *      typosquat shape.
- *   3. Compound-suspicion: a package accumulating 3+ WARN findings across 2+
- *      categories has its WARN findings promoted to BLOCK. Closes the
- *      "spread the attack thin across N files to avoid tripping any single
- *      detector's threshold" evasion.
+ *      package EITHER ships any BLOCK-tier NET/INSTALL/EXEC/ENV/FS/CODE/OBF
+ *      capability (original rule, broadened categories) OR has 2+ WARN-tier
+ *      findings across 2+ distinct categories (REDTEAM D5).
+ *   3. Compound-suspicion: a package accumulating WARN findings escalates to
+ *      BLOCK when EITHER (a) warns.length >= 3 regardless of category count
+ *      (closes single-category saturation — REDTEAM S5, D4) OR (b) warns.length
+ *      >= 2 across 2+ distinct categories AND at least one finding is in a
+ *      security-relevant category NET/INSTALL/EXEC/ENV/FS/CODE (REDTEAM D4, S5).
  */
 
 import type {
@@ -90,43 +92,79 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
     for (const f of d.run(pair, context)) all.push(f);
   }
 
-  // Escalation 1: OBF/WARN → BLOCK when same package also has NET or INSTALL
+  // REDTEAM L9, S8 FIX — Escalation 1: OBF/WARN → BLOCK when same package also has
+  // NET, INSTALL, EXEC, ENV, or FS findings. Previously only NET and INSTALL triggered
+  // this promotion; attackers who used child_process (EXEC), env-harvest (ENV), or
+  // hotpath writes (FS) without any URL literals or lifecycle hooks evaded it.
+  const riskyCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS']);
   const risky = new Set(
     all
-      .filter((f) => f.category === 'NET' || f.category === 'INSTALL')
+      .filter((f) => riskyCategories.has(f.category))
       .map((f) => f.package),
   );
   for (const f of all) {
     if (f.category === 'OBF' && f.severity === 'WARN' && risky.has(f.package)) {
       f.severity = 'BLOCK';
-      f.message += ' [escalated: co-occurring NET/INSTALL findings in this package]';
+      f.message += ' [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS findings in this package]';
     }
   }
 
-  // Escalation 2: typosquat WARN → BLOCK when same package has any BLOCK-tier capability
-  const dangerousCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS']);
+  // REDTEAM D5 FIX — Escalation 2: typosquat WARN → BLOCK when the added package EITHER
+  // (a) has any BLOCK-tier NET/INSTALL/EXEC/ENV/FS/CODE/OBF finding (original rule,
+  //     broadened from just NET/INSTALL/EXEC/ENV/FS), OR
+  // (b) has 2+ WARN-tier findings across 2+ distinct categories (new rule — catches
+  //     the typosquat+net.new-module WARN-only shape with no static URL literal).
+  const dangerousCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS', 'CODE', 'OBF']);
   const dangerous = new Set(
     all.filter((f) => dangerousCategories.has(f.category) && f.severity === 'BLOCK').map((f) => f.package),
   );
+  // Also build WARN-count-by-package for the new WARN-tier co-occurrence check (rule 2b).
+  const warnByPkgForTypo = new Map<string, Set<string>>();
   for (const f of all) {
-    if (f.detector === 'deps.typosquat-candidate' && f.severity === 'WARN' && dangerous.has(f.package)) {
-      f.severity = 'BLOCK';
-      f.message += ' [escalated: added package also ships BLOCK-tier capabilities]';
+    if (f.severity !== 'WARN') continue;
+    if (!warnByPkgForTypo.has(f.package)) warnByPkgForTypo.set(f.package, new Set());
+    warnByPkgForTypo.get(f.package)!.add(f.category);
+  }
+  const multiWarnPkgs = new Set(
+    [...warnByPkgForTypo.entries()]
+      .filter(([, cats]) => cats.size >= 2)
+      .map(([pkg]) => pkg),
+  );
+  for (const f of all) {
+    if (f.detector === 'deps.typosquat-candidate' && f.severity === 'WARN') {
+      if (dangerous.has(f.package)) {
+        f.severity = 'BLOCK';
+        f.message += ' [escalated: added package also ships BLOCK-tier capabilities]';
+      } else if (multiWarnPkgs.has(f.package)) {
+        f.severity = 'BLOCK';
+        f.message += ' [escalated: typosquat candidate has 2+ WARN-tier signals across 2+ categories]';
+      }
     }
   }
 
-  // Escalation 3: compound-suspicion. Per-package: if the package has 3+ WARN
-  // findings AND those findings span 2+ distinct categories, promote all its
-  // WARN findings to BLOCK. Closes cross-file / cross-category evasion.
+  // REDTEAM D4, S5 FIX — Escalation 3: compound-suspicion. Per-package, escalate ALL
+  // WARN findings to BLOCK when EITHER:
+  //   (a) warns.length >= 3, regardless of category count — closes the single-category
+  //       saturation evasion where an attacker ships N obfuscated files (all OBF) but
+  //       no other signal.
+  //   (b) warns.length >= 2 across 2+ distinct categories AND at least one finding is
+  //       in a security-relevant category — closes the 2-finding cross-category evasion
+  //       (e.g. code.dynamic-loading-added + net.new-module staying WARN because the
+  //       old rule required 3+).
+  // Previously: requires warns.length >= 3 AND cats.size >= 2 (both AND'd).
+  const securityCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS', 'CODE']);
   const warnFindingsByPkg = new Map<string, Finding[]>();
   for (const f of all) {
     if (f.severity !== 'WARN') continue;
     (warnFindingsByPkg.get(f.package) ?? warnFindingsByPkg.set(f.package, []).get(f.package)!).push(f);
   }
   for (const [pkg, warns] of warnFindingsByPkg) {
-    if (warns.length < 3) continue;
     const cats = new Set(warns.map((w) => w.category));
-    if (cats.size < 2) continue;
+    const hasSecurityRelevant = warns.some((w) => securityCategories.has(w.category));
+    const shouldEscalate =
+      warns.length >= 3 ||
+      (warns.length >= 2 && cats.size >= 2 && hasSecurityRelevant);
+    if (!shouldEscalate) continue;
     for (const w of warns) {
       w.severity = 'BLOCK';
       w.message += ` [escalated: package '${pkg}' has ${warns.length} WARN findings across ${cats.size} categories]`;

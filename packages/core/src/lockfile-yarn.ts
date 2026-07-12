@@ -157,6 +157,10 @@ function objectToGraph(
     rootVersion: '',
     nodes,
     byName,
+    // yarn.lock has no `link: true` shape; workspace linking is expressed
+    // via workspace:^ specs in package.json. Empty array satisfies the
+    // LockGraph contract added for the npm-parser F2 fix.
+    workspaceLinks: [],
   };
 }
 
