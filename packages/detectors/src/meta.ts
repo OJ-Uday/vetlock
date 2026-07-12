@@ -6,9 +6,15 @@
  *   - Old and new both fully within the built-in trust store → INFO
  *     (routine team rotation on well-known packages)
  *   - Old was a trusted publisher, new one is NOT → BLOCK (takeover shape)
+ *   - Old had emails, new has ZERO emails → BLOCK (S6 dropped-maintainer)
  *   - Neither is on trust store → WARN (unknown package or unfamiliar org)
  *   - New is trusted, old wasn't → INFO (a maintainer joined a trusted org;
  *     unusual but not an attack shape)
+ *
+ * REDTEAM S6 FIX: the old rule bailed early when EITHER side had zero emails.
+ * That silenced the dropped-maintainer attack shape: attacker republishes a
+ * compromised package with the maintainers field STRIPPED. Now we treat a
+ * populated-to-empty transition as a first-class signal.
  *
  * The runAll() layer additionally correlates with the user's .vetlock.json
  * `trustedPublishers` config for per-repo customization.
@@ -24,8 +30,81 @@ export const maintainerDetector: Detector = {
     if (!pair.old || !pair.new) return [];
     const oldEmails = collectEmails(pair.old.manifest);
     const newEmails = collectEmails(pair.new.manifest);
-    if (oldEmails.length === 0 || newEmails.length === 0) return [];
 
+    // Both empty: genuine no-op — the package never had maintainers metadata.
+    if (oldEmails.length === 0 && newEmails.length === 0) return [];
+
+    // REDTEAM S6 FIX: old had maintainers, new has NONE.
+    // That's the "attacker republished the tarball with the maintainers field
+    // stripped" shape — either they don't know the field is a signal, or they
+    // do and are actively suppressing it. Either way it's higher signal than
+    // an ordinary maintainer swap.
+    if (oldEmails.length > 0 && newEmails.length === 0) {
+      const trustList = BUILTIN_TRUST_STORE[pair.new.name] ?? [];
+      const oldWasTrusted =
+        trustList.length > 0 &&
+        oldEmails.every((e) => isTrustedPublisher(e, trustList));
+      // If the OLD side was trusted (built-in trust store) and the new side
+      // has ZERO emails, that's takeover-with-suppression: BLOCK / high.
+      // If old wasn't in the trust store (obscure package), still WARN
+      // because dropping maintainer info is unusual for legitimate releases.
+      const severity: Severity = oldWasTrusted ? 'BLOCK' : 'WARN';
+      const confidence: 'high' | 'medium' = oldWasTrusted ? 'high' : 'medium';
+      const note = oldWasTrusted
+        ? ' [takeover pattern: trusted publisher(s) replaced by EMPTY maintainer field — attacker suppressed the signal]'
+        : ' [maintainer field emptied — unusual for legit releases]';
+      return [
+        {
+          detector: 'meta.maintainer-change',
+          category: 'META',
+          package: pair.new.name,
+          from: pair.old.version,
+          to: pair.new.version,
+          direction: 'changed',
+          severity,
+          confidence,
+          message: 'Publisher/maintainer set changed between versions.' + note,
+          evidence: [
+            {
+              file: 'package.json',
+              line: 1,
+              snippet: `maintainers: [${oldEmails.join(', ')}] → []`.slice(0, 240),
+            },
+          ],
+          provenance: [],
+        },
+      ];
+    }
+
+    // REDTEAM S6 corollary: new has maintainers, old had none. This is a
+    // suddenly-appeared signal — package that never had metadata now does.
+    // Not a takeover per se, but still worth surfacing at WARN.
+    if (oldEmails.length === 0 && newEmails.length > 0) {
+      return [
+        {
+          detector: 'meta.maintainer-change',
+          category: 'META',
+          package: pair.new.name,
+          from: pair.old.version,
+          to: pair.new.version,
+          direction: 'changed',
+          severity: 'WARN',
+          confidence: 'medium',
+          message:
+            'Publisher/maintainer set changed between versions. [new package version added maintainer metadata that was previously absent]',
+          evidence: [
+            {
+              file: 'package.json',
+              line: 1,
+              snippet: `maintainers: [] → [${newEmails.join(', ')}]`.slice(0, 240),
+            },
+          ],
+          provenance: [],
+        },
+      ];
+    }
+
+    // Both non-empty — original behavior.
     const oldSet = new Set(oldEmails);
     const newSet = new Set(newEmails);
     const removed = oldEmails.filter((e) => !newSet.has(e));
@@ -48,27 +127,21 @@ export const maintainerDetector: Detector = {
     let note = '';
 
     if (trustList.length === 0) {
-      // Package not in the built-in trust store — vanilla WARN.
       severity = 'WARN';
       confidence = 'medium';
     } else if (oldTrusted && !anyNewTrusted) {
-      // Trusted publisher entirely replaced by unknown emails — classic takeover.
       severity = 'BLOCK';
       confidence = 'high';
       note = ` [takeover pattern: trusted publisher(s) replaced by unknown]`;
     } else if (oldTrusted && !newTrusted && anyNewTrusted) {
-      // Some trusted stayed, an unknown was added. Still a WARN — could be
-      // a legitimate new team member OR an added attacker account.
       severity = 'WARN';
       confidence = 'medium';
       note = ` [new publisher added alongside trusted team]`;
     } else if (newTrusted && oldTrusted) {
-      // Rotation within trust — INFO.
       severity = 'INFO';
       confidence = 'high';
       note = ` [rotation within trusted publishers]`;
     } else if (!oldTrusted && newTrusted) {
-      // Odd but not an attack shape.
       severity = 'INFO';
       confidence = 'medium';
       note = ` [publisher moved TO a trusted publisher list]`;
