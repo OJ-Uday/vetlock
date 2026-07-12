@@ -13,8 +13,8 @@
     "node_modules/@lottiefiles/lottie-player": {
       "name": "@lottiefiles/lottie-player",
       "version": "2.0.5",
-      "integrity": "sha512-P1KUFDk/Xdx0KL3b6KcgW1wyx9kHwfQCtyUdNaZAFY8eVaI4ah3NxIsZpBwmbuu6Jt2F2Ac1MaUATmRe2jUUhg==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/lottie-player-2024/_lottiefiles_lottie-player-2.0.5/_lottiefiles_lottie-player-2.0.5.tgz"
+      "integrity": "sha512-3SjJl9wFXSq9O4/dfkHVal5noUw3BGd/PnHslNuHmJ2z/1EUFKFY2w4mS0DRvwR6j67nlL2XW9rSpCgVDpprFA==",
+      "resolved": "file:./_lottiefiles_lottie-player-2.0.5/_lottiefiles_lottie-player-2.0.5.tgz"
     }
   }
 }

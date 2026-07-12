@@ -13,8 +13,8 @@
     "node_modules/foo-lib": {
       "name": "foo-lib",
       "version": "1.2.3",
-      "integrity": "sha512-KZe6Ff2DPM3ikn3Z82b0YRbNLmah67cFi9DtQ364A5jOWA3zS1qCNB+9zPhnpio0s6/VHe9mAOjUoVDx3gtQug==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/integrity-tamper-synthetic/foo-lib-1.2.3/foo-lib-1.2.3.tgz"
+      "integrity": "sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw==",
+      "resolved": "file:./foo-lib-1.2.3/foo-lib-1.2.3.tgz"
     }
   }
 }

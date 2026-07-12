@@ -13,8 +13,8 @@
     "node_modules/evader-lib": {
       "name": "evader-lib",
       "version": "1.0.1",
-      "integrity": "sha512-Dt0KyKIIQTb/AkYmvrh6mkLmJ8/RGVZgGYRe39pyhSGLpnzwWay2Mn23mbEmInhCnUE3PORDJ9KD7O/3+Bgp3Q==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/hardened-evader-2026/evader-lib-1.0.1/evader-lib-1.0.1.tgz"
+      "integrity": "sha512-W/dG4164uTivbzHN8CbIHROBKoivA/RxtoKpsAnNcjZm5CIjseGxtAB88oAoaooUSt86oD7CLs8n8YjQ4/YYgw==",
+      "resolved": "file:./evader-lib-1.0.1/evader-lib-1.0.1.tgz"
     }
   }
 }

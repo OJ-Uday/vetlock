@@ -1,4 +1,4 @@
-export const VETLOCK_VERSION = '0.2.0';
+export const VETLOCK_VERSION = '0.3.0';
 
 export * from './finding.js';
 export * from './extract.js';
@@ -13,4 +13,5 @@ export * from './changeset.js';
 export * from './engine.js';
 export * from './fetch.js';
 export * from './config.js';
+export * from './config-trust.js';
 export * from './wasm.js';

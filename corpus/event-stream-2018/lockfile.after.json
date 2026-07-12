@@ -13,8 +13,8 @@
     "node_modules/event-stream": {
       "name": "event-stream",
       "version": "3.3.6",
-      "integrity": "sha512-VHNET1/uC988j0MpXnqVDwftpa2zL4BZ1ztDXGHHyUx3kj5adbA3gGWGxPpg6bkGFLRbaQjDTyZ+il1HN3YVcQ==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/event-stream-2018/event-stream-3.3.6/event-stream-3.3.6.tgz",
+      "integrity": "sha512-s6DjvE4jb7efbXAMCD5srnjqskIm2MP8BxD9/siGBJZ37UoWwqR0wON1lHjkzXYWbdjREC1VEnN62R6Y0Fi3HA==",
+      "resolved": "file:./event-stream-3.3.6/event-stream-3.3.6.tgz",
       "dependencies": {
         "flatmap-stream": "^0.1"
       }
@@ -22,8 +22,8 @@
     "node_modules/flatmap-stream": {
       "name": "flatmap-stream",
       "version": "0.1.1",
-      "integrity": "sha512-Pi27rRZkO+YA73cInYxSQqcVYpl0LMTpN9bIqd+2zHk0JM2yV6Eql3EoY4ge4zAXdlrz/aLaAPH1i8OYDkvi9w==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/event-stream-2018/flatmap-stream-0.1.1/flatmap-stream-0.1.1.tgz"
+      "integrity": "sha512-NuNy7SIs3/2VZTjBJKYwHUoGJ7nWU26CzO46yFNzb5CloxI27r7yIs0bIg02cyLyV0QRYDFrBsWu2A3DnwVgLg==",
+      "resolved": "file:./flatmap-stream-0.1.1/flatmap-stream-0.1.1.tgz"
     }
   }
 }

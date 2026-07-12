@@ -13,8 +13,8 @@
     "node_modules/colors": {
       "name": "colors",
       "version": "1.4.44",
-      "integrity": "sha512-XlcaeXVJv+HicLzeH23hLCPQj6eBulVcuai+AIZmcj/6m6y7oJa2OinGtdjtuydyJ1fABqhl7qH74tyVZ0EBVw==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/colors-2022/colors-1.4.44/colors-1.4.44.tgz"
+      "integrity": "sha512-HIzjoNtoics5lUbW3fOMqnK/4J22d+b3g8N7COhaB/Jj0vvHI2P1b6tm0NjZWsSzCnQ+BqhtXN/AW9ZCMJkhQg==",
+      "resolved": "file:./colors-1.4.44/colors-1.4.44.tgz"
     }
   }
 }

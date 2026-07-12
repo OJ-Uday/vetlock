@@ -13,8 +13,8 @@
     "node_modules/crossenv": {
       "name": "crossenv",
       "version": "1.0.0",
-      "integrity": "sha512-luOyKGkNGPBJeBnMPwqmIsK00f1WE3o2rkO2zo5K3T5mACGN6O4P5fJmEBtQ/jM6w21SAKTvWIbHsCLvO+ypEA==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/typosquat-synthetic/crossenv-1.0.0/crossenv-1.0.0.tgz"
+      "integrity": "sha512-q5rytaYtAQXSLaEF0alDjyzdWAzPryLSX53bK8VkXVNe09CbhCPXdIGLKAbh9UZ2KSTHmGS86jS9qhp6c5k70A==",
+      "resolved": "file:./crossenv-1.0.0/crossenv-1.0.0.tgz"
     }
   }
 }

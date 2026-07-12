@@ -25,12 +25,12 @@
     "clean": {
       "name": "coa",
       "version": "2.0.2",
-      "integrity": "sha512-Lz92JohTrHmKwE4CX/WWnr9fzh8UpkQdeytZWXh4VFUMoCPcuTgi17KMauoNpGNCA70Puo8C3k5VdEdKV+cCAQ=="
+      "integrity": "sha512-p2H74Y4jdonGJMZQS8eYvXS49VsCRUrCd6h52mSMYhK63WPGpzgralOYUjMzigDXLMqFlUGEeTTlqOb59huJdw=="
     },
     "malicious": {
       "name": "coa",
       "version": "2.0.3",
-      "integrity": "sha512-BKD2J2l35/s2gcMPsXW571whVWfyTsuF8zKHki9urSGqxkt9Y1SKT67B32CmhY/kUzJB73znooUM6u7PN8pU7g=="
+      "integrity": "sha512-cUPrnCAsGh6LhVdWjDDWTTHVyPAGE6u4FLPtHmK8GUBhcz4YtuzNrnCSoTjP0YQ55Arjrf+imsS25lkRJc40tw=="
     },
     "transitives": []
   }

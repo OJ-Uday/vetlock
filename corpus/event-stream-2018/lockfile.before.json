@@ -13,8 +13,8 @@
     "node_modules/event-stream": {
       "name": "event-stream",
       "version": "3.3.5",
-      "integrity": "sha512-AjVJ+0HwXl7gRmTCY6BZb4kXNfOT1kd1a77Y3cxitzeJn5gEiYwSfzTVVTnZgq4+4fY5MqNdd9+AZh4shFDkwQ==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/event-stream-2018/event-stream-3.3.5/event-stream-3.3.5.tgz"
+      "integrity": "sha512-do+KV1KIFH2LamDo+KeGtpPF0BgsrnaUgRwBAHBcWCf7HcJihpmZQViBS405A5QhmZ1XkrMAXtiA8TFp/uE3MQ==",
+      "resolved": "file:./event-stream-3.3.5/event-stream-3.3.5.tgz"
     }
   }
 }

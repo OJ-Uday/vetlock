@@ -50,20 +50,36 @@ export function computeChangeset(oldG: LockGraph, newG: LockGraph): Change[] {
   }
 
   // Same-version integrity mismatch → BLOCK-tier signal (before any other diffs).
+  //
+  // REDTEAM S10 FIX: the old rule `o.integrity !== n.integrity && n.integrity && o.integrity`
+  // suppressed the tripwire when EITHER side was empty. An attacker who controls
+  // the "before" lockfile (any PR review scenario — the attacker authored the
+  // diff) could deliberately omit the integrity field from the old entry so
+  // that oldIntegrity is '' at parse time, then ship any tarball on the new
+  // side and the tripwire never fires.
+  //
+  // Corrected rule: fire whenever new integrity is present AND differs from
+  // old, INCLUDING the case where old was blank. A blank-then-populated
+  // integrity for the SAME version string means "vetlock previously had no
+  // ground truth for this artifact and now does" — that transition IS the
+  // signal, and it deserves a BLOCK-tier finding (integrity.now-known) rather
+  // than being silently ignored.
   for (const [id, n] of newByNameVer) {
     const o = oldByNameVer.get(id);
-    if (o && n.integrity !== o.integrity && n.integrity && o.integrity) {
-      changes.push({
-        kind: 'integrity-changed',
-        name: n.name,
-        nodeKeyOld: o.key,
-        nodeKeyNew: n.key,
-        oldVersion: o.version,
-        newVersion: n.version,
-        oldIntegrity: o.integrity,
-        newIntegrity: n.integrity,
-      });
-    }
+    if (!o) continue;
+    if (!n.integrity) continue; // no new integrity to compare against — can't tell
+    if (n.integrity === o.integrity) continue; // matches exactly, no signal
+    // Everything else is a change we must surface.
+    changes.push({
+      kind: 'integrity-changed',
+      name: n.name,
+      nodeKeyOld: o.key,
+      nodeKeyNew: n.key,
+      oldVersion: o.version,
+      newVersion: n.version,
+      oldIntegrity: o.integrity, // may be '' — that's a valid signal
+      newIntegrity: n.integrity,
+    });
   }
 
   // Version upgrades / downgrades → look at set of versions per name.

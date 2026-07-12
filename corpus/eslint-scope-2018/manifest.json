@@ -26,12 +26,12 @@
     "clean": {
       "name": "eslint-scope",
       "version": "3.7.1",
-      "integrity": "sha512-/Xd6hLRLBvHysJdDUmq6XEZq65GhzuoHUjZPvFkxe/YLQhMBrudOvNNHqT7loyjgdvX2iuQ62vv+3bYNB/n++g=="
+      "integrity": "sha512-dKWvkhQiuxzOkWbfbQwQ58il10s+yfOSOaJl7CK3hnb0/jGjRyeTM3XFFQGqdxC63oOmRCDGJnBAFx19YI7Agg=="
     },
     "malicious": {
       "name": "eslint-scope",
       "version": "3.7.2",
-      "integrity": "sha512-6rnn+2ddKUExu7TEBCYTIFE8E9AViJ3nHMZCaFfYghaTareS/XOIicPb+aPobzCTiNHEiDFzCwAwOen36GTd+Q=="
+      "integrity": "sha512-KVuLnj8LIc+yeOu4ujOYoXKYrU/Lt6bqvNUcCNn5MFUBXLQeFo5Wg5JQ2Qx8j+XD1IuFwaZiqOSO9eFO02s0Qg=="
     },
     "transitives": []
   }

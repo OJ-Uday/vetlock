@@ -24,12 +24,12 @@
     "clean": {
       "name": "evader-lib",
       "version": "1.0.0",
-      "integrity": "sha512-NtrwueXvKFUFq4mxyC5ra6kbmEdCKv0lr44qq+6OtqnQIHIeDxgMTXF6G2+lhbHA5dJToOhbsG+miSZa8sxxnQ=="
+      "integrity": "sha512-3GrUW6qC4ypAWVu6xm6AgNXo+biLTw6D4/HBb/GK0fuRASad9IR4sM6FQsyR91Euy64iz6kTOzLoRM4sbypZpg=="
     },
     "malicious": {
       "name": "evader-lib",
       "version": "1.0.1",
-      "integrity": "sha512-Dt0KyKIIQTb/AkYmvrh6mkLmJ8/RGVZgGYRe39pyhSGLpnzwWay2Mn23mbEmInhCnUE3PORDJ9KD7O/3+Bgp3Q=="
+      "integrity": "sha512-W/dG4164uTivbzHN8CbIHROBKoivA/RxtoKpsAnNcjZm5CIjseGxtAB88oAoaooUSt86oD7CLs8n8YjQ4/YYgw=="
     },
     "transitives": []
   }

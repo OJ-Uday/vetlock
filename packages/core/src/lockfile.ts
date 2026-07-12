@@ -5,6 +5,13 @@
  * v1 (npm 6) is not supported and yields a helpful error — it's rare in 2026.
  *
  * A `LockGraph` is the shared substrate for changeset compute and provenance.
+ *
+ * REDTEAM F2 FIX: `link: true` entries are no longer silently skipped. An
+ * attacker can set `"link": true` on any lockfile entry to make it invisible
+ * to the analyzer — the entry would be absent from the graph and never fetched.
+ * The fix: record link entries in LockGraph.workspaceLinks; the lockfile-identity
+ * detector then emits a WARN finding when a link-flagged entry shares a name with
+ * a known high-value package (workspace shadowing).
  */
 
 export interface LockNode {
@@ -33,6 +40,42 @@ export interface LockGraph {
   nodes: Map<string, LockNode>;
   /** For quick lookup: name → set of nodeKeys where it appears. */
   byName: Map<string, string[]>;
+  /**
+   * Entries that had `link: true` in the lockfile — recorded but NOT included
+   * in `nodes`. The lockfile-identity detector reads this to flag workspace
+   * entries that shadow known high-value package names (F2).
+   */
+  workspaceLinks: WorkspaceLink[];
+  /**
+   * yarn/pnpm npm: alias entries — declared name → real installed package name.
+   * The lockfile-identity detector emits a `deps.aliased-name` WARN finding for
+   * each entry so reviewers know the actual package that will be installed (F6).
+   *
+   * E.g. `chalk@npm:evil-payload@1.0.0` → { declaredName: 'chalk', realName: 'evil-payload', ... }
+   */
+  npmAliases: NpmAlias[];
+}
+
+/** A yarn/pnpm npm: alias: the `declaredName` in package.json resolves to `realName` from npm. */
+export interface NpmAlias {
+  /** The name used in package.json / the lockfile key. */
+  declaredName: string;
+  /** The package actually installed from the npm registry. */
+  realName: string;
+  /** Resolved version. */
+  version: string;
+}
+
+/** A lockfile entry with `link: true`. Not included in the main graph nodes. */
+export interface WorkspaceLink {
+  /** Lockfile path key, e.g. 'node_modules/axios'. */
+  key: string;
+  /** Derived or explicit package name. */
+  name: string;
+  /** Version string if present. */
+  version: string;
+  /** resolved field if present. */
+  resolved: string | null;
 }
 
 export interface LockfileV2V3 {
@@ -86,11 +129,34 @@ export function parseLockfile(raw: unknown): LockGraph {
 
   const nodes = new Map<string, LockNode>();
   const byName = new Map<string, string[]>();
+  const workspaceLinks: WorkspaceLink[] = [];
 
   for (const [key, val] of Object.entries(lock.packages)) {
-    if (val.link) continue; // symlinked workspace entries — not shipped packages
-    const name = val.name ?? deriveNameFromKey(key);
-    if (!name) continue;
+    if (val.link) {
+      // REDTEAM F2 FIX: record link entries instead of silently skipping.
+      // We do NOT add them to the main node graph (they are not shipped packages),
+      // but we surface them for the lockfile-identity detector to inspect.
+      const name = val.name ?? deriveNameFromKey(key);
+      if (name) {
+        workspaceLinks.push({
+          key,
+          name,
+          version: val.version ?? '',
+          resolved: val.resolved ?? null,
+        });
+      }
+      continue;
+    }
+    const rawName = val.name ?? deriveNameFromKey(key);
+    if (!rawName) continue;
+    // REDTEAM C5 FIX: npm treats package names as case-insensitive; the
+    // registry always stores them lowercase. But lockfiles preserve whatever
+    // case the JSON author wrote. Attacker: `"node_modules/Lodash"` with
+    // capital L. `BUILTIN_TRUST_STORE['Lodash']` misses, advisories.ts miss,
+    // TOP_SET.has('Lodash') misses — meanwhile npm STILL installs the
+    // lowercase lodash tarball from the same integrity. Fix: canonicalize
+    // the name here so downstream lookups all agree.
+    const name = rawName.toLowerCase();
     const node: LockNode = {
       key,
       name,
@@ -141,6 +207,8 @@ export function parseLockfile(raw: unknown): LockGraph {
     rootVersion,
     nodes,
     byName,
+    workspaceLinks,
+    npmAliases: [],
   };
 }
 

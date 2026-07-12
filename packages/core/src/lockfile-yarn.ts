@@ -17,7 +17,7 @@
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 import * as yarnLockfileNs from '@yarnpkg/lockfile';
 import { parseSyml } from '@yarnpkg/parsers';
-import type { LockGraph, LockNode } from './lockfile.js';
+import type { LockGraph, LockNode, NpmAlias } from './lockfile.js';
 import { UnsupportedLockfileError } from './lockfile.js';
 
 // @yarnpkg/lockfile is CommonJS. Depending on the toolchain (tsc emits ESM,
@@ -87,6 +87,7 @@ function objectToGraph(
 ): LockGraph {
   const nodes = new Map<string, LockNode>();
   const byName = new Map<string, string[]>();
+  const npmAliases: NpmAlias[] = [];
 
   // Root
   nodes.set('', {
@@ -106,11 +107,17 @@ function objectToGraph(
     for (const alias of aliases) {
       const parsed = parseYarnAlias(alias);
       if (!parsed) continue;
-      const { name } = parsed;
+      const { name, realName } = parsed;
       const version = entry.version ?? '';
       if (!version) continue;
       const nvKey = `${name}@${version}`;
       if (seen.has(nvKey)) continue;
+
+      // REDTEAM F6: record npm: alias mapping so the engine can emit
+      // a deps.aliased-name finding for reviewer scrutiny.
+      if (realName) {
+        npmAliases.push({ declaredName: name, realName, version });
+      }
 
       let key = `node_modules/${name}`;
       if (nodes.has(key)) key = `${key}@${version}`;
@@ -157,6 +164,11 @@ function objectToGraph(
     rootVersion: '',
     nodes,
     byName,
+    // yarn.lock has no `link: true` shape; workspace linking is expressed
+    // via workspace:^ specs in package.json. Empty array satisfies the
+    // LockGraph contract added for the npm-parser F2 fix.
+    workspaceLinks: [],
+    npmAliases,
   };
 }
 
@@ -164,14 +176,48 @@ function objectToGraph(
  * Parse a single yarn.lock alias like:
  *   'foo@^1.0.0'
  *   '@scope/foo@^1.0.0'
- *   'foo@npm:^1.0.0'   (yarn berry)
+ *   'foo@npm:^1.0.0'   (yarn berry plain range)
+ *   'foo@npm:evil-pkg@1.0.0'  (yarn berry npm: alias — installs a DIFFERENT package)
+ *
+ * REDTEAM F6 FIX: when the spec starts with 'npm:' AND is followed by a
+ * package name (i.e. `npm:<other-name>@<ver>`), the declared alias name and
+ * the actually-installed package name DIFFER. We return both so the engine
+ * layer can emit a `deps.aliased-name` finding. Previously only `name` was
+ * returned, hiding the real installed package from every downstream detector.
  */
-export function parseYarnAlias(alias: string): { name: string; spec: string } | null {
+export function parseYarnAlias(alias: string): {
+  name: string;
+  spec: string;
+  /** Present only when spec is `npm:<realName>@<ver>` — the name npm actually resolves. */
+  realName?: string;
+} | null {
   const s = alias.trim();
   const atIdx = s.startsWith('@') ? s.indexOf('@', 1) : s.indexOf('@');
   if (atIdx <= 0) return null;
   const name = s.slice(0, atIdx);
   const spec = s.slice(atIdx + 1);
   if (!name || !spec) return null;
+
+  // Detect `npm:<package>@<version>` alias shape (F6).
+  // A plain range looks like `npm:^1.0.0` — the first char after 'npm:' is '^','~', or a digit.
+  // A package alias looks like `npm:evil-pkg@1.0.0` — the part after 'npm:' contains '@'
+  // (for non-scoped) or starts with '@' (scoped, e.g. `npm:@scope/pkg@1.0.0`).
+  if (spec.startsWith('npm:')) {
+    const after = spec.slice(4); // text after 'npm:'
+    // Is this a package alias? Check if it contains an '@' that isn't the first char
+    // (non-scoped) OR starts with '@' (scoped package alias).
+    const isAlias = after.startsWith('@')
+      ? after.indexOf('@', 1) !== -1           // scoped: @scope/pkg@ver
+      : after.includes('@') && !/^[\^~><=*]/.test(after); // non-scoped: pkg@ver (not a semver range)
+    if (isAlias) {
+      // Extract the real package name from `npm:<realName>@<ver>` or `npm:@scope/pkg@ver`.
+      const realAt = after.startsWith('@') ? after.indexOf('@', 1) : after.indexOf('@');
+      const realName = realAt === -1 ? after : after.slice(0, realAt);
+      if (realName && realName !== name) {
+        return { name, spec, realName };
+      }
+    }
+  }
+
   return { name, spec };
 }

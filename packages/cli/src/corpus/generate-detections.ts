@@ -54,11 +54,20 @@ async function main() {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Manifest;
     const before = fs.readFileSync(path.join(CORPUS_ROOT, id, 'lockfile.before.json'), 'utf8');
     const after = fs.readFileSync(path.join(CORPUS_ROOT, id, 'lockfile.after.json'), 'utf8');
+    const fixtureDir = path.join(CORPUS_ROOT, id);
     const result = await runDiff(before, after, {
       runDetectors: (pair) => runAll(pair),
       fetchOverride: async (ref) => {
-        if (ref.resolved?.startsWith('file://')) return new URL(ref.resolved).pathname;
-        throw new Error(`should not need to fetch ${ref.name}@${ref.version}`);
+        if (!ref.resolved?.startsWith('file:')) {
+          throw new Error(`should not need to fetch ${ref.name}@${ref.version}`);
+        }
+        // Corpus fixtures use RELATIVE resolved URLs (file:./...) so the corpus
+        // is portable across machines; resolve them against the fixture dir.
+        const raw = ref.resolved.slice('file:'.length);
+        if (raw.startsWith('///')) return raw.slice(2);
+        if (raw.startsWith('//')) return raw.slice(raw.indexOf('/', 2));
+        if (raw.startsWith('/')) return raw;
+        return path.resolve(fixtureDir, raw.replace(/^\.\//, ''));
       },
     });
     entries.push({ manifest, result });

@@ -13,8 +13,8 @@
     "node_modules/ua-parser-js": {
       "name": "ua-parser-js",
       "version": "0.7.29",
-      "integrity": "sha512-/EPzp62zSq2tyGYNoIWat3gCU/EuNJhKnZ8h4L806EKvTxduhyD1QGfSRytqEH/cZSvCTYs8e4V47FZdpUOMag==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/ua-parser-2021/ua-parser-js-0.7.29/ua-parser-js-0.7.29.tgz"
+      "integrity": "sha512-GHSIIUR6MY1AqGZYu5vrkBal/3+NlN9fykJVCCH8uPSKxnLVjRFdxgcDaeP1aCAxqrA/CSGRZBAzdcRyYygrhg==",
+      "resolved": "file:./ua-parser-js-0.7.29/ua-parser-js-0.7.29.tgz"
     }
   }
 }

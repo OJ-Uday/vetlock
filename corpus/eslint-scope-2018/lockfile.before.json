@@ -13,8 +13,8 @@
     "node_modules/eslint-scope": {
       "name": "eslint-scope",
       "version": "3.7.1",
-      "integrity": "sha512-/Xd6hLRLBvHysJdDUmq6XEZq65GhzuoHUjZPvFkxe/YLQhMBrudOvNNHqT7loyjgdvX2iuQ62vv+3bYNB/n++g==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/eslint-scope-2018/eslint-scope-3.7.1/eslint-scope-3.7.1.tgz"
+      "integrity": "sha512-dKWvkhQiuxzOkWbfbQwQ58il10s+yfOSOaJl7CK3hnb0/jGjRyeTM3XFFQGqdxC63oOmRCDGJnBAFx19YI7Agg==",
+      "resolved": "file:./eslint-scope-3.7.1/eslint-scope-3.7.1.tgz"
     }
   }
 }

@@ -100,7 +100,8 @@ describe('compound-suspicion escalation (runAll)', () => {
     }
   });
 
-  it('does NOT escalate when only 2 WARN findings (below threshold)', () => {
+  it('does NOT escalate when only 1 WARN finding (below threshold)', () => {
+    // A single WARN finding can never trigger compound-suspicion (needs 2+).
     const pair = {
       old: mkSnap({
         name: 'benign',
@@ -111,12 +112,12 @@ describe('compound-suspicion escalation (runAll)', () => {
       new: mkSnap({
         name: 'benign',
         version: '1.0.1',
+        // Only maintainer-change fires (META/WARN). No capability changes → no NET/CODE/etc.
         manifest: { name: 'benign', version: '1.0.1', maintainers: [{ email: 'new@ex.com' }] },
-        files: [mkFile({ path: 'i.js', networkModules: ['https'] })],
+        files: [mkFile({ path: 'i.js' })],
       }),
     };
     const findings = runAll(pair);
-    // Should still contain the two WARN findings unchanged.
     const stillWarn = findings.filter((f) => f.severity === 'WARN');
     expect(stillWarn.length).toBeGreaterThan(0);
     for (const w of stillWarn) {
@@ -124,9 +125,10 @@ describe('compound-suspicion escalation (runAll)', () => {
     }
   });
 
-  it('does NOT escalate 3+ WARN findings in the SAME category (needs category diversity)', () => {
-    // 3 code.dynamic-loading-added findings — same category — should NOT
-    // escalate because the diversity rule requires 2+ distinct categories.
+  it('DOES escalate 3+ WARN findings in the SAME category (single-category saturation — REDTEAM S5, D4)', () => {
+    // Under the new rule 3a, warns.length >= 3 is sufficient to escalate regardless
+    // of category count. 3 code.dynamic-loading-added findings (all CODE) must escalate
+    // because 3 dynamic-eval calls across a diff is compound suspicious even in isolation.
     const pair = {
       old: mkSnap({
         name: 'code-heavy',
@@ -150,9 +152,11 @@ describe('compound-suspicion escalation (runAll)', () => {
     };
     const findings = runAll(pair);
     const codeFindings = findings.filter((f) => f.category === 'CODE');
-    // All 3 should still be WARN, none escalated by compound-suspicion.
+    // All 3 should now be BLOCK — compound-suspicion escalates on 3+ WARN regardless of category.
+    expect(codeFindings.length).toBeGreaterThanOrEqual(3);
     for (const f of codeFindings) {
-      expect(f.severity).toBe('WARN');
+      expect(f.severity).toBe('BLOCK');
+      expect(f.message).toMatch(/escalated/);
     }
   });
 });

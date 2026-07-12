@@ -158,6 +158,10 @@ async function main() {
   });
 
   // Build the lockfile pair. Root project has chalk as a direct dependency.
+  // Resolved URLs are RELATIVE to the fixture dir so the corpus is byte-portable
+  // across machines and no builder-home path leaks into shipped docs.
+  const cleanRel = 'file:./' + path.relative(OUT_DIR, clean.path).split(path.sep).join('/');
+  const malRel = 'file:./' + path.relative(OUT_DIR, mal.path).split(path.sep).join('/');
   const lockBefore = {
     name: 'my-app',
     version: '1.0.0',
@@ -168,7 +172,7 @@ async function main() {
         name: 'chalk',
         version: '5.3.0',
         integrity: clean.integrity,
-        resolved: `file://${clean.path}`,
+        resolved: cleanRel,
       },
     },
   };
@@ -182,7 +186,7 @@ async function main() {
         name: 'chalk',
         version: '5.3.1',
         integrity: mal.integrity,
-        resolved: `file://${mal.path}`,
+        resolved: malRel,
       },
     },
   };

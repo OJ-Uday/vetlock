@@ -34,13 +34,25 @@ const traverse: BabelTraverseCallable = (() => {
 })();
 
 const NETWORK_MODULES = new Set([
+  // HTTP / TCP / UDP / TLS
   'http', 'https', 'net', 'dgram', 'tls', 'undici', 'axios', 'node-fetch',
   'got', 'request', 'superagent', 'ws',
   'node:http', 'node:https', 'node:net', 'node:dgram', 'node:tls',
+  // REDTEAM N3 FIX: dns is a covert exfil channel. Encode data as a subdomain
+  // and dns.lookup() / dns.resolve() send it to the attacker's DNS server.
+  // Ignored by the network detectors until this addition.
+  'dns', 'dns/promises', 'node:dns', 'node:dns/promises',
 ]);
 const EXEC_MODULES = new Set([
   'child_process', 'worker_threads', 'vm',
   'node:child_process', 'node:worker_threads', 'node:vm',
+  // REDTEAM N2 FIX: inspector.open() starts a V8 debug server that lets any
+  // reachable client eval arbitrary JS in the running process — that's an
+  // RCE primitive equivalent to child_process. async_hooks lets an attacker
+  // monkeypatch every Promise/timer callback. trace_events and perf_hooks
+  // expose Chrome trace format host callbacks with historical CVEs.
+  'inspector', 'async_hooks', 'trace_events', 'perf_hooks',
+  'node:inspector', 'node:async_hooks', 'node:trace_events', 'node:perf_hooks',
 ]);
 const FS_MODULES = new Set([
   'fs', 'fs/promises', 'node:fs', 'node:fs/promises', 'graceful-fs',
@@ -128,7 +140,20 @@ export function isMinified(text: string): boolean {
   return false;
 }
 
-const URL_REGEX = /\b(https?:\/\/[^\s'"`<>]+|(?:[a-z0-9-]+\.){1,}(?:com|net|org|io|dev|co|app|xyz|ru|cn|tk|ml|ga|cf|invalid))\b/gi;
+// REDTEAM L4 FIX: the old regex only accepted 15 hardcoded TLDs. Attackers
+// routinely use `.top`, `.pw`, `.zip`, `.click`, `.info`, `.icu`, `.site`,
+// etc. — Spamhaus & abuseIPDB rank these as top-abused TLDs. Also expanded to
+// include RFC-2606 reserved TLDs (.example / .test / .localhost) because
+// vetlock's own defanged fixtures use those; they should be flagged in real
+// packages as suspicious placeholders.
+//
+// Structure: alternative 1 (unchanged) — full https?:// URL.
+// Alternative 2 — bare `sub.domain.tld` with any of the below TLDs.
+// Alternative 3 — bare host on any 2-4 letter TLD that isn't a hardcoded
+// "safe" TLD. Any random 2-4 letter TLD that isn't in ALLOWED_BENIGN_TLDS
+// (com/net/org/io/dev/co/etc — the widely-legitimate ones we tolerate as
+// baseline) is treated as suspect.
+const URL_REGEX = /\b(https?:\/\/[^\s'"`<>]+|(?:[a-z0-9-]+\.){1,}(?:com|net|org|io|dev|co|app|xyz|ru|cn|tk|ml|ga|cf|invalid|top|pw|zip|click|info|us|biz|mobi|icu|host|online|club|cloud|site|work|stream|party|science|today|link|fit|men|rest|space|store|shop|tech|world|life|guru|pro|name|example|test|localhost))\b/gi;
 
 /** Heuristic: does this string LOOK like a filesystem path? */
 const LOOKS_LIKE_PATH = /^([~./]|[A-Z]:\\|\/[a-zA-Z._-]|\.\.\/|\.\/|[a-zA-Z_-]+[/\\])/;
@@ -332,6 +357,12 @@ export function extractCapabilities(
   const dynamicCode: DynamicCodeSite[] = [];
   const fsWriteTargets = new Set<string>();
   const fsReadTargets = new Set<string>();
+  // REDTEAM L11 FIX: detect rot13 / XOR / custom-substitution decoders by
+  // co-occurrence of `String.fromCharCode` and `charCodeAt` in the same file.
+  // Both are the primitives used by every per-char decoder loop — legitimate
+  // packages rarely use both together outside of hash/encoding libraries.
+  let hasFromCharCodeCall = false;
+  let hasCharCodeAtRef = false;
   /** Set of hot-path-shaped string literals seen anywhere in the file. */
   const pathLiterals = new Set<string>();
   /** Whether the file references fs.<read*|write*> at all. */
@@ -360,7 +391,22 @@ export function extractCapabilities(
   // ---- CONSTANT-FOLDING PASS (v0.2) ----
   // Resolve as many strings as possible so subsequent detector logic can
   // treat charCode/base64/hex-encoded values the same as literals.
-  const folds = foldConstants(ast, traverse as unknown as (n: t.Node, opts: unknown) => void);
+  //
+  // REDTEAM L6 FIX: wrap foldConstants in try/catch. A file with deeply
+  // nested AST structures (e.g. 15000 backticks → ~7500-deep TemplateLiteral
+  // chain) parses fine under errorRecovery but then overflows @babel/traverse's
+  // recursive descent, raising a RangeError.  Fail-soft into a parseError
+  // result so the run continues and the file is flagged, not crashed.
+  let folds: ReturnType<typeof foldConstants>;
+  try {
+    folds = foldConstants(ast, traverse as unknown as (n: t.Node, opts: unknown) => void);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      ...base,
+      parseError: `traverse failed: ${msg.slice(0, 200)}`,
+    };
+  }
 
   /** Prefer the folded value of a node; fall back to `.value` for direct literals. */
   function nodeValue(node: t.Node | undefined | null): string | null {
@@ -377,6 +423,104 @@ export function extractCapabilities(
     if (FS_MODULES.has(name)) fsMods.add(name);
   }
 
+  /**
+   * REDTEAM L10 helper: reparse a string as JS and route its module-imports
+   * through noteModuleImport. Used for `eval("require('x')")` and
+   * `new Function("return require('x')")()`. Fail-soft — a string that
+   * doesn't parse is not signal, just quiet.
+   *
+   * Depth-limited to prevent runaway recursion. The nested pass is a fresh
+   * `parser.parse` with error-recovery and no traversal — we walk manually
+   * and extract only CallExpression whose callee is 'require' (or
+   * require.call / require.apply / etc via the same rules as the outer
+   * visitor). No fold, no aliases inside the nested source — this is a
+   * best-effort recovery pass, not a full re-analysis.
+   */
+  function scanNestedSource(source: string, forwardImport: (name: string) => void): void {
+    if (!source || source.length < 4 || source.length > 8192) return;
+    let nestedAst: parser.ParseResult<t.File>;
+    try {
+      nestedAst = parser.parse(source, {
+        sourceType: 'unambiguous',
+        errorRecovery: true,
+        allowReturnOutsideFunction: true,
+        allowAwaitOutsideFunction: true,
+        allowImportExportEverywhere: true,
+      });
+    } catch {
+      return;
+    }
+    // Manual walk — depth-first, node.type-driven, no @babel/traverse cost.
+    const stack: unknown[] = [nestedAst];
+    let visited = 0;
+    while (stack.length > 0 && visited < 5000) {
+      const cur = stack.pop();
+      visited++;
+      if (!cur || typeof cur !== 'object') continue;
+      const n = cur as t.Node;
+      // Check CallExpression variants
+      if (n.type === 'CallExpression') {
+        const ce = n as t.CallExpression;
+        const callee = ce.callee;
+        const args = ce.arguments;
+        // Bare require('x')
+        if (t.isIdentifier(callee, { name: 'require' })) {
+          const a = args[0];
+          if (t.isStringLiteral(a)) forwardImport(a.value);
+        }
+        // require.call(null, 'x')
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.object, { name: 'require' }) &&
+          t.isIdentifier(callee.property, { name: 'call' })
+        ) {
+          const modArg = args[1];
+          if (t.isStringLiteral(modArg)) forwardImport(modArg.value);
+        }
+        // require.apply(null, ['x'])
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.object, { name: 'require' }) &&
+          t.isIdentifier(callee.property, { name: 'apply' })
+        ) {
+          const arr = args[1];
+          if (t.isArrayExpression(arr) && t.isStringLiteral(arr.elements[0])) {
+            forwardImport(arr.elements[0].value);
+          }
+        }
+        // process.mainModule.require('x')
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.property, { name: 'require' }) &&
+          t.isMemberExpression(callee.object) &&
+          t.isIdentifier(callee.object.object, { name: 'process' }) &&
+          t.isIdentifier(callee.object.property, { name: 'mainModule' })
+        ) {
+          const a = args[0];
+          if (t.isStringLiteral(a)) forwardImport(a.value);
+        }
+        // module.constructor._load / Module._load
+        if (
+          t.isMemberExpression(callee) &&
+          t.isIdentifier(callee.property, { name: '_load' })
+        ) {
+          const a = args[0];
+          if (t.isStringLiteral(a)) forwardImport(a.value);
+        }
+      }
+      // Descend into all fields of the current node — brute-force AST walk
+      for (const k of Object.keys(n)) {
+        if (k === 'loc' || k === 'start' || k === 'end') continue;
+        const v = (n as unknown as Record<string, unknown>)[k];
+        if (Array.isArray(v)) {
+          for (const child of v) if (child && typeof child === 'object') stack.push(child);
+        } else if (v && typeof v === 'object') {
+          stack.push(v);
+        }
+      }
+    }
+  }
+
   function lineOf(node: t.Node): number {
     return node.loc?.start.line ?? 0;
   }
@@ -391,6 +535,11 @@ export function extractCapabilities(
     return (lines[start.line - 1] ?? '').slice(0, 240).trim();
   }
 
+  // REDTEAM L6 FIX: wrap the main traverse visitor in try/catch. Any traversal
+  // crash (stack overflow, unexpected node shape, etc.) that slips through the
+  // foldConstants guard above is caught here and fails-soft so vetlock never
+  // re-throws from extractCapabilities.
+  try {
   traverse(ast, {
     // Static ES module imports
     ImportDeclaration(path: NodePath<t.ImportDeclaration>) {
@@ -406,19 +555,31 @@ export function extractCapabilities(
         }
       }
     },
-    // CommonJS require(...)
+    // CommonJS require(...) — plus require.call, require.apply,
+    // process.mainModule.require, module.constructor._load, Module._load.
+    // REDTEAM L3 FIX: attackers use `require.call(null, 'child_process')` and
+    // friends to load modules via callee shapes the naive `require` visitor
+    // never fired on. We now match every documented equivalent form.
     CallExpression(path: NodePath<t.CallExpression>) {
       const callee = path.node.callee;
       const args = path.node.arguments;
 
-      // require('x') — try folded value too
+      // REDTEAM L11: track String.fromCharCode calls (part of the rot13
+      // co-occurrence signal — see the post-pass below).
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.object, { name: 'String' }) &&
+        t.isIdentifier(callee.property, { name: 'fromCharCode' })
+      ) {
+        hasFromCharCodeCall = true;
+      }
+
+      // Direct: `require('x')`
       if (t.isIdentifier(callee, { name: 'require' })) {
         const a = args[0];
         const asString = nodeValue(a ?? null);
         if (asString !== null) {
           noteModuleImport(asString);
-          // Alias tracking: `const cp = require('child_process')` — the
-          // enclosing VariableDeclarator visitor handles binding cp → module.
         } else if (a) {
           dynamicCode.push({
             line: lineOf(path.node),
@@ -428,13 +589,96 @@ export function extractCapabilities(
         }
       }
 
-      // eval(...)
+      // REDTEAM L3: require.call(null, 'x') and require.apply(null, ['x']).
+      // Callee is a MemberExpression whose object is Identifier 'require' and
+      // property is 'call' or 'apply'. For .call the module name is arg[1];
+      // for .apply it's the first element of the array in arg[1].
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.object, { name: 'require' }) &&
+        t.isIdentifier(callee.property) &&
+        (callee.property.name === 'call' || callee.property.name === 'apply')
+      ) {
+        if (callee.property.name === 'call') {
+          const modArg = args[1];
+          const asString = nodeValue(modArg ?? null);
+          if (asString !== null) noteModuleImport(asString);
+          else if (modArg) {
+            dynamicCode.push({ line: lineOf(path.node), kind: 'dynamic-require', snippet: snippetOf(path.node) });
+          }
+        } else {
+          // .apply — arg[1] is an ArrayExpression whose first element is the module name
+          const arr = args[1];
+          if (t.isArrayExpression(arr)) {
+            const first = arr.elements[0];
+            if (first) {
+              const asString = nodeValue(first as t.Node);
+              if (asString !== null) noteModuleImport(asString);
+            }
+          }
+        }
+      }
+
+      // REDTEAM L3: process.mainModule.require('x') — callee is a nested
+      // MemberExpression whose innermost object is 'process' and innermost
+      // property is 'mainModule', with outer property 'require'.
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.property, { name: 'require' }) &&
+        t.isMemberExpression(callee.object) &&
+        t.isIdentifier(callee.object.object, { name: 'process' }) &&
+        t.isIdentifier(callee.object.property, { name: 'mainModule' })
+      ) {
+        const a = args[0];
+        const asString = nodeValue(a ?? null);
+        if (asString !== null) noteModuleImport(asString);
+      }
+
+      // REDTEAM L3: module.constructor._load('x') and Module._load('x').
+      // Both use ._load as the effective require. Callee: MemberExpression
+      // with property '_load' (any object).
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.property, { name: '_load' })
+      ) {
+        const a = args[0];
+        const asString = nodeValue(a ?? null);
+        if (asString !== null) noteModuleImport(asString);
+      }
+
+      // eval(...) — record the dynamic-code site AND recursively re-parse the
+      // folded argument for hidden require calls.
       if (t.isIdentifier(callee, { name: 'eval' })) {
         dynamicCode.push({
           line: lineOf(path.node),
           kind: 'eval',
           snippet: snippetOf(path.node),
         });
+        // REDTEAM L10 FIX: pull out the eval argument as a string, parse it as
+        // JS, and re-run the module-detection logic on the mini-AST. This
+        // catches `eval("require('child_process')")` and folded variants like
+        // `eval("requ" + "ire('child_process')")`.
+        const argValue = nodeValue(args[0] ?? null);
+        if (argValue !== null && argValue.length < 8192) {
+          scanNestedSource(argValue, noteModuleImport);
+        }
+      }
+
+      // REDTEAM L10 FIX: `new Function("return require('x')")()` — Babel
+      // represents this as a CallExpression whose callee is a NewExpression
+      // of Function. When we detect this shape, parse the function body
+      // string and scan for module imports.
+      if (
+        t.isNewExpression(callee) &&
+        t.isIdentifier(callee.callee, { name: 'Function' })
+      ) {
+        // Last argument of `new Function(...)` is the function body string.
+        const fnArgs = callee.arguments;
+        const bodyNode = fnArgs[fnArgs.length - 1];
+        const bodyText = nodeValue(bodyNode as t.Node ?? null);
+        if (bodyText !== null && bodyText.length < 8192) {
+          scanNestedSource(bodyText, noteModuleImport);
+        }
       }
 
       // dynamic import(...)
@@ -447,6 +691,71 @@ export function extractCapabilities(
           dynamicCode.push({
             line: lineOf(path.node),
             kind: 'dynamic-import',
+            snippet: snippetOf(path.node),
+          });
+        }
+      }
+
+      // REDTEAM L5 FIX: Reflect.get(process.env, 'KEY') and Reflect.get(process, 'env').
+      // Reflect.get is a MemberExpression callee with object 'Reflect' and property 'get'.
+      // First arg is the target; second is the key literal (foldable).
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.object, { name: 'Reflect' }) &&
+        t.isIdentifier(callee.property, { name: 'get' })
+      ) {
+        const target = args[0];
+        const keyNode = args[1];
+        const isEnvTarget =
+          !!target &&
+          t.isMemberExpression(target) &&
+          t.isIdentifier(target.object, { name: 'process' }) &&
+          t.isIdentifier(target.property, { name: 'env' });
+        const isProcessTargetForEnv =
+          !!target &&
+          t.isIdentifier(target, { name: 'process' }) &&
+          nodeValue(keyNode as t.Node ?? null) === 'env';
+        if (isEnvTarget) {
+          const line = lineOf(path.node);
+          const snippet = snippetOf(path.node);
+          const asString = nodeValue(keyNode as t.Node ?? null);
+          if (asString !== null) {
+            envAccesses.push({ line, keys: [asString], snippet });
+          } else {
+            envAccesses.push({ line, keys: null, snippet });
+          }
+        }
+        if (isProcessTargetForEnv) {
+          // Reflect.get(process, 'env') — treat like alias assignment target
+          // when we see the parent VariableDeclarator (handled below), but
+          // also record it as a whole-env enumeration signal in place.
+          envAccesses.push({
+            line: lineOf(path.node),
+            keys: null,
+            snippet: snippetOf(path.node),
+          });
+        }
+      }
+
+      // REDTEAM L2 FIX: Reflect.ownKeys(process.env) — whole-object enumeration.
+      // Existing Object.keys/entries/values/assign are handled in the MemberExpression
+      // visitor; Reflect.ownKeys was uncovered. Recognize it here.
+      if (
+        t.isMemberExpression(callee) &&
+        t.isIdentifier(callee.object, { name: 'Reflect' }) &&
+        t.isIdentifier(callee.property) &&
+        (callee.property.name === 'ownKeys' || callee.property.name === 'has')
+      ) {
+        const target = args[0];
+        if (
+          target &&
+          t.isMemberExpression(target) &&
+          t.isIdentifier(target.object, { name: 'process' }) &&
+          t.isIdentifier(target.property, { name: 'env' })
+        ) {
+          envAccesses.push({
+            line: lineOf(path.node),
+            keys: null,
             snippet: snippetOf(path.node),
           });
         }
@@ -502,6 +811,11 @@ export function extractCapabilities(
       const obj = path.node.object;
       const prop = path.node.property;
 
+      // REDTEAM L11: track .charCodeAt references (rot13 co-occurrence signal).
+      if (t.isIdentifier(prop, { name: 'charCodeAt' })) {
+        hasCharCodeAtRef = true;
+      }
+
       // Directly-typed process.env access
       const isProcessEnvDirect =
         t.isMemberExpression(obj) &&
@@ -537,20 +851,38 @@ export function extractCapabilities(
         }
       }
 
-      // Object.keys(process.env) / Object.entries(process.env) — whole-object enumeration
+      // Whole-object enumeration of process.env — many equivalent shapes.
+      // REDTEAM L2 FIX: the old rule only accepted `Object.keys(process.env)`
+      // and similar. Real attackers use spread (`{...process.env}`), for-in
+      // (`for (const k in process.env)`), and rest-in-destructure
+      // (`const { ...rest } = process.env`). These all end up with `process.env`
+      // as the immediate object node whose PARENT is one of:
+      //   - CallExpression with callee.object === Object (existing)
+      //   - CallExpression with callee.object === Reflect (Reflect.ownKeys is handled in the CallExpression visitor above, but this covers the case where we visit process.env before its consuming CallExpression)
+      //   - SpreadElement (spread into array or object)
+      //   - ForInStatement (right side)
+      //   - ForOfStatement (right side — Object.entries loop pattern)
+      //   - AssignmentExpression right side that binds to `{ ...x }` — covered via ObjectPattern below
       if (
         t.isIdentifier(obj, { name: 'process' }) &&
-        t.isIdentifier(prop, { name: 'env' }) &&
-        path.parent &&
-        t.isCallExpression(path.parent) &&
-        t.isMemberExpression(path.parent.callee) &&
-        t.isIdentifier(path.parent.callee.object, { name: 'Object' })
+        t.isIdentifier(prop, { name: 'env' })
       ) {
-        envAccesses.push({
-          line: lineOf(path.node),
-          keys: null,
-          snippet: snippetOf(path.node),
-        });
+        const parent = path.parent;
+        const isObjectKeysCall =
+          parent &&
+          t.isCallExpression(parent) &&
+          t.isMemberExpression(parent.callee) &&
+          t.isIdentifier(parent.callee.object, { name: 'Object' });
+        const isSpread = parent && t.isSpreadElement(parent);
+        const isForIn = parent && t.isForInStatement(parent) && parent.right === path.node;
+        const isForOf = parent && t.isForOfStatement(parent) && parent.right === path.node;
+        if (isObjectKeysCall || isSpread || isForIn || isForOf) {
+          envAccesses.push({
+            line: lineOf(path.node),
+            keys: null,
+            snippet: snippetOf(path.node),
+          });
+        }
       }
     },
     // new Function(...)
@@ -563,12 +895,64 @@ export function extractCapabilities(
         });
       }
     },
-    // Track local variable bindings — for paths, module aliases, and process aliases.
+    // Track local variable bindings — for paths, module aliases, process
+    // aliases, and (REDTEAM L1/L2/L5/L8) destructured env access.
     VariableDeclarator(path: NodePath<t.VariableDeclarator>) {
-      if (!t.isIdentifier(path.node.id)) return;
-      const varName = path.node.id.name;
+      const id = path.node.id;
       const init = path.node.init;
       if (!init) return;
+
+      // REDTEAM L1/L2/L5 FIX — destructure from process.env
+      // ObjectPattern binding never triggers the MemberExpression visitor
+      // for `process.env.X`. We check whether the init resolves to process.env
+      // (directly or via alias or via Reflect.get(process, 'env')) and, if
+      // the id is an ObjectPattern, walk each destructured property.
+      if (t.isObjectPattern(id)) {
+        const initIsProcessEnv =
+          // direct: process.env
+          (t.isMemberExpression(init) &&
+            t.isIdentifier(init.object, { name: 'process' }) &&
+            ((t.isIdentifier(init.property, { name: 'env' }) && !init.computed) ||
+              (t.isStringLiteral(init.property, { value: 'env' }) && init.computed))) ||
+          // aliased: const env = process.env; const { NPM_TOKEN } = env;
+          (t.isIdentifier(init) && processAliases.get(init.name) === 'process.env') ||
+          // Reflect.get(process, 'env')
+          (t.isCallExpression(init) &&
+            t.isMemberExpression(init.callee) &&
+            t.isIdentifier(init.callee.object, { name: 'Reflect' }) &&
+            t.isIdentifier(init.callee.property, { name: 'get' }) &&
+            init.arguments[0] &&
+            t.isIdentifier(init.arguments[0], { name: 'process' }) &&
+            nodeValue(init.arguments[1] as t.Node ?? null) === 'env');
+
+        if (initIsProcessEnv) {
+          const line = lineOf(path.node);
+          const snippet = snippetOf(path.node);
+          for (const prop of id.properties) {
+            if (t.isObjectProperty(prop)) {
+              const key = prop.key;
+              if (t.isIdentifier(key) && !prop.computed) {
+                envAccesses.push({ line, keys: [key.name], snippet });
+              } else if (t.isStringLiteral(key)) {
+                envAccesses.push({ line, keys: [key.value], snippet });
+              } else {
+                const folded = nodeValue(key as t.Node);
+                if (folded !== null) envAccesses.push({ line, keys: [folded], snippet });
+                else envAccesses.push({ line, keys: null, snippet });
+              }
+            } else if (t.isRestElement(prop)) {
+              // `const { ...rest } = process.env` — whole-object enumeration
+              envAccesses.push({ line, keys: null, snippet });
+            }
+          }
+        }
+        // ObjectPattern binding doesn't create a scalar varName for further
+        // alias tracking; stop here.
+        return;
+      }
+
+      if (!t.isIdentifier(id)) return;
+      const varName = id.name;
 
       // Filesystem path binding: `var x = path.join(os.homedir(), '.npmrc')`
       const pathTarget = extractPathTarget(init);
@@ -583,6 +967,50 @@ export function extractCapabilities(
           moduleAliases.set(varName, modName);
         }
       }
+      // REDTEAM L3 — `const cp = require.call(null, 'child_process')` alias binding
+      if (
+        t.isCallExpression(init) &&
+        t.isMemberExpression(init.callee) &&
+        t.isIdentifier(init.callee.object, { name: 'require' }) &&
+        t.isIdentifier(init.callee.property) &&
+        (init.callee.property.name === 'call' || init.callee.property.name === 'apply')
+      ) {
+        if (init.callee.property.name === 'call') {
+          const modArg = init.arguments[1];
+          const modName = nodeValue(modArg ?? null);
+          if (modName !== null) moduleAliases.set(varName, modName);
+        } else {
+          const arr = init.arguments[1];
+          if (t.isArrayExpression(arr)) {
+            const first = arr.elements[0];
+            if (first) {
+              const modName = nodeValue(first as t.Node);
+              if (modName !== null) moduleAliases.set(varName, modName);
+            }
+          }
+        }
+      }
+      // REDTEAM L3 — `const cp = process.mainModule.require('child_process')`
+      if (
+        t.isCallExpression(init) &&
+        t.isMemberExpression(init.callee) &&
+        t.isIdentifier(init.callee.property, { name: 'require' }) &&
+        t.isMemberExpression(init.callee.object) &&
+        t.isIdentifier(init.callee.object.object, { name: 'process' }) &&
+        t.isIdentifier(init.callee.object.property, { name: 'mainModule' })
+      ) {
+        const modName = nodeValue(init.arguments[0] ?? null);
+        if (modName !== null) moduleAliases.set(varName, modName);
+      }
+      // REDTEAM L3 — `const cp = Module._load('child_process')`
+      if (
+        t.isCallExpression(init) &&
+        t.isMemberExpression(init.callee) &&
+        t.isIdentifier(init.callee.property, { name: '_load' })
+      ) {
+        const modName = nodeValue(init.arguments[0] ?? null);
+        if (modName !== null) moduleAliases.set(varName, modName);
+      }
       // Second-level alias: `const spawn = cp.spawn` — spawn inherits cp's module
       if (t.isMemberExpression(init) && t.isIdentifier(init.object)) {
         const parentMod = moduleAliases.get(init.object.name);
@@ -596,14 +1024,35 @@ export function extractCapabilities(
         if (parentProc) processAliases.set(varName, parentProc);
       }
 
-      // Process aliases: `const p = process` and `const e = process.env`
+      // Process aliases: `const p = process` and `const e = process.env`.
+      // REDTEAM L8 FIX: also handle computed-property access like
+      // `process["env"]` and `process["e" + "nv"]` (fold-aware).
       if (t.isIdentifier(init, { name: 'process' })) {
         processAliases.set(varName, 'process');
       }
       if (
         t.isMemberExpression(init) &&
-        t.isIdentifier(init.object, { name: 'process' }) &&
-        t.isIdentifier(init.property, { name: 'env' })
+        t.isIdentifier(init.object, { name: 'process' })
+      ) {
+        // Non-computed: process.env
+        if (t.isIdentifier(init.property, { name: 'env' }) && !init.computed) {
+          processAliases.set(varName, 'process.env');
+        }
+        // Computed with string literal or fold-resolvable to 'env'
+        if (init.computed) {
+          const propValue = nodeValue(init.property);
+          if (propValue === 'env') processAliases.set(varName, 'process.env');
+        }
+      }
+      // REDTEAM L5: `const env = Reflect.get(process, 'env')`
+      if (
+        t.isCallExpression(init) &&
+        t.isMemberExpression(init.callee) &&
+        t.isIdentifier(init.callee.object, { name: 'Reflect' }) &&
+        t.isIdentifier(init.callee.property, { name: 'get' }) &&
+        init.arguments[0] &&
+        t.isIdentifier(init.arguments[0], { name: 'process' }) &&
+        nodeValue(init.arguments[1] as t.Node ?? null) === 'env'
       ) {
         processAliases.set(varName, 'process.env');
       }
@@ -655,6 +1104,13 @@ export function extractCapabilities(
       }
     },
   });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      ...base,
+      parseError: `traverse failed: ${msg.slice(0, 200)}`,
+    };
+  }
 
   // ---- POST-FOLD SWEEP ----
   // Every node the fold pass resolved to a string is a candidate for URL /
@@ -679,6 +1135,77 @@ export function extractCapabilities(
     }
     if (folded.length > 2 && folded.length < 200 && LOOKS_LIKE_PATH.test(folded)) {
       pathLiterals.add(folded);
+    }
+  }
+
+  // REDTEAM L11 FIX: rot13 / XOR / custom-substitution decoder detection.
+  // If the file uses BOTH String.fromCharCode AND charCodeAt, it almost
+  // certainly contains a per-char decoder loop — the primitive attackers use
+  // to hide URLs, module names, and env-key names from static scans. We emit
+  // a dynamicCode entry marking the char-arithmetic decoder shape AND promote
+  // any short-but-suspect string literal in the file to a suspiciousLiteral
+  // that OBF detectors will treat as signal.
+  //
+  // Legitimate use: hash / encoding / codec libraries. Trade-off accepted:
+  // those are OFTEN legit but a package that grew this shape between versions
+  // is worth flagging. The corpus / FP-smoke will confirm the noise floor.
+  if (hasFromCharCodeCall && hasCharCodeAtRef) {
+    dynamicCode.push({
+      line: 1,
+      kind: 'char-arithmetic-decoder',
+      snippet: 'file uses String.fromCharCode + charCodeAt — per-char decoder shape',
+    });
+    // Promote any short (>=8 char) literal that could plausibly be encoded
+    // exfil-URL-like content. We check for `.` + alpha content, which matches
+    // rot13('exfil.example.invalid') = 'rksvy.rknzcyr.vainyvq'.
+    for (const p of pathLiterals) {
+      if (p.length >= 8 && /[a-zA-Z]/.test(p) && p.includes('.')) {
+        // Already tracked as pathLiteral, but also mark suspicious.
+        suspiciousLiterals.push({
+          line: 1,
+          length: p.length,
+          entropy: shannonEntropy(p),
+          preview: p.slice(0, 40),
+        });
+      }
+    }
+    // Also sweep the base URL-literal set — a legit-looking short domain
+    // might already be there; escalate.
+    // But primarily we want to catch the encoded strings that DIDN'T become
+    // pathLiterals — small opaque literals. Walk the AST once more via the
+    // already-computed fold map: any literal ≥ 8 chars with letters + a dot
+    // in a file that has the decoder shape is suspect.
+    if (ast) {
+      const seen = new Set<string>();
+      const walkStack: unknown[] = [ast];
+      let walkCount = 0;
+      while (walkStack.length > 0 && walkCount < 5000) {
+        walkCount++;
+        const n = walkStack.pop();
+        if (!n || typeof n !== 'object') continue;
+        const node = n as t.Node;
+        if (t.isStringLiteral(node)) {
+          const v = node.value;
+          if (v.length >= 8 && v.length < 200 && /[a-zA-Z]/.test(v) && v.includes('.') && !seen.has(v)) {
+            seen.add(v);
+            suspiciousLiterals.push({
+              line: node.loc?.start.line ?? 0,
+              length: v.length,
+              entropy: shannonEntropy(v),
+              preview: v.slice(0, 40),
+            });
+          }
+        }
+        for (const k of Object.keys(node)) {
+          if (k === 'loc' || k === 'start' || k === 'end') continue;
+          const v = (node as unknown as Record<string, unknown>)[k];
+          if (Array.isArray(v)) {
+            for (const c of v) if (c && typeof c === 'object') walkStack.push(c);
+          } else if (v && typeof v === 'object') {
+            walkStack.push(v);
+          }
+        }
+      }
     }
   }
 

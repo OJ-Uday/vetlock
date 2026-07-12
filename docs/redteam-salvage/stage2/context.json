@@ -1,0 +1,637 @@
+{
+  "stats": {
+    "totalProposed": 48,
+    "dropped": 3,
+    "verified": 45,
+    "confirmed": 35,
+    "plausible": 1,
+    "partial": 7,
+    "refuted": 2
+  },
+  "verdictCounts": {
+    "confirmed": 35,
+    "plausible": 1,
+    "partial": 7,
+    "refuted": 2
+  },
+  "summaryTable": [
+    {
+      "id": "D1",
+      "title": "T5 tripwire (unconditional-BLOCK invariant) defeated by config: `severityOverride: {\"integrity.hash-mismatch\": \"INFO\"}` in .vetlock.json — same-version tarball swap now exits 0 (CLEAN)",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "escalation-abuse / config-override",
+      "detectors_bypassed_count": 2,
+      "reasoning_summary": "End-to-end code path trace:\n\n1. engine.ts:148-168 — when `change.kind === 'integrity-changed'` (same version, different integrity hash), the engine pushes a finding with `detector: 'integrity.hash-mis"
+    },
+    {
+      "id": "D2",
+      "title": "`ignorePathsInside: { \"attacker-pkg\": [\"\"] }` — empty-string prefix silently drops every finding for the named package (any evidence path startsWith empty string)",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "config-injection self-exemption",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit is confirmed end-to-end. Two independent flaws combine:\n\n1. Schema validation gap: `/Users/L122472/personal/vetlock/packages/core/src/config.ts` line 40 defines `ignorePathsInside: z.recor"
+    },
+    {
+      "id": "F1",
+      "title": "CLI advertises pnpm/yarn support; engine crashes with exit code 3 on any pnpm-lock.yaml or yarn.lock — no analysis performed",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "silent-skip / crash-out via format mismatch",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The code path trace confirms the exploit end-to-end.\n\ncli.ts:181-187 runs a preflight via parseLockfileText() which correctly detects and parses pnpm/yarn formats — but the returned LockGraph is throw"
+    },
+    {
+      "id": "F2",
+      "title": "`\"link\": true` on a lockfile entry makes vetlock ignore the package entirely (silent CLEAN)",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "changeset-blindness via manifest field",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "Complete end-to-end trace confirms the exploit. In `lockfile.ts:91`, `if (val.link) continue;` unconditionally skips any lockfile entry where `link` is truthy during the first pass that builds `nodes`"
+    },
+    {
+      "id": "L1",
+      "title": "Env token harvest via `const { NPM_TOKEN } = process.env` destructuring bypasses env.token-harvest",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "detector-evasion",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The VariableDeclarator visitor in capabilities.ts (line 568) begins with `if (!t.isIdentifier(path.node.id)) return;`. For `const { NPM_TOKEN, GITHUB_TOKEN, ... } = process.env`, the `id` node is an O"
+    },
+    {
+      "id": "L2",
+      "title": "process.env whole-object enumeration via `{...process.env}` spread is invisible",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "detector-evasion",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "All three claimed bypass patterns are verified to produce zero envAccesses through code-path tracing:\n\n1. `{...process.env}` (SpreadElement): The MemberExpression visitor fires on the `process.env` no"
+    },
+    {
+      "id": "L3",
+      "title": "child_process import bypass via `require.call(null, 'child_process')` — no exec.new-module",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "detector-evasion",
+      "detectors_bypassed_count": 3,
+      "reasoning_summary": "The CallExpression visitor in capabilities.ts (line 415) checks `t.isIdentifier(callee, { name: 'require' })`. For `require.call(null, 'child_process')` and `require.apply(null, ['child_process'])`, t"
+    },
+    {
+      "id": "L9",
+      "title": "Compound attack: full Shai-Hulud shape (env harvest + child_process + exfil) reports as WARN instead of BLOCK",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "compound bypass — end-to-end proof of no-BLOCK",
+      "detectors_bypassed_count": 4,
+      "reasoning_summary": "All three component bypasses are independently verified in the source and together produce exactly the claimed WARN-only outcome.\n\nL1 bypass (destructured env): `VariableDeclarator` handler at capabil"
+    },
+    {
+      "id": "N1",
+      "title": "bundledDependencies field ships full malicious payload inside `package/node_modules/*` — analyze.ts:116 excludes all `node_modules/` paths from analysis, so BLOCK-tier capabilities (child_process, env harvest, exfil URL, cluster shape) are 100% invisible",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "novel-technique / detector-blindspot",
+      "detectors_bypassed_count": 13,
+      "reasoning_summary": "The exploit is confirmed by a complete end-to-end code-path trace.\n\nThe filter that causes the blindspot is `isAnalyzableSource` at `/Users/L122472/personal/vetlock/packages/core/src/analyze.ts:116`:\n"
+    },
+    {
+      "id": "N2",
+      "title": "`inspector` / `trace_events` / `async_hooks` Node built-ins are absent from every module allow-list — an attacker can call `inspector.open(9229, '0.0.0.0', false)` and hand the process to a public V8 debugger with ZERO findings (verdict CLEAN)",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "novel-technique / detector-blindspot (module-list gap)",
+      "detectors_bypassed_count": 6,
+      "reasoning_summary": "The exploit's core claim is directly verified by reading the source. `EXEC_MODULES` in `/Users/L122472/personal/vetlock/packages/core/src/capabilities.ts` lines 41-44 contains exactly six entries: `ch"
+    },
+    {
+      "id": "S1",
+      "title": "Cache poisoning: attacker-supplied lockfile integrity string is used as the cache lookup key BEFORE any fetch/verify, so a pre-planted snapshot file completely masks tarball analysis",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "cache-poisoning",
+      "detectors_bypassed_count": 9,
+      "reasoning_summary": "The exploit is confirmed end-to-end by direct code tracing.\n\nCode path in `analyzeOne` (engine.ts lines 226-231):\n\n1. `if (ref.integrity)` — the integrity string from the lockfile is truthy, so the br"
+    },
+    {
+      "id": "S10",
+      "title": "The engine's per-package integrity-changed short-circuit compares `oldIntegrity` to `newIntegrity` textually — attacker can leave the OLD lockfile entry integrity BLANK to suppress the tripwire, then swap the tarball freely on the NEW side",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "detector-bypass",
+      "detectors_bypassed_count": 2,
+      "reasoning_summary": "The exploit works exactly as described. The complete code-path trace:\n\n1. lockfile.ts:98 — `integrity: val.integrity ?? ''` — when the before-lockfile entry omits the `integrity` field, the parsed nod"
+    },
+    {
+      "id": "S2",
+      "title": "The .vetlock.json config file the CLI reads is trusted from the SAME PR being reviewed — a malicious PR that changes package-lock.json can also introduce allowlist / ignorePackages / trustedPublishers that silence every finding against itself",
+      "severity": "critical",
+      "verdict": "confirmed",
+      "class": "escalation-abuse",
+      "detectors_bypassed_count": 10,
+      "reasoning_summary": "End-to-end code-path trace confirms the exploit works exactly as described.\n\n1. cli.ts:119-120 — loadConfig() resolves the config path as `opts.config ?? '.vetlock.json'`, reading from the current wor"
+    },
+    {
+      "id": "D3",
+      "title": "`trustedPublishers: { \"chalk\": [\"\"] }` — empty-string trust list downgrades meta.maintainer-change takeover-BLOCK to INFO because `evidence.includes(\"\")` is always true",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "escalation-abuse / config-override",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit works end-to-end. Three code facts lock this in:\n\n1. Schema allows empty strings (config.ts:41): `trustedPublishers: z.record(z.string(), z.array(z.string()))` — no `.min(1)` constraint, s"
+    },
+    {
+      "id": "D4",
+      "title": "Compound-suspicion escalation (rule 3) needs cats.size ≥ 2 — a package emitting 3+ OBF WARN findings in the SAME category (multiple obfuscated files) and no NET/INSTALL never escalates",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "escalation-abuse (boundary)",
+      "detectors_bypassed_count": 2,
+      "reasoning_summary": "The escalation logic in /Users/L122472/personal/vetlock/packages/detectors/src/index.ts lines 118-134 (Escalation 3) has a compound guard: `if (warns.length < 3) continue` AND `if (cats.size < 2) cont"
+    },
+    {
+      "id": "D5",
+      "title": "Typosquat escalation (rule 2) requires BLOCK-tier NET/INSTALL/EXEC/ENV/FS — a typosquat that ships ONLY WARN-tier capabilities (net.new-module without net.new-endpoint) stays WARN",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "escalation-abuse (boundary)",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit traces end-to-end through the actual code. A typosquat package (e.g. axoiss, edit-distance 1 from axios) that uses `require('https')` but constructs its exfil URL entirely at runtime produ"
+    },
+    {
+      "id": "D6",
+      "title": "TOP_NPM_NAMES is 230 names — critical popular targets (openai, nodemailer, stripe, discord.js, firebase, electron, sentry, slack-node, ioredis-mock, @nestjs/*, @sentry/*) are ABSENT; typosquats of them (openia, nodemaler, strippe, firebaze) return null from closestTop and produce zero DEPS findings",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "detector-evasion (list-completeness)",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit is fully confirmed by direct code tracing and live execution.\n\nThe core claim: `TOP_NPM_NAMES` at `/Users/L122472/personal/vetlock/packages/detectors/src/top-npm-names.ts` contains ~93 ent"
+    },
+    {
+      "id": "F6",
+      "title": "yarn berry `npm:` package alias lets an attacker install any tarball under a trusted name — bypassing typo, trust-store, and advisory keyed detectors",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "name-vs-content confusion via alias syntax",
+      "detectors_bypassed_count": 4,
+      "reasoning_summary": "The exploit is confirmed. The name-vs-content confusion is real and fully traceable through the code.\n\nCode-path trace:\n\n1. parseYarnAlias (lockfile-yarn.ts:169-177): For key `'chalk@npm:evil-payload@"
+    },
+    {
+      "id": "L10",
+      "title": "Eval-wrapped require loads modules invisibly — only WARN dynamic-loading fires, exec/net modules not recorded",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "detector-evasion",
+      "detectors_bypassed_count": 3,
+      "reasoning_summary": "The exploit is end-to-end confirmed by static code tracing.\n\nThe core issue: when `eval(\"require('child_process')\")` is processed by `extractCapabilities` in `/packages/core/src/capabilities.ts`, the "
+    },
+    {
+      "id": "L11",
+      "title": "Rot13/XOR/custom-substitution URL obfuscation not folded — URL escapes both URL_REGEX and encodedUrl decoder",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "detector-evasion",
+      "detectors_bypassed_count": 3,
+      "reasoning_summary": "All three claims in L11 are confirmed by direct code tracing:\n\n1. tryDecodeUrl threshold: /packages/core/src/capabilities.ts line 218 gates tryDecodeUrl on literal.length >= 24. The encoded string 'rk"
+    },
+    {
+      "id": "L4",
+      "title": "Bare-hostname exfil with non-listed TLD (.top, .pw, .zip, .click, .info) bypasses net.new-endpoint",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "detector-evasion",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit is confirmed end-to-end. URL_REGEX at /packages/core/src/capabilities.ts line 131 is: /\\b(https?:\\/\\/[^\\s'\"`<>]+|(?:[a-z0-9-]+\\.){1,}(?:com|net|org|io|dev|co|app|xyz|ru|cn|tk|ml|ga|cf|inva"
+    },
+    {
+      "id": "L5",
+      "title": "process.env access via `Reflect.get(process.env, 'NPM_TOKEN')` bypasses env.token-harvest",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "detector-evasion",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The MemberExpression visitor in /Users/L122472/personal/vetlock/packages/core/src/capabilities.ts (lines 501-554) has three branches for detecting process.env access:\n\n1. isProcessEnvDirect (line 506-"
+    },
+    {
+      "id": "L6",
+      "title": "Fail-soft-parse invariant violated: unterminated backtick chain crashes @babel/traverse with stack overflow",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "crash / DoS",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit is fully confirmed end-to-end. The fail-soft-parse invariant (\"unparseable source → WARN, never crash\") is broken for the backtick-chain case.\n\nCode-path trace:\n\n1. `capabilities.ts` lines"
+    },
+    {
+      "id": "L8",
+      "title": "process aliased through computed member access `process[\"env\"]` bypasses processAliases tracker",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "detector-evasion",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit is confirmed end-to-end via direct code-path tracing.\n\n**Root cause — VariableDeclarator processAliases binding (capabilities.ts lines 603-609):**\n\n```ts\nif (\n  t.isMemberExpression(init) "
+    },
+    {
+      "id": "N3",
+      "title": "DNS-based exfil channel — `dns.lookup()` / `dns.resolve()` are not in NETWORK_MODULES, and URL_REGEX doesn't match `wss://` or bare hostnames without a listed TLD, so stolen data can be leaked via DNS subdomain encoding with verdict CLEAN",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "novel-technique / detector-blindspot (network channel gap)",
+      "detectors_bypassed_count": 4,
+      "reasoning_summary": "All three independent claims in N3 are verified by direct code trace:\n\n1. `dns` absent from NETWORK_MODULES: capabilities.ts lines 36-40 define NETWORK_MODULES as a Set containing http, https, net, dg"
+    },
+    {
+      "id": "N5",
+      "title": "Git-URL / GitHub-shorthand / patch-protocol dependencies bypass content analysis — `fetchTarball` reconstructs `${name}@${version}` for pacote regardless of the `resolved` field, so a lockfile whose `resolved` points at `git+ssh://…` or `patch:foo@npm:1.0.0#./x.patch` gets analyzed against REGISTRY content while `npm install` actually installs the git/patched content",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "novel-technique / name-vs-content confusion (TOCTOU)",
+      "detectors_bypassed_count": 2,
+      "reasoning_summary": "The exploit is confirmed by unambiguous code-path trace.\n\n**The core bypass:**\n\n`cli.ts:194-200` — `fetchOverride` checks `ref.resolved.startsWith('file://')` only. Any other scheme (`git+ssh://`, `gi"
+    },
+    {
+      "id": "S3",
+      "title": "Publisher trust-store substring match — attacker email that CONTAINS a trusted username/domain as a substring is treated as trusted, so 'attacker@github.com.evil.tld' looks like GitHub",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "escalation-abuse",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The substring match in isTrustedPublisher (publishers.ts:106) is a real, exploitable defect. Full end-to-end code path:\n\n1. publishers.ts:106 — `if (lc.includes(t.toLowerCase())) return true` — no dom"
+    },
+    {
+      "id": "S4",
+      "title": "Analyze-timeout & extract-error silently drop the entire package's detection — a tarball that throws during safeExtract or takes >90s to parse yields ZERO findings, so a malicious package that intentionally stalls is reported CLEAN",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "denial-of-detection",
+      "detectors_bypassed_count": 11,
+      "reasoning_summary": "End-to-end code path trace confirms the exploit works exactly as described.\n\n1. CHANGESET: A malicious chalk@5.3.1 in the after-lockfile triggers `computeChangeset` to emit kind='upgraded' (changeset."
+    },
+    {
+      "id": "S5",
+      "title": "Compound-suspicion escalation (rule 3) needs 3+ WARN across 2+ categories — an attacker who lands EXACTLY 2 WARN findings across 2 categories is never promoted to BLOCK, so a diff carrying only `code.dynamic-loading-added` + `meta.maintainer-change` (with new maintainer that also happens to sneak past the trust store) reports WARN, not BLOCK",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "escalation-abuse",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit correctly identifies a real gap in escalation rule 3. Here is the end-to-end code path trace:\n\n1. code.dynamic-loading-added fires (WARN, CODE): capabilities.ts lines 432-438 detect any `e"
+    },
+    {
+      "id": "S6",
+      "title": "meta detector requires both oldEmails AND newEmails to be non-empty; a new version that ships with NO maintainers/_npmUser field emits zero maintainer-change findings and completely bypasses meta detection",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "detector-bypass",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit is confirmed by direct code inspection.\n\nmeta.ts line 27 contains: `if (oldEmails.length === 0 || newEmails.length === 0) return [];`\n\nThis is an unconditional early-return guard that fire"
+    },
+    {
+      "id": "S9",
+      "title": "The demo/CLI fetchOverride blindly resolves any file:// URL from the lockfile's `resolved` field — a malicious lockfile can point `resolved` at an attacker-chosen local .tgz outside the intended tarball dir, giving a lockfile-controlled read primitive",
+      "severity": "high",
+      "verdict": "confirmed",
+      "class": "system-attack",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit is confirmed end-to-end. The code path is:\n\n1. cli.ts:194-196 defines fetchOverride: when ref.resolved starts with 'file://', it returns `new URL(ref.resolved).pathname` with no allowlist,"
+    },
+    {
+      "id": "C1",
+      "title": "advisory-known BLOCK + same-PR .vetlock.json ignorePackages = CLEAN verdict + GHSA cite silently dropped",
+      "severity": "BLOCK",
+      "verdict": "confirmed",
+      "class": "compositional: config trust + advisory correlation + verdict flow",
+      "detectors_bypassed_count": 10,
+      "reasoning_summary": "The exploit chain is confirmed end-to-end via direct code tracing:\n\n1. cli.ts:120-135 (loadConfig): .vetlock.json is loaded from cwd with fsSync.existsSync + readFileSync. No check that the file pre-d"
+    },
+    {
+      "id": "C2",
+      "title": "ignorePathsInside prefix + META detector's fixed 'package.json' evidence-file drops all maintainer-change findings package-wide",
+      "severity": "BLOCK",
+      "verdict": "confirmed",
+      "class": "compositional: config path-filter + detector evidence-file convention",
+      "detectors_bypassed_count": 5,
+      "reasoning_summary": "All three code paths the exploit describes are verified end-to-end:\n\n1. HARDCODED EVIDENCE FILE IN DETECTORS\n   - meta.ts:89 always emits `evidence: [{ file: 'package.json', line: 1, ... }]`\n   - inst"
+    },
+    {
+      "id": "C3",
+      "title": "GHSA range uses semver.satisfies with includePrerelease + attacker-controlled version tag → advisory misses AND ignorePackages/allowlist is unnecessary — the finding is emitted at normal (non-high) confidence, no GHSA cite, no forced BLOCK-floor",
+      "severity": "BLOCK",
+      "verdict": "confirmed",
+      "class": "compositional: attacker version-string + advisory range algebra + escalation-3 threshold",
+      "detectors_bypassed_count": 4,
+      "reasoning_summary": "All four claimed bypass mechanisms trace cleanly through the code:\n\n1. Advisory range miss (advisories.ts line 150): semver.satisfies('1.95.8', '>=1.95.5 <=1.95.7', { includePrerelease: true }) return"
+    },
+    {
+      "id": "C5",
+      "title": "case-mismatch package name + TOP_SET lowercase membership + trust-store lookup + advisory package match = full typo/trust/GHSA blind spot in a lockfile that installs a KNOWN package",
+      "severity": "BLOCK",
+      "verdict": "confirmed",
+      "class": "compositional: parser case-preservation + detector Set/string-compare + npm registry case-normalization",
+      "detectors_bypassed_count": 4,
+      "reasoning_summary": "All three lookup chains that would elevate the verdict to BLOCK fail when the package name is capitalized as 'Lodash':\n\n1. parseLockfile (lockfile.ts:92): `const name = val.name ?? deriveNameFromKey(k"
+    },
+    {
+      "id": "C6",
+      "title": "Snapshot cache poisoning + tarball not fetched + advisories bypass + integrity-changed synthesis skip = malicious version served entirely from cache with no analysis and no advisory annotation",
+      "severity": "BLOCK",
+      "verdict": "plausible",
+      "class": "compositional: cache-lookup by integrity + engine synthesized-finding skip + advisory range predicate",
+      "detectors_bypassed_count": 11,
+      "reasoning_summary": "The core cache-poisoning mechanism is real and traceable through the code. In engine.ts:analyzeOne (lines 226-232), the cache lookup short-circuits before any tarball fetch: if `ref.integrity` is set "
+    },
+    {
+      "id": "F9",
+      "title": "pnpm parser silently drops packages whose keys don't match the strict `name@version` shape — malicious dep hidden by key formatting alone",
+      "severity": "high",
+      "verdict": "partial",
+      "class": "silent-skip via strict key parse",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The parsePnpmPackageKey bug is real and confirmed in isolation. At line 176 of /Users/L122472/personal/vetlock/packages/core/src/lockfile-pnpm.ts, `if (at <= 0) return null` causes any key without an "
+    },
+    {
+      "id": "N4",
+      "title": "Scope-prefix typosquat (`@evil-org/react` → `react`) evades typosquatDetector because Damerau-Levenshtein `maxDist=2` never fires when a whole `@scope/` prefix is added (distance ≥ 6)",
+      "severity": "high",
+      "verdict": "partial",
+      "class": "novel-technique / detector-evasion via name-shape confusion",
+      "detectors_bypassed_count": 2,
+      "reasoning_summary": "The typosquat detector gap is real and fully confirmed by code trace. In `closestTop` (typo.ts:39-51), the early length-prune at line 44 (`Math.abs(top.length - name.length) > maxDist`) eliminates ALL"
+    },
+    {
+      "id": "F10",
+      "title": "safe-extract totalBytes counter is racy across concurrent entries — attacker can push memory usage far beyond maxTotalBytes and DoS the analyzer",
+      "severity": "medium",
+      "verdict": "partial",
+      "class": "resource-exhaustion via async accounting race",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit's core claim — that `totalBytes` accounting in `safeExtract` happens post-entry rather than per-chunk, creating a window where multiple entries' data is in memory before the cap is enforce"
+    },
+    {
+      "id": "F8",
+      "title": "pnpm workspace importer confusion — malicious dep added ONLY to a non-root workspace has zero provenance from root, breaking the rollup and 'impact by direct dependency' view",
+      "severity": "medium",
+      "verdict": "partial",
+      "class": "provenance blindness in monorepo layouts",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit is accurate about the code paths but overstates the security impact. In `parsePnpmLockText` (lockfile-pnpm.ts:71-76), when no `importers['.']` key exists, the fallback reads `doc.dependenc"
+    },
+    {
+      "id": "C4",
+      "title": "pnpm workspace-only importer + shortestPaths BFS via `root.dependencies` + rollupByDirect empty = malicious dep reports CLEAN in the direct-dep view even when detectors emit BLOCK",
+      "severity": "BLOCK",
+      "verdict": "partial",
+      "class": "compositional: monorepo lockfile shape + provenance BFS + rollup UI-truth channel",
+      "detectors_bypassed_count": 4,
+      "reasoning_summary": "The underlying logic flaw in the pnpm parser is real: when a pnpm lockfile has `importers` but no `importers['.']` entry AND no top-level `dependencies`/`devDependencies`/`optionalDependencies` fields"
+    },
+    {
+      "id": "S7",
+      "title": "Advisory-range check uses `semver.satisfies(includePrerelease:true)` — a compromised republish at `ua-parser-js@0.7.29-x1` fails the exact-match range `=0.7.29`, so no GHSA cite is attached and the finding's confidence stays at default rather than being auto-upgraded to 'high'",
+      "severity": "moderate",
+      "verdict": "partial",
+      "class": "escalation-abuse",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The semver behavior is confirmed: `semver.satisfies('1.2.9-hotfix', '=1.2.9', { includePrerelease: true })` returns `false` (verified against the actual semver@7.8.5 module in the vetlock pnpm store)."
+    },
+    {
+      "id": "S8",
+      "title": "runAll's escalation rule 1 promotes OBF only when NET or INSTALL is present in the same package — an obfuscated payload paired with EXEC (child_process), ENV (env harvest), or FS (secret file read) does NOT escalate OBF from WARN to BLOCK",
+      "severity": "moderate",
+      "verdict": "partial",
+      "class": "escalation-abuse",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit accurately identifies a real gap in Escalation Rule 1. In index.ts lines 93-104, the `risky` set is built exclusively from findings where `f.category === 'NET' || f.category === 'INSTALL'`"
+    },
+    {
+      "id": "F7",
+      "title": "YAML alias bomb in pnpm-lock.yaml crashes vetlock (Invalid string length / OOM) — attacker DoSes the check to force a fail-open in CI",
+      "severity": "high",
+      "verdict": "refuted",
+      "class": "DoS / resource-exhaustion via YAML parser",
+      "detectors_bypassed_count": 1,
+      "reasoning_summary": "The exploit claims that a YAML anchor/alias bomb in a pnpm-lock.yaml causes `yaml.load()` to allocate ~46MB (or more) of heap and crash vetlock with \"Invalid string length\" or OOM, because `parsePnpmL"
+    },
+    {
+      "id": "N6",
+      "title": "pnpm-lock.yaml `peerDependencies` are declared in the schema but never merged into the graph — a malicious dep injected as a peer-only transitive has NO parent link, breaking provenance and letting the change hide in the flat `packages` map",
+      "severity": "medium",
+      "verdict": "refuted",
+      "class": "novel-technique / lockfile-parser blindspot (pnpm-specific)",
+      "detectors_bypassed_count": 3,
+      "reasoning_summary": "The exploit claims that a pnpm lockfile whose `peerDependencies` are omitted from the dep-merge dict in `lockfile-pnpm.ts:138-143` allows a malicious peer-only node to pass vetlock with empty `provena"
+    }
+  ],
+  "confirmedTitles": [
+    {
+      "id": "D1",
+      "title": "T5 tripwire (unconditional-BLOCK invariant) defeated by config: `severityOverride: {\"integrity.hash-mismatch\": \"INFO\"}` in .vetlock.json — same-version tarball swap now exits 0 (CLEAN)",
+      "severity": "critical",
+      "class": "escalation-abuse / config-override"
+    },
+    {
+      "id": "D2",
+      "title": "`ignorePathsInside: { \"attacker-pkg\": [\"\"] }` — empty-string prefix silently drops every finding for the named package (any evidence path startsWith empty string)",
+      "severity": "critical",
+      "class": "config-injection self-exemption"
+    },
+    {
+      "id": "F1",
+      "title": "CLI advertises pnpm/yarn support; engine crashes with exit code 3 on any pnpm-lock.yaml or yarn.lock — no analysis performed",
+      "severity": "critical",
+      "class": "silent-skip / crash-out via format mismatch"
+    },
+    {
+      "id": "F2",
+      "title": "`\"link\": true` on a lockfile entry makes vetlock ignore the package entirely (silent CLEAN)",
+      "severity": "critical",
+      "class": "changeset-blindness via manifest field"
+    },
+    {
+      "id": "L1",
+      "title": "Env token harvest via `const { NPM_TOKEN } = process.env` destructuring bypasses env.token-harvest",
+      "severity": "critical",
+      "class": "detector-evasion"
+    },
+    {
+      "id": "L2",
+      "title": "process.env whole-object enumeration via `{...process.env}` spread is invisible",
+      "severity": "critical",
+      "class": "detector-evasion"
+    },
+    {
+      "id": "L3",
+      "title": "child_process import bypass via `require.call(null, 'child_process')` — no exec.new-module",
+      "severity": "critical",
+      "class": "detector-evasion"
+    },
+    {
+      "id": "L9",
+      "title": "Compound attack: full Shai-Hulud shape (env harvest + child_process + exfil) reports as WARN instead of BLOCK",
+      "severity": "critical",
+      "class": "compound bypass — end-to-end proof of no-BLOCK"
+    },
+    {
+      "id": "N1",
+      "title": "bundledDependencies field ships full malicious payload inside `package/node_modules/*` — analyze.ts:116 excludes all `node_modules/` paths from analysis, so BLOCK-tier capabilities (child_process, env harvest, exfil URL, cluster shape) are 100% invisible",
+      "severity": "critical",
+      "class": "novel-technique / detector-blindspot"
+    },
+    {
+      "id": "N2",
+      "title": "`inspector` / `trace_events` / `async_hooks` Node built-ins are absent from every module allow-list — an attacker can call `inspector.open(9229, '0.0.0.0', false)` and hand the process to a public V8 debugger with ZERO findings (verdict CLEAN)",
+      "severity": "critical",
+      "class": "novel-technique / detector-blindspot (module-list gap)"
+    },
+    {
+      "id": "S1",
+      "title": "Cache poisoning: attacker-supplied lockfile integrity string is used as the cache lookup key BEFORE any fetch/verify, so a pre-planted snapshot file completely masks tarball analysis",
+      "severity": "critical",
+      "class": "cache-poisoning"
+    },
+    {
+      "id": "S10",
+      "title": "The engine's per-package integrity-changed short-circuit compares `oldIntegrity` to `newIntegrity` textually — attacker can leave the OLD lockfile entry integrity BLANK to suppress the tripwire, then swap the tarball freely on the NEW side",
+      "severity": "critical",
+      "class": "detector-bypass"
+    },
+    {
+      "id": "S2",
+      "title": "The .vetlock.json config file the CLI reads is trusted from the SAME PR being reviewed — a malicious PR that changes package-lock.json can also introduce allowlist / ignorePackages / trustedPublishers that silence every finding against itself",
+      "severity": "critical",
+      "class": "escalation-abuse"
+    },
+    {
+      "id": "D3",
+      "title": "`trustedPublishers: { \"chalk\": [\"\"] }` — empty-string trust list downgrades meta.maintainer-change takeover-BLOCK to INFO because `evidence.includes(\"\")` is always true",
+      "severity": "high",
+      "class": "escalation-abuse / config-override"
+    },
+    {
+      "id": "D4",
+      "title": "Compound-suspicion escalation (rule 3) needs cats.size ≥ 2 — a package emitting 3+ OBF WARN findings in the SAME category (multiple obfuscated files) and no NET/INSTALL never escalates",
+      "severity": "high",
+      "class": "escalation-abuse (boundary)"
+    },
+    {
+      "id": "D5",
+      "title": "Typosquat escalation (rule 2) requires BLOCK-tier NET/INSTALL/EXEC/ENV/FS — a typosquat that ships ONLY WARN-tier capabilities (net.new-module without net.new-endpoint) stays WARN",
+      "severity": "high",
+      "class": "escalation-abuse (boundary)"
+    },
+    {
+      "id": "D6",
+      "title": "TOP_NPM_NAMES is 230 names — critical popular targets (openai, nodemailer, stripe, discord.js, firebase, electron, sentry, slack-node, ioredis-mock, @nestjs/*, @sentry/*) are ABSENT; typosquats of them (openia, nodemaler, strippe, firebaze) return null from closestTop and produce zero DEPS findings",
+      "severity": "high",
+      "class": "detector-evasion (list-completeness)"
+    },
+    {
+      "id": "F6",
+      "title": "yarn berry `npm:` package alias lets an attacker install any tarball under a trusted name — bypassing typo, trust-store, and advisory keyed detectors",
+      "severity": "high",
+      "class": "name-vs-content confusion via alias syntax"
+    },
+    {
+      "id": "L10",
+      "title": "Eval-wrapped require loads modules invisibly — only WARN dynamic-loading fires, exec/net modules not recorded",
+      "severity": "high",
+      "class": "detector-evasion"
+    },
+    {
+      "id": "L11",
+      "title": "Rot13/XOR/custom-substitution URL obfuscation not folded — URL escapes both URL_REGEX and encodedUrl decoder",
+      "severity": "high",
+      "class": "detector-evasion"
+    },
+    {
+      "id": "L4",
+      "title": "Bare-hostname exfil with non-listed TLD (.top, .pw, .zip, .click, .info) bypasses net.new-endpoint",
+      "severity": "high",
+      "class": "detector-evasion"
+    },
+    {
+      "id": "L5",
+      "title": "process.env access via `Reflect.get(process.env, 'NPM_TOKEN')` bypasses env.token-harvest",
+      "severity": "high",
+      "class": "detector-evasion"
+    },
+    {
+      "id": "L6",
+      "title": "Fail-soft-parse invariant violated: unterminated backtick chain crashes @babel/traverse with stack overflow",
+      "severity": "high",
+      "class": "crash / DoS"
+    },
+    {
+      "id": "L8",
+      "title": "process aliased through computed member access `process[\"env\"]` bypasses processAliases tracker",
+      "severity": "high",
+      "class": "detector-evasion"
+    },
+    {
+      "id": "N3",
+      "title": "DNS-based exfil channel — `dns.lookup()` / `dns.resolve()` are not in NETWORK_MODULES, and URL_REGEX doesn't match `wss://` or bare hostnames without a listed TLD, so stolen data can be leaked via DNS subdomain encoding with verdict CLEAN",
+      "severity": "high",
+      "class": "novel-technique / detector-blindspot (network channel gap)"
+    },
+    {
+      "id": "N5",
+      "title": "Git-URL / GitHub-shorthand / patch-protocol dependencies bypass content analysis — `fetchTarball` reconstructs `${name}@${version}` for pacote regardless of the `resolved` field, so a lockfile whose `resolved` points at `git+ssh://…` or `patch:foo@npm:1.0.0#./x.patch` gets analyzed against REGISTRY content while `npm install` actually installs the git/patched content",
+      "severity": "high",
+      "class": "novel-technique / name-vs-content confusion (TOCTOU)"
+    },
+    {
+      "id": "S3",
+      "title": "Publisher trust-store substring match — attacker email that CONTAINS a trusted username/domain as a substring is treated as trusted, so 'attacker@github.com.evil.tld' looks like GitHub",
+      "severity": "high",
+      "class": "escalation-abuse"
+    },
+    {
+      "id": "S4",
+      "title": "Analyze-timeout & extract-error silently drop the entire package's detection — a tarball that throws during safeExtract or takes >90s to parse yields ZERO findings, so a malicious package that intentionally stalls is reported CLEAN",
+      "severity": "high",
+      "class": "denial-of-detection"
+    },
+    {
+      "id": "S5",
+      "title": "Compound-suspicion escalation (rule 3) needs 3+ WARN across 2+ categories — an attacker who lands EXACTLY 2 WARN findings across 2 categories is never promoted to BLOCK, so a diff carrying only `code.dynamic-loading-added` + `meta.maintainer-change` (with new maintainer that also happens to sneak past the trust store) reports WARN, not BLOCK",
+      "severity": "high",
+      "class": "escalation-abuse"
+    },
+    {
+      "id": "S6",
+      "title": "meta detector requires both oldEmails AND newEmails to be non-empty; a new version that ships with NO maintainers/_npmUser field emits zero maintainer-change findings and completely bypasses meta detection",
+      "severity": "high",
+      "class": "detector-bypass"
+    },
+    {
+      "id": "S9",
+      "title": "The demo/CLI fetchOverride blindly resolves any file:// URL from the lockfile's `resolved` field — a malicious lockfile can point `resolved` at an attacker-chosen local .tgz outside the intended tarball dir, giving a lockfile-controlled read primitive",
+      "severity": "high",
+      "class": "system-attack"
+    },
+    {
+      "id": "C1",
+      "title": "advisory-known BLOCK + same-PR .vetlock.json ignorePackages = CLEAN verdict + GHSA cite silently dropped",
+      "severity": "BLOCK",
+      "class": "compositional: config trust + advisory correlation + verdict flow"
+    },
+    {
+      "id": "C2",
+      "title": "ignorePathsInside prefix + META detector's fixed 'package.json' evidence-file drops all maintainer-change findings package-wide",
+      "severity": "BLOCK",
+      "class": "compositional: config path-filter + detector evidence-file convention"
+    },
+    {
+      "id": "C3",
+      "title": "GHSA range uses semver.satisfies with includePrerelease + attacker-controlled version tag → advisory misses AND ignorePackages/allowlist is unnecessary — the finding is emitted at normal (non-high) confidence, no GHSA cite, no forced BLOCK-floor",
+      "severity": "BLOCK",
+      "class": "compositional: attacker version-string + advisory range algebra + escalation-3 threshold"
+    },
+    {
+      "id": "C5",
+      "title": "case-mismatch package name + TOP_SET lowercase membership + trust-store lookup + advisory package match = full typo/trust/GHSA blind spot in a lockfile that installs a KNOWN package",
+      "severity": "BLOCK",
+      "class": "compositional: parser case-preservation + detector Set/string-compare + npm registry case-normalization"
+    }
+  ],
+  "bodyLen": 255596
+}

@@ -90,4 +90,63 @@ export const TOP_NPM_NAMES: readonly string[] = [
   'through2', 'readable-stream', 'stream-browserify',
   'buffer', 'safe-buffer',
   'process', 'events', 'util',
+
+  // REDTEAM D6 FIX: high-download packages that were absent from the earlier
+  // list. These are common typosquat targets — attackers publish `openia`,
+  // `nodemaler`, `strippe`, `firebaze` to catch install typos on huge-download
+  // packages. Coverage gap identified by the red-team pass.
+  //
+  // AI/ML SDKs (very high 2024 install growth):
+  'openai', '@openai/api', '@anthropic-ai/sdk', 'anthropic',
+  'langchain', 'langchainjs', '@langchain/core', '@langchain/openai',
+  'ollama', 'llamaindex', 'llama-index', 'huggingface',
+  '@huggingface/inference', '@huggingface/transformers',
+  'onnxruntime-node', 'transformers.js', 'openaigraph',
+  // Payments
+  'stripe', '@stripe/stripe-js', '@stripe/react-stripe-js',
+  '@stripe/agent-toolkit', 'square', '@squareup/checkout',
+  // Comms / auth SaaS
+  'discord.js', '@discordjs/rest', '@discordjs/voice', '@discordjs/opus',
+  'slack-node', '@slack/web-api', '@slack/bolt', '@slack/rtm-api',
+  'telegraf', 'telegram', 'node-telegram-bot-api',
+  // Cloud / infra
+  'firebase', 'firebase-admin', '@firebase/app', '@firebase/auth',
+  '@firebase/firestore', '@firebase/messaging',
+  'electron', '@electron/remote', 'electron-builder', 'electron-store',
+  'chromedriver', 'geckodriver', 'selenium-webdriver',
+  // Error tracking / observability (Sentry ecosystem heavily typosquatted)
+  '@sentry/node', '@sentry/react', '@sentry/browser', '@sentry/nextjs',
+  '@sentry/vue', '@sentry/angular', '@sentry/electron', '@sentry/tracing',
+  '@sentry/utils', '@sentry/types', '@sentry/integrations',
+  // NestJS ecosystem
+  '@nestjs/core', '@nestjs/common', '@nestjs/platform-express',
+  '@nestjs/config', '@nestjs/testing', '@nestjs/typeorm',
+  '@nestjs/graphql', '@nestjs/websockets', '@nestjs/mongoose',
+  // DevOps / auth secrets
+  'dotenv-vault', 'dotenv-safe', 'dotenv-expand', 'dotenv-cli',
+  'convict', 'joi', '@sindresorhus/df',
+  // Mongo / DBs (dev-only servers often installed for testing)
+  'mongodb-memory-server', 'mongodb-client-encryption',
+  '@planetscale/database', '@vercel/postgres',
+  // Prisma / ORMs beyond top list
+  '@prisma/engines', '@prisma/generator-helper', '@prisma/internals',
+  'objection', 'bookshelf', 'kysely',
+  // Framework companions frequently squat-targeted
+  'astro', '@astrojs/react', '@astrojs/tailwind',
+  'sveltekit', '@sveltejs/adapter-node', '@sveltejs/adapter-vercel',
+  'solid-js', '@solidjs/router', '@solidjs/start',
+  // Testing / mocking newer entries
+  '@playwright/test', 'playwright-core', '@testing-library/user-event',
+  '@storybook/react', '@storybook/testing-library', '@storybook/addon-essentials',
+  // Auth libs
+  'next-auth', '@auth/core', 'clerk', '@clerk/nextjs', '@clerk/backend',
+  'lucia', '@lucia-auth/adapter-prisma',
+  // Node build/runtime companions
+  'ts-node-dev', 'nodemon-webpack-plugin', 'tsup', 'tsdown', 'unbuild',
+  // Redis / queues
+  'ioredis', 'bullmq', '@bull-board/api', 'bull',
+  // Emails
+  'nodemailer', '@sendgrid/mail', 'mailgun.js', 'resend',
+  // Popular utility renaming targets
+  'ky', 'ofetch', 'redaxios', 'wretch',
 ];

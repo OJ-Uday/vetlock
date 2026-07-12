@@ -87,6 +87,30 @@ function sanitize(s: string): string {
   return s.replace(/[^A-Za-z0-9._-]/g, '_');
 }
 
+/**
+ * Given an absolute tarball path inside a fixture dir, return the corpus-portable
+ * relative `file:` URL that we bake into lockfiles. Using RELATIVE paths (rather
+ * than absolute `file:///Users/...`) means:
+ *
+ *   1. Corpus builds are byte-identical across machines / clones / CI runners.
+ *   2. Regenerated DETECTIONS.md doesn't leak the builder's home directory.
+ *   3. The `deps.local-source` detector (S9) does not fire on corpus fixtures —
+ *      it's designed to flag ABSOLUTE file: paths in real user lockfiles, which
+ *      are attacker-controllable. Relative `file:./` paths are ignored by
+ *      classifyResolved() by design (they're normal in monorepos).
+ *
+ * Consumers that need to actually read the tarball (cli.ts fetchOverride and the
+ * corpus-replay test's localFetch) resolve these relative URLs against the
+ * lockfile's own directory — see the resolveFileResolved() helper both use.
+ */
+function relativeFileResolved(fixtureDir: string, absTarballPath: string): string {
+  const rel = path.relative(fixtureDir, absTarballPath);
+  // Force forward slashes (Windows portability) and prefix with `./` so it's
+  // an unambiguous relative-path (rather than a bare filename that some parsers
+  // treat as a scheme part).
+  return `file:./${rel.split(path.sep).join('/')}`;
+}
+
 async function buildFixture(spec: FixtureSpec): Promise<void> {
   const dir = path.join(CORPUS_ROOT, spec.id);
   fs.mkdirSync(dir, { recursive: true });
@@ -140,7 +164,7 @@ async function buildFixture(spec: FixtureSpec): Promise<void> {
         '': { name: 'my-app', version: '1.0.1', dependencies: { crossenv: '^1' } },
         'node_modules/crossenv': {
           name: 'crossenv', version: '1.0.0',
-          integrity: malTgz.integrity, resolved: `file://${malTgz.path}`,
+          integrity: malTgz.integrity, resolved: relativeFileResolved(dir, malTgz.path),
         },
       },
     };
@@ -156,7 +180,7 @@ async function buildFixture(spec: FixtureSpec): Promise<void> {
         '': { name: 'my-app', version: '1.0.0', dependencies: rootDeps },
         [`node_modules/${spec.clean.name}`]: {
           name: spec.clean.name, version: spec.clean.version,
-          integrity: cleanTgz.integrity, resolved: `file://${cleanTgz.path}`,
+          integrity: cleanTgz.integrity, resolved: relativeFileResolved(dir, cleanTgz.path),
           dependencies: (spec.clean.manifest as { dependencies?: Record<string, string> }).dependencies,
         },
       },
@@ -165,14 +189,14 @@ async function buildFixture(spec: FixtureSpec): Promise<void> {
       '': { name: 'my-app', version: '1.0.0', dependencies: rootDeps },
       [`node_modules/${spec.malicious.name}`]: {
         name: spec.malicious.name, version: spec.malicious.version,
-        integrity: malTgz.integrity, resolved: `file://${malTgz.path}`,
+        integrity: malTgz.integrity, resolved: relativeFileResolved(dir, malTgz.path),
         dependencies: (spec.malicious.manifest as { dependencies?: Record<string, string> }).dependencies,
       },
     };
     for (const t of transitives) {
       afterPackages[`node_modules/${t.pkg.name}`] = {
         name: t.pkg.name, version: t.pkg.version,
-        integrity: t.integrity, resolved: `file://${t.path}`,
+        integrity: t.integrity, resolved: relativeFileResolved(dir, t.path),
       };
     }
     after = {

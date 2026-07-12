@@ -142,9 +142,13 @@ export function advisoriesForVersion(
   packageName: string,
   version: string,
 ): AdvisoryEntry[] {
+  // Also canonicalize the package name — the lockfile parser already
+  // lowercases, but advisoriesForVersion is a public API and could be called
+  // with attacker-cased input (C5 defense-in-depth).
+  const canonName = packageName.toLowerCase();
   const out: AdvisoryEntry[] = [];
   for (const a of ADVISORIES) {
-    if (a.package !== packageName) continue;
+    if (a.package.toLowerCase() !== canonName) continue;
     if (!version) continue;
     try {
       if (semver.satisfies(version, a.vulnerableRange, { includePrerelease: true })) {
@@ -153,6 +157,88 @@ export function advisoriesForVersion(
     } catch {
       // Advisory range malformed — skip. Never crash on advisory-data quality issues.
     }
+  }
+  return out;
+}
+
+/**
+ * REDTEAM C3 FIX: adjacent-advisory correlation.
+ *
+ * An attacker who publishes a package version JUST outside a known-vulnerable
+ * range (e.g. GHSA range `>=1.95.5 <=1.95.7`, attacker publishes `1.95.8`)
+ * escapes `advisoriesForVersion` because semver.satisfies is strict. But the
+ * one-patch-above shape is itself a red flag — the attacker either read the
+ * advisory and picked the next version, or the maintainer bumped past the
+ * fix without actually patching. Either way, review should see the adjacency.
+ *
+ * Returns advisories whose vulnerable range is within ±1 minor OR ±3 patch of
+ * the version under test. Semver-parses both sides.
+ */
+export function adjacentAdvisories(
+  packageName: string,
+  version: string,
+): AdvisoryEntry[] {
+  const canonName = packageName.toLowerCase();
+  const versionParsed = semver.parse(version);
+  if (!versionParsed) return [];
+
+  const out: AdvisoryEntry[] = [];
+  for (const a of ADVISORIES) {
+    if (a.package.toLowerCase() !== canonName) continue;
+    // Skip if the strict version-range match already fires — that goes through
+    // advisoriesForVersion, not this function.
+    try {
+      if (semver.satisfies(version, a.vulnerableRange, { includePrerelease: true })) {
+        continue;
+      }
+    } catch {
+      continue;
+    }
+    // Extract the highest version in the vulnerable range. semver doesn't
+    // expose a clean "max of range" API, so parse the range and pick a
+    // conservative upper bound: the largest concrete version < some ceiling.
+    // We use minSatisfying / maxSatisfying with a synthetic candidate list.
+    //
+    // Simpler pragmatic approach: for each concrete version we could imagine,
+    // check if that version satisfies AND is within ±3 patch / ±1 minor of
+    // the version under test. We probe a small window around the target.
+    const nearby = generateNearbyVersions(versionParsed);
+    let adjacent = false;
+    for (const candidate of nearby) {
+      try {
+        if (semver.satisfies(candidate, a.vulnerableRange, { includePrerelease: true })) {
+          adjacent = true;
+          break;
+        }
+      } catch {
+        // Malformed range — skip.
+      }
+    }
+    if (adjacent) out.push(a);
+  }
+  return out;
+}
+
+/**
+ * Generate a small window of nearby versions around `v`. We probe ±3 patch,
+ * ±1 minor. The window is intentionally tight — we want to catch adversarial
+ * "just above the fixed version" without false-positive on legitimate bumps
+ * many versions later.
+ */
+function generateNearbyVersions(v: semver.SemVer): string[] {
+  const out: string[] = [];
+  for (let dPatch = -3; dPatch <= 3; dPatch++) {
+    if (dPatch === 0) continue;
+    const patch = v.patch + dPatch;
+    if (patch < 0) continue;
+    out.push(`${v.major}.${v.minor}.${patch}`);
+  }
+  for (let dMinor = -1; dMinor <= 1; dMinor++) {
+    if (dMinor === 0) continue;
+    const minor = v.minor + dMinor;
+    if (minor < 0) continue;
+    // pick patch=0 for the adjacent minor
+    out.push(`${v.major}.${minor}.0`);
   }
   return out;
 }
