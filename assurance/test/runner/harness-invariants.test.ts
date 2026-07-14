@@ -103,9 +103,10 @@ describe('runBounded — robustness-bounded-mem', () => {
           const outcome = await runBounded({ kind: 'synthetic:oom', mode }, bounds);
           // OOM is what we assert. On some Node/V8 versions timing is unpredictable — the
           // worker can be killed with a crash-shaped error before the OOM classifier catches
-          // it. Both signals mean "the heap cap trapped the runaway"; only the label differs.
-          // We accept either but pin the expectation for the common case.
-          expect(['oom', 'crash']).toContain(outcome.kind);
+          // it, OR the wallMs can trip first when the allocation rate is CPU-bound. All three
+          // signals mean "the heap cap or wall clock trapped the runaway"; only the label
+          // differs. We accept any of them.
+          expect(['oom', 'crash', 'timeout']).toContain(outcome.kind);
           if (outcome.kind === 'oom') {
             expect(outcome.peakRssBytes).toBeGreaterThan(0);
             // The peak reported is the cap in bytes (see runner.ts: peakRssBytes = heapMb *

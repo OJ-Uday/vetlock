@@ -35,8 +35,14 @@ import {
   adaptFindings,
   findingsSignalFailSafe,
   extractFailSafeReason,
+  adaptFileCapabilities,
+  adaptPackageSnapshot,
 } from './engine-adapter.js';
-import type { Finding as EngineFinding } from '@vetlock/core';
+import type {
+  Finding as EngineFinding,
+  FileCapabilities,
+  PackageSnapshot,
+} from '@vetlock/core';
 
 /**
  * Local widening of the shared Scenario union. Only the child-process runner exposes these
@@ -248,6 +254,52 @@ async function runEngine(
     };
   }
 
+  if (scenario.kind === 'engine:extractCapabilities') {
+    // Wave 3-O engine scenario. Mirrors worker.ts's handler exactly — text-in, capabilities-
+    // out, adapted to assurance Findings. The child-process runner supports it too since
+    // extractCapabilities is a pure text-scanner (no I/O, so nothing about child_process
+    // isolation changes what the engine sees).
+    const extractCapabilities = engine.extractCapabilities as
+      | ((relPath: string, text: string, sha256: string, bytes: number) => FileCapabilities)
+      | undefined;
+    if (typeof extractCapabilities !== 'function') {
+      throw new Error(
+        `[child-entry] enginePath ${scenario.enginePath} does not export extractCapabilities`,
+      );
+    }
+    const cap = extractCapabilities(
+      scenario.relPath,
+      scenario.text,
+      scenario.sha256 ?? '',
+      scenario.bytes ?? scenario.text.length,
+    );
+    return {
+      channel: 'ok',
+      findings: adaptFileCapabilities(cap),
+      wallMs: performance.now() - start,
+    };
+  }
+
+  if (scenario.kind === 'engine:analyzeTarball') {
+    // Wave 3-O engine scenario. Full pipeline: extract + per-file scan + manifest read.
+    // The child_process fallback exists specifically for scenarios like adversarial tarballs
+    // where the extractor could hit native aborts — this is a primary target for it.
+    const analyzeTarball = engine.analyzeTarball as
+      | ((tarballPath: string, opts?: unknown) => Promise<PackageSnapshot>)
+      | undefined;
+    if (typeof analyzeTarball !== 'function') {
+      throw new Error(
+        `[child-entry] enginePath ${scenario.enginePath} does not export analyzeTarball`,
+      );
+    }
+    const snap = await analyzeTarball(scenario.tarballPath);
+    return {
+      channel: 'ok',
+      findings: adaptPackageSnapshot(snap),
+      wallMs: performance.now() - start,
+    };
+  }
+
   const _exhaustive: never = scenario;
   throw new Error(`[child-entry] unknown engine scenario kind: ${JSON.stringify(_exhaustive)}`);
 }
@@ -303,6 +355,8 @@ async function main(): Promise<void> {
       throw new Error('unreachable');
     case 'engine:parseLockfileText':
     case 'engine:runDiff':
+    case 'engine:extractCapabilities':
+    case 'engine:analyzeTarball':
       outcome = await runEngine(scenario);
       break;
     default: {
