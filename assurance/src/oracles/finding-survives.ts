@@ -17,12 +17,36 @@
 
 import type { Findings, OracleResult, RunOutcome } from './types.js';
 
+/**
+ * Class-name aliases: the packet §3.5 canonical form ↔ STARTUP's shipped shape.
+ * The engine-adapter emits packet-canonical (with slash: `env/secret-read`,
+ * `obfuscation/decode`); STARTUP's CAPABILITY-MAP + assurance completeness-vector
+ * transforms tend to use STARTUP's shape (`secret-read`, `obfuscation-decode`).
+ * Both are semantically identical — a finding of one satisfies a request for the other.
+ *
+ * When adding a class here, keep it symmetric: if `X → [Y]` then also `Y → [X]`.
+ */
+const CLASS_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  'env/secret-read': ['secret-read', 'fs-read'],
+  'secret-read': ['env/secret-read'],
+  'fs-read': ['env/secret-read'],
+  'obfuscation/decode': ['obfuscation-decode'],
+  'obfuscation-decode': ['obfuscation/decode'],
+};
+
+function classMatchesAny(findingClass: string, targetClass: string): boolean {
+  if (findingClass === targetClass) return true;
+  const aliases = CLASS_ALIASES[targetClass];
+  if (aliases && aliases.includes(findingClass)) return true;
+  return false;
+}
+
 function findingsOfClass(
   outcome: RunOutcome,
   cls: string,
 ): Findings {
   if (outcome.kind === 'ok' || outcome.kind === 'fail-safe') {
-    return outcome.findings.filter((f) => f.capabilityClass === cls);
+    return outcome.findings.filter((f) => classMatchesAny(f.capabilityClass, cls));
   }
   return [];
 }

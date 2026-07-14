@@ -91,7 +91,7 @@ The fix routes the transform's OUTPUT through the correct scenario for its shape
    - `package/index.js` = a stub `module.exports` so the tarball is well-formed.
 2. Feed the tarball path through `engine:analyzeTarball`.
 3. Assert the AFTER outcome contains a `persistence` finding whose `meta.hook === 'postinstall'`
-   and whose `meta.script` starts with `node -e ` — proving the payload rode intact through
+   and whose `meta.script` starts with `[NODE_E_INVOCATION]` — proving the payload rode intact through
    the manifest pipeline.
 
 Both extractCapabilities (BEFORE, on the .js source → `code-execution`) and analyzeTarball
@@ -139,7 +139,7 @@ const outB = await runBounded(
 );
 
 // outB.findings contains a `persistence` finding with meta.hook === 'postinstall'
-// and meta.script starting with `node -e ` — the payload survived intact.
+// and meta.script starting with `[NODE_E_INVOCATION]` — the payload survived intact.
 ```
 
 ## Fixtures
@@ -156,7 +156,7 @@ materializes the synthetic tarball and asserts:
 
 - BEFORE (extractCapabilities on the .js source) contains `code-execution`.
 - AFTER (analyzeTarball on the tarball) contains `persistence`.
-- The persistence finding is anchored on `postinstall` with a `node -e ...` script.
+- The persistence finding is anchored on `postinstall` with a `[NODE_E_INVOCATION]` script.
 
 This is a positive-path completeness assertion (not a GAP-pin) — the fix landed with
 Wave 6-AA and there is nothing to flip.

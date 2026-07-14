@@ -88,7 +88,49 @@ const CAUGHT_SOURCES: Readonly<Record<string, string>> = {
   // `require("http")` lands in NETWORK_MODULES; the URL literal lands in urlLiterals;
   // both surface as net-egress. Defanged via RFC 2606 example.com.
   'net-egress': 'const http = require("http"); http.request("http://example.com/p");\n',
+  // Wave 6-X: fs-write. `require("fs")` lands in FS_MODULES; the call surfaces as
+  // fs-write via fsWriteTargets. Defanged via .invalid path.
+  'fs-write': 'const fs = require("fs"); fs.writeFile("/tmp/out.invalid", "d", () => {});\n',
+  // Wave 6-X: secret-read. `process.env.FOO` triggers env access detection. The engine
+  // may emit env/secret-read OR the split secret-read class depending on version.
+  'secret-read': 'const token = process.env.NPM_TOKEN;\n',
+  // Wave 6-X: obfuscation-decode. `Buffer.from(x, "base64")` triggers encoded-decode.
+  'obfuscation-decode':
+    'const decoded = Buffer.from("aGVsbG8=", "base64").toString("utf8");\n',
+  // Wave 6-Y: process-enumeration. The engine may not have a dedicated detector for
+  // this class yet — see NO_ENGINE_DETECTOR_YET below. Same source shape kept for when
+  // detection lands (require("ps-list") is the canonical entry-point).
+  'process-enumeration': 'const psList = require("ps-list");\nawait psList();\n',
 };
+
+/**
+ * Classes for which STARTUP has NOT (yet) wired a dedicated detector in @vetlock/core.
+ * Wave 6-Y added completeness-vector transforms targeting these classes pre-emptively —
+ * the packet's completeness axis extends to canonical §3.5 classes even before the engine
+ * enumerates them. For the evasion driver, though, we cannot assert finding-survives when
+ * there IS no finding to survive. These transforms round-trip via the driver's
+ * "no-detector-yet" skip path with a note directing readers to the future wave that will
+ * un-skip them once STARTUP lands the detector.
+ */
+const NO_ENGINE_DETECTOR_YET: ReadonlySet<string> = new Set<string>([
+  // Wave 6-Y crypto-mine transform (webcryptoToNode) — engine has no crypto-mine detector.
+  // packet §3.5 canonical class; STARTUP §3.5 hasn't populated it in capability-map.json.
+  'webcrypto-to-node',
+  // Wave 6-Y clipboard transform — engine has no clipboard detector. Ditto.
+  'exec-clipboard-call',
+  // Wave 6-Y integrity transform (sha256Reimplement) — engine's integrity class in the
+  // CAPABILITY-MAP is about hash-mismatch verification, not about DETECTING crypto
+  // primitives in source. Different axis; no source-level detector.
+  'sha256-reimplement',
+  // Wave 6-Y process-enumeration transform (psListToChildProcess) — engine has no
+  // dedicated detector; require("ps-list") isn't flagged as anything special (just
+  // another module import).
+  'ps-list-to-child-process',
+  // Wave 6-Y dep-graph-anomaly transform — the class is a GRAPH-level signal (STARTUP
+  // computes it during runDiff), not a source-level signal. extractCapabilities can't
+  // see graph-level shape from a single source string.
+  'named-alias-to-node-modules-path',
+]);
 
 /**
  * Transform ids whose output is NOT a .js file body and therefore doesn't belong in the
@@ -109,6 +151,9 @@ const ANALYZE_TARBALL_ROUTED_IDS: ReadonlySet<string> = new Set<string>([
   // via adaptPackageSnapshot (LIFECYCLE_HOOKS set includes postinstall).
   // Corpus: assurance/corpus/evasion/into-lifecycle-script/README.md.
   'into-lifecycle-script',
+  // Wave 6-Y: preinstall-to-postinstall — same shape as into-lifecycle-script (JSON
+  // manifest fragment). Both belong on the analyzeTarball path. See note above.
+  'preinstall-to-postinstall',
 ]);
 
 /**
@@ -118,7 +163,20 @@ const ANALYZE_TARBALL_ROUTED_IDS: ReadonlySet<string> = new Set<string>([
  * dedicated GAP-pinning `it(...)` block below (see the metamorphic-invariance file for the
  * canonical shape).
  */
-const KNOWN_GAP_IDS: ReadonlySet<string> = new Set<string>();
+const KNOWN_GAP_IDS: ReadonlySet<string> = new Set<string>([
+  // Wave 6 integration found: base64-decode-to-atob and hex-decode-to-parseInt evade
+  // the engine's obfuscation detector. The engine catches Buffer.from(x, "base64") and
+  // Buffer.from(x, "hex") but NOT the equivalent atob(x) / parseInt-based hex-decode
+  // forms. Both `atob` (available in Node ≥16 without import) and the parseInt-IIFE
+  // are legitimate decoders; a hostile package can use them to slip payloads past the
+  // detector. Corpus entries:
+  //   assurance/corpus/evasion/base64-decode-to-atob/README.md
+  //   assurance/corpus/evasion/hex-decode-to-parseInt/README.md
+  // STARTUP owns the fix: capabilities.ts::extractCapabilities should treat atob() +
+  // parseInt-based hex parsing as encodedUrls / suspiciousLiterals signals.
+  'base64-decode-to-atob',
+  'hex-decode-to-parseInt',
+]);
 
 /**
  * Feed one source string through the bounded runner's engine:extractCapabilities
@@ -146,6 +204,11 @@ describe('evasion catch-rate — completeness-vector transforms preserve capabil
   it('battery covers every registered transform and has a caught source for its class', () => {
     expect(allTransforms.length).toBeGreaterThan(0);
     for (const t of allTransforms) {
+      // Every transform must be in exactly one of: (a) routed via analyzeTarball
+      // (JSON output), (b) known to have no engine detector yet (canonical class the
+      // engine hasn't wired), or (c) have a CAUGHT_SOURCES entry for its targetClass.
+      if (ANALYZE_TARBALL_ROUTED_IDS.has(t.id)) continue;
+      if (NO_ENGINE_DETECTOR_YET.has(t.id)) continue;
       expect(
         CAUGHT_SOURCES[t.targetClass],
         `no CAUGHT_SOURCES entry for transform ${t.id}'s targetClass=${t.targetClass}`,
@@ -157,9 +220,11 @@ describe('evasion catch-rate — completeness-vector transforms preserve capabil
     // Skip transforms whose output is routed through a different scenario (analyze-tarball
     // for JSON-shaped output) — those have dedicated it() blocks below. Also skip transforms
     // in KNOWN_GAP_IDS (extractCapabilities-shape gaps whose GAP-pinning assertion lives in
-    // its own it() block below).
+    // its own it() block below) or in NO_ENGINE_DETECTOR_YET (canonical §3.5 classes for
+    // which STARTUP hasn't shipped a detector, so there's no finding to survive).
     if (ANALYZE_TARBALL_ROUTED_IDS.has(transform.id)) continue;
     if (KNOWN_GAP_IDS.has(transform.id)) continue;
+    if (NO_ENGINE_DETECTOR_YET.has(transform.id)) continue;
 
     it(
       `${transform.family}/${transform.id}: finding survives transform (class=${transform.targetClass})`,
@@ -336,4 +401,51 @@ describe('evasion catch-rate — completeness-vector transforms preserve capabil
     },
     30_000,
   );
+
+  // ------------------------------------------------------------------------------------------
+  // KNOWN GAPS (packet rule #6 protocol): transforms that DO produce .js output but
+  // genuinely evade the current engine's extractCapabilities pipeline. Each has a corpus
+  // entry under assurance/corpus/evasion/<id>/ and an assertion-flip note for STARTUP.
+  // The tests below assert the CURRENT (failing) behavior so a future engine fix surfaces
+  // as a test-changepoint (assertion flips green when the fix lands).
+  // ------------------------------------------------------------------------------------------
+
+  // Per-GAP sources: each KNOWN_GAP transform needs a source that actually contains
+  // the specific pattern it rewrites. `CAUGHT_SOURCES['obfuscation-decode']` uses a
+  // base64 Buffer.from — the hex-decode transform is a no-op on that. Route each gap
+  // to its own targeted source.
+  const GAP_SOURCES: Readonly<Record<string, string>> = {
+    'base64-decode-to-atob': CAUGHT_SOURCES['obfuscation-decode']!,
+    // hex-decode-to-parseInt looks for Buffer.from(_, 'hex'). Give it one.
+    'hex-decode-to-parseInt':
+      'const raw = Buffer.from("68656c6c6f", "hex").toString("utf8");\n',
+  };
+
+  for (const gapId of ['base64-decode-to-atob', 'hex-decode-to-parseInt']) {
+    it(
+      `GAP: ${gapId} — engine's obfuscation-decode detector does not see atob/parseInt-based decoders`,
+      async () => {
+        const transform = allTransforms.find((t) => t.id === gapId);
+        expect(transform, `expected transform ${gapId} to be registered`).toBeDefined();
+        if (!transform) return;
+
+        const source = GAP_SOURCES[gapId]!;
+        expect(scanForDefangViolations(source).clean).toBe(true);
+        const mutated = transform.transform(source, /*seed*/ 42);
+        expect(mutated).not.toBe(source);
+        expect(scanForDefangViolations(mutated).clean).toBe(true);
+
+        const [outA, outB] = await Promise.all([
+          analyzeSource(source, 'a.js'),
+          analyzeSource(mutated, 'a.js'),
+        ]);
+        const verdict = oracleFindingSurvives(outA, outB, transform.targetClass);
+        // Pinning the current gap: the transform DOES evade the detector. When STARTUP wires
+        // detection for atob() / parseInt-based hex-decode, this assertion flips to
+        // expect(verdict.pass).toBe(true) and the transform rejoins the standard survives loop.
+        expect(verdict.pass).toBe(false);
+      },
+      30_000,
+    );
+  }
 });
