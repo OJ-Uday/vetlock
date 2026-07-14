@@ -19,10 +19,15 @@ import {
 } from '../../src/capability-map/index.js';
 
 /** Cover every enumerated sink + entry-point. Used by the "0% → 100%" test and by any
- *  test that wants a fully-covered baseline before flipping one member off. */
+ *  test that wants a fully-covered baseline before flipping one member off.
+ *
+ *  Iterates OVER THE MAP'S ACTUAL CLASSES, not the packet §3.5 canonical nine — STARTUP's
+ *  shipped artifact enumerates additional classes (fs-read, secret-read, integrity,
+ *  advisory-known-vuln, dep-graph-anomaly) that we want counted, and may add more in
+ *  future without breaking this helper. */
 function coverEverything(gate: CoverageGate, map: CapabilityMap): void {
-  for (const classId of CAPABILITY_CLASS_IDS) {
-    for (const sink of map.classes[classId].sinks) {
+  for (const classId of Object.keys(map.classes) as (keyof CapabilityMap['classes'])[]) {
+    for (const sink of map.classes[classId]?.sinks ?? []) {
       gate.assertMemberCovered(classId, sink.id, true);
     }
   }
@@ -108,19 +113,26 @@ describe('CoverageGate — assertEntryPointCovered semantics', () => {
   it('covering an execution entry-point shows in the execution axis report', () => {
     const map = loadCapabilityMap();
     const gate = new CoverageGate(map);
-    gate.assertEntryPointCovered('execution', 'lifecycle-postinstall', true);
+    // Use the first-enumerated execution entry-point rather than a hardcoded id — STARTUP's
+    // shipped artifact uses prefixed ids (install-hook:preinstall etc.), the assurance scaffold
+    // used unprefixed (lifecycle-preinstall). Either shape passes this test.
+    const firstExec = map.entryPoints.execution[0]?.id;
+    if (!firstExec) throw new Error('capability-map has no execution entry-points');
+    gate.assertEntryPointCovered('execution', firstExec, true);
     const r = gate.report();
     expect(r.entryPoints.execution.covered).toBe(1);
-    expect(r.entryPoints.execution.missing).not.toContain('lifecycle-postinstall');
+    expect(r.entryPoints.execution.missing).not.toContain(firstExec);
   });
 
   it('covering a graph entry-point shows in the graph axis report', () => {
     const map = loadCapabilityMap();
     const gate = new CoverageGate(map);
-    gate.assertEntryPointCovered('graph', 'transitive', true);
+    const firstGraph = map.entryPoints.graph[0]?.id;
+    if (!firstGraph) throw new Error('capability-map has no graph entry-points');
+    gate.assertEntryPointCovered('graph', firstGraph, true);
     const r = gate.report();
     expect(r.entryPoints.graph.covered).toBe(1);
-    expect(r.entryPoints.graph.missing).not.toContain('transitive');
+    expect(r.entryPoints.graph.missing).not.toContain(firstGraph);
   });
 
   it('rejects an entry-point id that is not enumerated under the given axis', () => {
@@ -180,8 +192,12 @@ describe('coverage-gate-fails-on-uncovered-sink (packet §5 P2 done-gate name)',
     const map = loadCapabilityMap();
     const gate = new CoverageGate(map);
     coverEverything(gate, map);
-    // Flip ONE known sink back to uncovered. enforce() must fire and name it.
-    gate.assertMemberCovered('code-execution', 'child_process.execFile', false);
+    // Flip ONE known sink back to uncovered. Pick the FIRST enumerated code-execution sink
+    // dynamically — STARTUP shipped `child_process` as an aggregate id, the scaffold used
+    // `child_process.execFile`. Either passes.
+    const firstSink = map.classes['code-execution']?.sinks[0]?.id;
+    if (!firstSink) throw new Error('code-execution has no enumerated sinks');
+    gate.assertMemberCovered('code-execution', firstSink, false);
 
     let caught: Error | undefined;
     try {
@@ -192,7 +208,7 @@ describe('coverage-gate-fails-on-uncovered-sink (packet §5 P2 done-gate name)',
     expect(caught).toBeInstanceOf(Error);
     // The gate must name the specific missing sink so a human can act on the failure
     // without re-running with more logging.
-    expect(caught!.message).toContain('child_process.execFile');
+    expect(caught!.message).toContain(firstSink);
     expect(caught!.message).toContain('code-execution');
   });
 
@@ -200,18 +216,24 @@ describe('coverage-gate-fails-on-uncovered-sink (packet §5 P2 done-gate name)',
     const map = loadCapabilityMap();
     const gate = new CoverageGate(map);
     coverEverything(gate, map);
-    gate.assertEntryPointCovered('execution', 'lifecycle-postinstall', false);
+    const firstExec = map.entryPoints.execution[0]?.id;
+    if (!firstExec) throw new Error('capability-map has no execution entry-points');
+    gate.assertEntryPointCovered('execution', firstExec, false);
 
-    expect(() => gate.enforce()).toThrow(/lifecycle-postinstall/);
+    // Escape any regex metacharacters that STARTUP-prefixed ids may contain (e.g. ':').
+    const escaped = firstExec.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    expect(() => gate.enforce()).toThrow(new RegExp(escaped));
   });
 
   it('enforce() throws when a graph entry-point is uncovered, naming the entry', () => {
     const map = loadCapabilityMap();
     const gate = new CoverageGate(map);
     coverEverything(gate, map);
-    gate.assertEntryPointCovered('graph', 'bundled', false);
-
-    expect(() => gate.enforce()).toThrow(/bundled/);
+    const firstGraph = map.entryPoints.graph[0]?.id;
+    if (!firstGraph) throw new Error('capability-map has no graph entry-points');
+    gate.assertEntryPointCovered('graph', firstGraph, false);
+    const escaped = firstGraph.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    expect(() => gate.enforce()).toThrow(new RegExp(escaped));
   });
 
   it('enforce() reports a count when many members are missing', () => {

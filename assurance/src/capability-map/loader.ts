@@ -160,6 +160,16 @@ function validateEntryPoints(raw: unknown): EntryPoints {
 function validateMap(raw: unknown): CapabilityMap {
   assert(isRecord(raw), 'top-level must be an object');
   assert(typeof raw.version === 'string' && raw.version.length > 0, 'version must be a non-empty string');
+
+  // Shape detection: STARTUP §3.5 shipped `entries: [...]` at packages/detectors/src/capability-map.json
+  // as of engine v0.4.0 (commit 5776abe). The assurance-side scaffold used `classes: {…}`
+  // as its interim shape. Both roundtrip to the same CapabilityMap; we adapt STARTUP's
+  // shape into ours when we see it.
+  if (Array.isArray((raw as { entries?: unknown }).entries)) {
+    return adaptStartupShape(raw as unknown as StartupShape);
+  }
+
+  // Legacy assurance-side scaffold shape.
   assert(typeof raw.notes === 'string', 'notes must be a string');
   assert(isRecord(raw.classes), 'classes must be an object');
   const classes: Partial<Record<CapabilityClassId, CapabilityClass>> = {};
@@ -172,6 +182,120 @@ function validateMap(raw: unknown): CapabilityMap {
     notes: raw.notes,
     classes: classes as Record<CapabilityClassId, CapabilityClass>,
     entryPoints: validateEntryPoints(raw.entryPoints),
+  };
+}
+
+// -----------------------------------------------------------------------------------------
+// STARTUP §3.5 shape adapter
+//
+// STARTUP shipped (packages/detectors/src/capability-map.json, ADR-0011):
+//   { version, entries: [
+//       { class, kind, id, aliases?, detectors?, tests?, corpus_refs? },
+//       ...
+//     ] }
+//
+// STARTUP's actual ontology (as of engine v0.4.2):
+//   kind: 'sink' — the class field is one of the capability classes (code-execution,
+//     net-egress, fs-write, fs-read, secret-read, obfuscation-decode, integrity,
+//     advisory-known-vuln, dep-graph-anomaly).
+//   kind: 'entry-point' — the class field is the entry-point FAMILY name
+//     (install-hook, publisher-trust, typosquat, graph-entry-point).
+//
+// We adapt into assurance's shape:
+//   sinks → grouped by class name (mapping STARTUP's names into packet §3.5 taxonomy
+//     where they differ; unknown-to-us STARTUP classes are kept under their own key so
+//     the coverage gate still sees them).
+//   entry-points → 'graph-entry-point' family → entryPoints.graph[]; all other entry-point
+//     families → entryPoints.execution[] (install-hook, publisher-trust, typosquat all
+//     fire at install / publish time — the execution axis in packet terms).
+// -----------------------------------------------------------------------------------------
+
+/** STARTUP class name → packet §3.5 class name. When no mapping exists, keep STARTUP's
+ *  name verbatim (assurance is a consumer, not a taxonomy gatekeeper). */
+const STARTUP_CLASS_ALIAS: Record<string, string> = {
+  'obfuscation-decode': 'obfuscation/decode', // slash-form is packet §3.5
+  // 'secret-read' and 'fs-read' are STARTUP splits of the packet's 'env/secret-read'.
+  // We honor STARTUP's split — future assurance coverage can name either bucket.
+};
+
+interface StartupEntry {
+  readonly class: string;
+  readonly kind: 'sink' | 'entry-point' | string;
+  readonly id: string;
+  readonly aliases?: readonly string[];
+  readonly detectors?: readonly string[];
+  readonly tests?: readonly string[];
+  readonly corpus_refs?: readonly string[];
+  readonly description?: string;
+}
+
+interface StartupShape {
+  readonly version: string;
+  readonly entries: readonly StartupEntry[];
+  readonly $comment?: string;
+  readonly generatedFrom?: string;
+}
+
+function describeStartupEntry(e: StartupEntry): string {
+  if (typeof e.description === 'string' && e.description.length > 0) return e.description;
+  const bits: string[] = [];
+  if (e.detectors && e.detectors.length > 0) {
+    bits.push(`detectors: ${e.detectors.join(', ')}`);
+  }
+  if (e.aliases && e.aliases.length > 0) {
+    bits.push(`aliases: ${e.aliases.slice(0, 3).join(', ')}${e.aliases.length > 3 ? '…' : ''}`);
+  }
+  return bits.length > 0 ? bits.join(' · ') : `(no description; kind=${e.kind})`;
+}
+
+function adaptStartupShape(raw: StartupShape): CapabilityMap {
+  const classes: Record<string, { sinks: Sink[] }> = {};
+  const execution: { id: string; description: string }[] = [];
+  const graph: { id: string; description: string }[] = [];
+
+  for (const e of raw.entries) {
+    assert(typeof e.class === 'string' && e.class.length > 0, 'STARTUP entry missing class');
+    assert(typeof e.id === 'string' && e.id.length > 0, `STARTUP entry (class=${e.class}) missing id`);
+    const description = describeStartupEntry(e);
+
+    if (e.kind === 'sink') {
+      const clsKey = STARTUP_CLASS_ALIAS[e.class] ?? e.class;
+      if (!classes[clsKey]) classes[clsKey] = { sinks: [] };
+      classes[clsKey].sinks.push({ id: e.id, description });
+      continue;
+    }
+
+    if (e.kind === 'entry-point') {
+      // STARTUP puts entry-point families in the CLASS field. graph-entry-point → graph axis;
+      // everything else (install-hook, publisher-trust, typosquat) fires at execution time.
+      // Prefix the id with the family so ids stay unique across families.
+      const prefixedId = `${e.class}:${e.id}`;
+      if (e.class === 'graph-entry-point') {
+        graph.push({ id: prefixedId, description });
+      } else {
+        execution.push({ id: prefixedId, description });
+      }
+      continue;
+    }
+
+    // Unknown kind — record as a sink under a synthetic class so it's visible in coverage
+    // reports but doesn't pollute canonical classes.
+    const cls = `x-startup:${e.kind}`;
+    if (!classes[cls]) classes[cls] = { sinks: [] };
+    classes[cls].sinks.push({ id: e.id, description });
+  }
+
+  // Ensure every packet §3.5 class is at least present (empty sinks OK — packet §4:
+  // "unknowns are the search target"). STARTUP may not enumerate every class yet.
+  for (const id of KNOWN_CLASS_IDS) {
+    if (!classes[id]) classes[id] = { sinks: [] };
+  }
+
+  return {
+    version: raw.version,
+    notes: 'Adapted from STARTUP §3.5 shape at packages/detectors/src/capability-map.json.',
+    classes: classes as unknown as Record<CapabilityClassId, CapabilityClass>,
+    entryPoints: { execution, graph },
   };
 }
 
