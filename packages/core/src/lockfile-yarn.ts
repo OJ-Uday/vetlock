@@ -39,7 +39,14 @@ const parseClassic: (text: string) => {
 interface YarnEntry {
   version?: string;
   resolved?: string;
+  /**
+   * yarn classic v1 emits `integrity: sha512-…` and (usually) no checksum.
+   * yarn berry v6+ emits `checksum: sha512-…` (or, in older berry, an opaque
+   * cache-key hash — those aren't SRI). We normalise both into a single field
+   * downstream. See `objectToGraph`.
+   */
   integrity?: string;
+  checksum?: string;
   dependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
 }
@@ -127,7 +134,12 @@ function objectToGraph(
         key,
         name,
         version,
-        integrity: entry.integrity ?? '',
+        // Prefer explicit SRI-shaped values. yarn classic populates `integrity`;
+        // yarn berry populates `checksum` (which is SRI in the sha512-… form
+        // when the entry came from npm). Normalise both into `integrity` so
+        // downstream detectors and the changeset integrity-tripwire (S10)
+        // don't silently miss berry lockfiles.
+        integrity: pickIntegrity(entry),
         resolved: entry.resolved ?? null,
         dependencies: [], // filled below
       });
@@ -220,4 +232,30 @@ export function parseYarnAlias(alias: string): {
   }
 
   return { name, spec };
+}
+
+/**
+ * Normalise the SRI-shaped integrity value for a yarn entry across yarn
+ * classic (`integrity`) and yarn berry (`checksum`). We only accept values
+ * that look SRI (`<algo>-<base64>` per the W3C Subresource Integrity spec) —
+ * an opaque berry cache-key hash (rare, only in some early berry versions on
+ * non-registry sources) is NOT SRI and is rejected here so the integrity
+ * tripwire never fires against a value it can't verify.
+ *
+ * Order of preference: `integrity` first (yarn classic — always SRI), then
+ * `checksum` (yarn berry — SRI when the entry came from the npm registry).
+ * Empty string when neither field carries an SRI value; that empty string
+ * flows through to the S10 tripwire as a "no ground truth" signal, which is
+ * the correct behavior.
+ */
+function pickIntegrity(entry: YarnEntry): string {
+  if (isSri(entry.integrity)) return entry.integrity!;
+  if (isSri(entry.checksum)) return entry.checksum!;
+  return '';
+}
+
+function isSri(v: string | undefined | null): v is string {
+  if (typeof v !== 'string' || v.length < 8) return false;
+  // sha1-<b64>, sha256-<b64>, sha384-<b64>, sha512-<b64> — the four SRI algos.
+  return /^sha(?:1|256|384|512)-[A-Za-z0-9+/=]+$/.test(v);
 }
