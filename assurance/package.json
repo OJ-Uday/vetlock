@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc -p .",
     "typecheck": "tsc -p . --noEmit",
-    "pretest": "pnpm --filter @vetlock/core build && tsc -p .",
+    "pretest": "pnpm --filter @vetlock/core build && pnpm --filter @vetlock/detectors build && tsc -p .",
     "test": "vitest run",
     "test:watch": "vitest",
     "assurance:report": "node dist/report/cli.js"
