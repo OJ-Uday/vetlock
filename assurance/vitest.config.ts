@@ -8,12 +8,14 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     testTimeout: 30_000,
     hookTimeout: 10_000,
-    // Sequential by default. Per-test resource caps must not be confounded by co-runners
-    // fighting over cores or heap. Individual suites may opt into concurrency where safe.
+    // One fork PER FILE (singleFork: false is the default), so a test file that provokes a
+    // native abort in a child worker (rare, but the whole point of the harness is that it
+    // CAN and we need to survive) only kills its own fork. Vitest reruns nothing in a
+    // crashed fork's queue — the file just fails, cleanly, without taking others with it.
     pool: 'forks',
     poolOptions: {
       forks: {
-        singleFork: true,
+        singleFork: false,
       },
     },
   },
