@@ -10,7 +10,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Dynamic code sink introduced (new-function). [escalated: package 'rand-user-agent' has 3 WARN findings across 3 categories]",
+      "message": "Dynamic code sink introduced (new-function). [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "index.js",
@@ -34,7 +34,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'rand-user-agent' has 3 WARN findings across 3 categories]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "package.json",
@@ -57,8 +57,8 @@
       "to": "2.0.1",
       "direction": "changed",
       "severity": "BLOCK",
-      "confidence": "high",
-      "message": "New network endpoint appeared: rat.example.invalid",
+      "confidence": "medium",
+      "message": "New network endpoint appeared: rat.example.invalid [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "index.js",
@@ -82,7 +82,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Package started using network module \"net\". [escalated: package 'rand-user-agent' has 3 WARN findings across 3 categories]",
+      "message": "Package started using network module \"net\". [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "index.js",

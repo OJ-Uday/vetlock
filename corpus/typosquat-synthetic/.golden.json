@@ -56,8 +56,8 @@
       "from": null,
       "to": "1.0.0",
       "direction": "added",
-      "severity": "BLOCK",
-      "confidence": "medium",
+      "severity": "WARN",
+      "confidence": "low",
       "message": "Newly-installed package contacts network endpoint: https://exfil.example.invalid/env",
       "evidence": [
         {

@@ -80,7 +80,7 @@
       "from": "0.7.28",
       "to": "0.7.29",
       "direction": "changed",
-      "severity": "BLOCK",
+      "severity": "WARN",
       "confidence": "high",
       "message": "New network endpoint appeared: https://miner.example.invalid/download [GHSA: GHSA-fh58-9fw3-vf2v]",
       "evidence": [

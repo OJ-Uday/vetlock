@@ -58,7 +58,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'coa' has 2 WARN findings across 2 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'coa' has 3 WARN findings across 2 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "package.json",
@@ -82,7 +82,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "New network endpoint appeared: https://loader.example.invalid [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "New network endpoint appeared: https://loader.example.invalid [escalated: package 'coa' has 3 WARN findings across 2 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "postinstall.js",
@@ -106,7 +106,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using network module \"https\". [escalated: package 'coa' has 2 WARN findings across 2 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "Package started using network module \"https\". [escalated: package 'coa' has 3 WARN findings across 2 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "postinstall.js",

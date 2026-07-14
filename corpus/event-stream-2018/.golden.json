@@ -27,31 +27,6 @@
       ]
     },
     {
-      "detector": "net.new-endpoint",
-      "category": "NET",
-      "package": "flatmap-stream",
-      "from": null,
-      "to": "0.1.1",
-      "direction": "added",
-      "severity": "BLOCK",
-      "confidence": "medium",
-      "message": "Newly-installed package contacts network endpoint: http://exfil.example.invalid/collect",
-      "evidence": [
-        {
-          "file": "index.js",
-          "line": 1,
-          "snippet": "http://exfil.example.invalid/collect"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "event-stream",
-          "flatmap-stream"
-        ]
-      ]
-    },
-    {
       "detector": "obf.new-obfuscated-file",
       "category": "OBF",
       "package": "flatmap-stream",
@@ -97,6 +72,31 @@
         [
           "my-app",
           "event-stream"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "flatmap-stream",
+      "from": null,
+      "to": "0.1.1",
+      "direction": "added",
+      "severity": "WARN",
+      "confidence": "low",
+      "message": "Newly-installed package contacts network endpoint: http://exfil.example.invalid/collect",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "http://exfil.example.invalid/collect"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "event-stream",
+          "flatmap-stream"
         ]
       ]
     },

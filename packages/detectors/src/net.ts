@@ -3,7 +3,17 @@
  *
  * Two sub-findings:
  *   - net.new-module    (WARN, medium) — a network module now imported that wasn't before
- *   - net.new-endpoint  (BLOCK, high)  — a URL literal now present that wasn't before
+ *   - net.new-endpoint  (WARN, medium)  — a URL literal now present that wasn't before
+ *
+ * v0.4.1 FP-STUDY §3b — `net.new-endpoint` downgraded from BLOCK to WARN.
+ * Rationale: on the 27-bump routine-upgrade study, a single new URL literal
+ * fired BLOCK on 33% of legitimate bumps — including docs URLs in error
+ * messages (prettier's typescript-eslint.io link) and install-help URLs in
+ * comments (sharp's pixelplumbing.com link). Any single URL delta shouldn't
+ * BLOCK on its own; a package adding a docs URL is not the same as one adding
+ * an exfil endpoint. Co-occurrence with INSTALL/EXEC/ENV/FS via the compound-
+ * suspicion escalator in index.ts promotes it back to BLOCK when the shape
+ * looks actually malicious.
  *
  * URL literals dedup across files; first-seen evidence is used.
  *
@@ -56,8 +66,8 @@ export const netDetector: Detector = {
         from: dir.from,
         to: pair.new.version,
         direction: dir.direction,
-        severity: 'BLOCK',
-        confidence: isAdded ? 'medium' : 'high',
+        severity: 'WARN',
+        confidence: isAdded ? 'low' : 'medium',
         message: isAdded
           ? `Newly-installed package contacts network endpoint: ${url}`
           : `New network endpoint appeared: ${url}`,

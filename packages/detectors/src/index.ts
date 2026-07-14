@@ -146,16 +146,39 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   }
 
   // REDTEAM D4, S5 FIX — Escalation 3: compound-suspicion. Per-package, escalate ALL
-  // WARN findings to BLOCK when EITHER:
-  //   (a) warns.length >= 3, regardless of category count — closes the single-category
-  //       saturation evasion where an attacker ships N obfuscated files (all OBF) but
-  //       no other signal.
-  //   (b) warns.length >= 2 across 2+ distinct categories AND at least one finding is
-  //       in a security-relevant category — closes the 2-finding cross-category evasion
-  //       (e.g. code.dynamic-loading-added + net.new-module staying WARN because the
-  //       old rule required 3+).
-  // Previously: requires warns.length >= 3 AND cats.size >= 2 (both AND'd).
+  // WARN findings to BLOCK when ONE of:
+  //   (a) warns.length >= 3 across 2+ distinct categories — multi-category
+  //       accumulation (attacker spreading signals across NET + INSTALL + EXEC).
+  //   (b) warns.length >= 2 across 2+ distinct categories AND at least one finding
+  //       is in a security-relevant category — 2-finding cross-category evasion
+  //       (e.g. code.dynamic-loading-added + net.new-module).
+  //   (c) warns.length >= 3 in a SINGLE OBF category — same-category obfuscated-file
+  //       saturation (attacker shipping N obfuscated files with no other signal;
+  //       REDTEAM S5, D4). Restricted to OBF because obfuscated file additions
+  //       have a low base rate in legit packages.
+  //   (d) warns.length >= 3 CODE findings BUT ONLY when all/most sink kinds are
+  //       "dangerous" — eval, new-function, char-arithmetic-decoder, unpacker.
+  //       dynamic-import and dynamic-require are excluded because bundlers ship
+  //       many of them legitimately (vite added 16 in a routine bump — REDTEAM
+  //       S5/D4 was originally written with dynamic-import in mind but the
+  //       actual exploit shape is eval/new-Function, not module loading).
+  //
+  // v0.4.1 FP-STUDY §3a — Previously, (c)+(d) collapsed into a single "any
+  // category with warns.length >= 3" rule. That over-fired on bundlers. The
+  // split preserves REDTEAM S5/D4 (a package adding 3+ eval() calls IS
+  // compound-suspicious) without misfiring on legitimate module loading.
   const securityCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS', 'CODE']);
+  // Sink kinds emitted in code.ts as "Dynamic code sink introduced (${kind}).".
+  // "Dangerous" kinds = ones with a low legit base rate. Excluded from this list:
+  //   - dynamic-import / dynamic-require: modern module-loading idiom (bundlers)
+  //   - char-arithmetic-decoder: bundlers (webpack/vite/rollup) legitimately
+  //     generate character-arithmetic patterns for asset transformers, font
+  //     encoders, and template compilers. FP-STUDY §3c: vite 5.2→5.4 added 3
+  //     char-arithmetic-decoder sites in `assetImportMetaUrl` handling; false.
+  // Retained as dangerous: eval, new-function (both direct-code-execution),
+  // and the unpacker/marshal/deserialize kinds (attacker-favored obfuscation
+  // unpacking).
+  const DANGEROUS_CODE_KINDS = /\((?:eval|new-function|unpacker|marshal|deserialize)\)/;
   const warnFindingsByPkg = new Map<string, Finding[]>();
   for (const f of all) {
     if (f.severity !== 'WARN') continue;
@@ -164,9 +187,17 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   for (const [pkg, warns] of warnFindingsByPkg) {
     const cats = new Set(warns.map((w) => w.category));
     const hasSecurityRelevant = warns.some((w) => securityCategories.has(w.category));
+    const obfSaturation = warns.length >= 3 && cats.size === 1 && cats.has('OBF');
+    // CODE saturation only counts DANGEROUS sink kinds — see comment block above.
+    const dangerousCodeCount = warns.filter(
+      (w) => w.category === 'CODE' && DANGEROUS_CODE_KINDS.test(w.message),
+    ).length;
+    const codeSaturation = dangerousCodeCount >= 3 && cats.size === 1 && cats.has('CODE');
     const shouldEscalate =
-      warns.length >= 3 ||
-      (warns.length >= 2 && cats.size >= 2 && hasSecurityRelevant);
+      (warns.length >= 3 && cats.size >= 2) ||
+      (warns.length >= 2 && cats.size >= 2 && hasSecurityRelevant) ||
+      obfSaturation ||
+      codeSaturation;
     if (!shouldEscalate) continue;
     for (const w of warns) {
       w.severity = 'BLOCK';

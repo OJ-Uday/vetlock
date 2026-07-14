@@ -58,7 +58,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'eslint-scope' has 3 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]",
       "evidence": [
         {
           "file": "package.json",
@@ -82,7 +82,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "New network endpoint appeared: exfil.example.invalid [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "message": "New network endpoint appeared: exfil.example.invalid [escalated: package 'eslint-scope' has 3 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]",
       "evidence": [
         {
           "file": "build.js",
@@ -106,7 +106,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using network module \"http\". [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "message": "Package started using network module \"http\". [escalated: package 'eslint-scope' has 3 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]",
       "evidence": [
         {
           "file": "build.js",

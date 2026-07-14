@@ -30,11 +30,20 @@
  * of the top 100, confidence level XYZ" in DETECTIONS.md.
  *
  * WHY we can't just include a big precomputed dataset:
- *   Real npm changes constantly. Running it against a canned dataset of yesterday's
- *   versions doesn't measure today's noise floor. Always run fresh.
+ *   Real npm changes constantly. Running it against a canned dataset of
+ *   yesterday's versions doesn't measure today's noise floor. Always run fresh.
+ *
+ * Registry & auth:
+ *   Uses the registry from the env var `NPM_CONFIG_REGISTRY` if set, else the
+ *   public npm registry. For behind-a-proxy runs (e.g. Lilly's Artifactory
+ *   mirror), also reads ~/.npmrc for an _authToken keyed on that registry's
+ *   host, resolving ${VAR} references from the environment. See
+ *   `resolveRegistryAuth()`.
  */
 
 import { promises as fs } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
 import * as path from 'node:path';
 import { parseArgs } from 'node:util';
 import {
@@ -44,6 +53,29 @@ import {
   type Severity,
 } from '@vetlock/core';
 import { runAll } from '@vetlock/detectors';
+
+async function pacoteTarballStream(spec: string, opts: Record<string, unknown>, dst: string): Promise<void> {
+  // pacote is a transitive dep of @vetlock/core; we dynamic-import it here to
+  // keep it out of the CLI package's direct-deps list (fp-study is dev-only
+  // tooling, not shipped in the npm publish). The ts-ignore is because
+  // pacote's types aren't reachable from this workspace boundary without
+  // adding pacote as a direct dep.
+  // @ts-ignore - transitive dep, resolved at runtime
+  const pacote = (await import('pacote')).default ?? await import('pacote');
+  const { createWriteStream } = await import('node:fs');
+  // pacote.tarball.stream(spec, handler, opts) — handler receives the read
+  // stream and must return a Promise that resolves when the handler is done.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (pacote as any).tarball.stream(spec, async (s: NodeJS.ReadableStream) => {
+    const out = createWriteStream(dst);
+    return new Promise<void>((resolve, reject) => {
+      s.pipe(out);
+      out.on('finish', () => resolve());
+      out.on('error', reject);
+      s.on('error', reject);
+    });
+  }, opts);
+}
 
 interface StudyBump {
   packageName: string;
@@ -60,6 +92,10 @@ interface StudyResultRow {
   detectors: string[];
   errored?: boolean;
   errorMessage?: string;
+  /** First analysis.failed message, if any — surfaces the real underlying error. */
+  analysisError?: string;
+  /** Per-finding detail: severity + detector + short message. Populated in verbose. */
+  findingsDetail?: Array<{ severity: string; detector: string; message: string }>;
 }
 
 interface StudyReport {
@@ -92,6 +128,12 @@ async function main() {
   const bumps = await parseInputFile(values.input);
   console.error(`fp-study: ${bumps.length} bumps queued`);
 
+  // Resolve registry + auth ONCE, at study start. Downstream fetches reuse.
+  const pacoteOpts = resolveRegistryAuth();
+  if (pacoteOpts.registry) {
+    console.error(`fp-study: registry=${pacoteOpts.registry}`);
+  }
+
   const rows: StudyResultRow[] = [];
   const detectorHits = new Map<string, number>();
   const severityCounts: Record<string, number> = { BLOCK: 0, WARN: 0, INFO: 0, CLEAN: 0 };
@@ -104,7 +146,7 @@ async function main() {
     const label = `${bump.packageName}@${bump.oldVersion}..${bump.newVersion}`;
     process.stderr.write(`[${i + 1}/${bumps.length}] ${label}… `);
     try {
-      const result = await analyzeSingleBump(bump);
+      const result = await analyzeSingleBump(bump, pacoteOpts);
       severityCounts[result.verdict]!++;
       totalFindings += result.findings.length;
       const detectors = [...new Set(result.findings.map((f) => f.detector))];
@@ -118,6 +160,14 @@ async function main() {
         verdict: result.verdict,
         findings: result.findings.length,
         detectors,
+        analysisError: result.findings.find((f) => f.detector === 'analysis.failed')?.message,
+        findingsDetail: values.verbose
+          ? result.findings.slice(0, 20).map((f) => ({
+              severity: f.severity,
+              detector: f.detector,
+              message: (f.message || '').slice(0, 220),
+            }))
+          : undefined,
       };
       rows.push(row);
       succeeded++;
@@ -186,6 +236,37 @@ async function main() {
   }
 }
 
+/**
+ * Read registry + auth from `NPM_CONFIG_REGISTRY` env var and `~/.npmrc`.
+ * Resolves `${VAR}` references so ~/.npmrc entries like
+ *   //corp.jfrog.io/artifactory/…/:_authToken=${JF_AUTH}
+ * work when JF_AUTH is exported. Returns an options object suitable for
+ * pacote (registry + one `//host/…:_authToken=` key per matched registry).
+ */
+function resolveRegistryAuth(): Record<string, unknown> {
+  const registry = process.env.NPM_CONFIG_REGISTRY || 'https://registry.npmjs.org/';
+  const opts: Record<string, unknown> = { registry };
+  let npmrcText = '';
+  try {
+    npmrcText = readFileSync(path.join(homedir(), '.npmrc'), 'utf8');
+  } catch {
+    return opts;
+  }
+  for (const line of npmrcText.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    // Match //host/path/:_authToken=... and //host/:_authToken=...
+    const m = trimmed.match(/^(\/\/[^:=]+):_authToken=(.+)$/);
+    if (!m) continue;
+    const [, hostPath, rawValue] = m;
+    // Resolve ${VAR} references from env; if any remains unresolved, skip.
+    const resolved = rawValue!.replace(/\$\{(\w+)\}/g, (_, name) => process.env[name] || '');
+    if (!resolved || resolved.includes('${')) continue;
+    opts[`${hostPath}:_authToken`] = resolved;
+  }
+  return opts;
+}
+
 async function parseInputFile(inputPath: string): Promise<StudyBump[]> {
   const raw = await fs.readFile(inputPath, 'utf8');
   const bumps: StudyBump[] = [];
@@ -212,8 +293,10 @@ async function parseInputFile(inputPath: string): Promise<StudyBump[]> {
   return bumps;
 }
 
-async function analyzeSingleBump(bump: StudyBump): Promise<{ verdict: string; findings: Finding[] }> {
-  // Build synthetic lockfiles referencing the two versions.
+async function analyzeSingleBump(bump: StudyBump, pacoteOpts: Record<string, unknown>): Promise<{ verdict: string; findings: Finding[] }> {
+  // Build synthetic lockfiles referencing the two versions. Integrity is left
+  // blank on purpose: the fetchOverride (below) resolves versions to tarballs
+  // via pacote.manifest() so vetlock never needs to check integrity itself.
   const lockBefore = JSON.stringify({
     name: 'fp-study-app',
     version: '1.0.0',
@@ -223,7 +306,6 @@ async function analyzeSingleBump(bump: StudyBump): Promise<{ verdict: string; fi
       [`node_modules/${bump.packageName}`]: {
         name: bump.packageName,
         version: bump.oldVersion,
-        // Integrity intentionally empty — pacote will fetch by version.
         integrity: '',
         resolved: '',
       },
@@ -244,9 +326,23 @@ async function analyzeSingleBump(bump: StudyBump): Promise<{ verdict: string; fi
     },
   });
 
+  // fetchOverride that goes through pacote with our resolved registry/auth
+  // options. Returns the tarball's local cached path so vetlock's extractor
+  // can read it directly.
+  const fetchOverride = async (ref: { name: string; version: string; integrity?: string | null; resolved?: string | null }): Promise<string> => {
+    const os = await import('node:os');
+    const pathMod = await import('node:path');
+    const fsMod = await import('node:fs');
+    const dir = await fsMod.promises.mkdtemp(pathMod.join(os.tmpdir(), 'fp-study-'));
+    const dst = pathMod.join(dir, `${ref.name.replace('/', '-')}-${ref.version}.tgz`);
+    await pacoteTarballStream(`${ref.name}@${ref.version}`, pacoteOpts, dst);
+    return dst;
+  };
+
   const result = await runDiff(lockBefore, lockAfter, {
     runDetectors: (pair) => runAll(pair),
     timeoutMs: 60_000,
+    fetchOverride,
   });
   return { verdict: result.verdict, findings: result.findings };
 }

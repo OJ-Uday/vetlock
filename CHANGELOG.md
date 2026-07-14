@@ -5,6 +5,64 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/).
 
+## [0.4.1] — 2026-07-14
+
+**FP-tune release.** First honest measurement of vetlock's false-positive rate on
+routine top-100 npm bumps (48.1% BLOCK on v0.4.0, an unshippable number), followed
+by three targeted tunes that cut it to 33.3% without any detector removal or
+attack-detection regression. Full study at [docs/FP-STUDY.md](docs/FP-STUDY.md).
+
+### Detector tunes (all backed by measured impact on `studies/top-100.txt`)
+
+- **`net.new-endpoint`** severity: BLOCK → WARN. A single new URL literal shouldn't
+  BLOCK on its own — docs URLs in error messages and install-help URLs in comments
+  were driving 33% of routine-bump false positives. Cross-category escalation
+  promotes it back to BLOCK when co-occurring with INSTALL/EXEC/ENV/FS.
+- **`code.dynamic-loading-added`** severity split by sink kind:
+  `eval` / `new-function` / `char-arithmetic-decoder` stay WARN (low legit base
+  rate), `dynamic-import` / `dynamic-require` drop to INFO (bundlers ship many
+  legitimately — vite added 16 in a routine bump), `vm` remains BLOCK (sandbox
+  escape shape).
+- **URL_REGEX** schemeless matches split: ambiguous TLDs (`.app`, `.dev`, `.io`,
+  `.co`, `.name`, `.pro`, `.tech`) now require a path/port/query/fragment suffix.
+  Vite's `Cursor.app` and `Edition.app` no longer match. Abused-TLD bare hosts
+  (`.top`, `.pw`, `.zip`, etc.) and `.com`/`.net`/`.org` still bare-match — REDTEAM
+  L4 coverage preserved.
+- **Compound-suspicion escalation** (`packages/detectors/src/index.ts`): same-
+  category saturation restricted to OBF and dangerous-CODE-kind subsets. Cross-
+  category escalation (2+ categories with 2+ WARNs including a security category)
+  unchanged. REDTEAM S5/D4 attack surface preserved.
+
+### FP-study infrastructure
+
+- **`packages/cli/src/corpus/fp-study.ts`** — reworked runner. Uses `pacote` for
+  tarball fetch with runtime-resolved auth from `~/.npmrc` (supports `${VAR}` env
+  substitution). Now records per-finding detail + `analysisError` in verbose mode
+  for downstream analysis. Registry URL taken from `NPM_CONFIG_REGISTRY` — works
+  behind proxied mirrors (Artifactory, Nexus, Verdaccio) without any code change.
+- **`packages/cli/package.json`** — added `pacote` as devDependency (dev-only
+  tooling, not shipped in the npm publish).
+
+### Measured
+
+|                       | v0.4.0    | v0.4.1    |
+|-----------------------|-----------|-----------|
+| BLOCK on routine bumps| 48.1% (13/27) | 33.3% (9/27) |
+| WARN                  | 3.7% (1)  | 18.5% (5) |
+| CLEAN                 | 48.1% (13)| 44.4% (12)|
+| Findings / bump       | 14.8      | 5.0       |
+| Corpus attacks caught | 12/13     | 12/13     |
+| Total tests           | 424 green | 424 green |
+
+### Roadmap
+
+v0.4.2 targets `install.script-changed` lifecycle-script allowlist, `obf.new-
+obfuscated-file` bundler-minified de-weight, and swaps the hand-rolled URL_REGEX
+for a vetted OSS library (`tldts` / `is-url-http` / `linkify-it`). Target ≤ 15%
+BLOCK on the same corpus.
+
+---
+
 ## [0.4.0] — 2026-07-14
 
 **Startup-launchable foundations.** Closes the packet's launch-blocker P1

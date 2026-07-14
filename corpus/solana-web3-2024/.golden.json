@@ -10,7 +10,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package '@solana/web3.js' has 2 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package '@solana/web3.js' has 3 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]",
       "evidence": [
         {
           "file": "package.json",
@@ -58,7 +58,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "New network endpoint appeared: https://exfil.example.invalid/wallet-drain [GHSA: GHSA-jj35-jhw9-vp4q]",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/wallet-drain [escalated: package '@solana/web3.js' has 3 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]",
       "evidence": [
         {
           "file": "index.js",
@@ -82,7 +82,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using network module \"https\". [escalated: package '@solana/web3.js' has 2 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]",
+      "message": "Package started using network module \"https\". [escalated: package '@solana/web3.js' has 3 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]",
       "evidence": [
         {
           "file": "index.js",

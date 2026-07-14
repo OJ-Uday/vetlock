@@ -153,7 +153,30 @@ export function isMinified(text: string): boolean {
 // "safe" TLD. Any random 2-4 letter TLD that isn't in ALLOWED_BENIGN_TLDS
 // (com/net/org/io/dev/co/etc — the widely-legitimate ones we tolerate as
 // baseline) is treated as suspect.
-const URL_REGEX = /\b(https?:\/\/[^\s'"`<>]+|(?:[a-z0-9-]+\.){1,}(?:com|net|org|io|dev|co|app|xyz|ru|cn|tk|ml|ga|cf|invalid|top|pw|zip|click|info|us|biz|mobi|icu|host|online|club|cloud|site|work|stream|party|science|today|link|fit|men|rest|space|store|shop|tech|world|life|guru|pro|name|example|test|localhost))\b/gi;
+// v0.4.1 FP-STUDY §3b — Schemeless URL matches now split into TWO branches:
+//   (i) "ambiguous TLDs" that overload with common JS/config meanings — `.app`,
+//       `.dev`, `.io`, `.co`, `.name`, `.pro`, `.tech` — REQUIRE a path suffix
+//       (`/`, `:`, `?`, `#`) to be counted. Rationale: vite's config code
+//       references identifiers like `Cursor.app` and `Edition.app` that end in a
+//       real TLD but are not URLs. Sass/PostCSS files reference `.dev` classnames.
+//       AWS package names include `.co` fragments. Requiring a path suffix filters
+//       these while preserving attack strings like `curl attacker.app/exfil`.
+//  (ii) all other TLDs — `.com`, `.net`, `.org`, `.cloud`, `.site`, plus the
+//       abused-TLD set (`.top`, `.pw`, `.zip`, `.click`, `.info`, `.us`, `.biz`,
+//       `.mobi`, `.icu`, `.host`, `.online`, `.club`, `.stream`, `.party`,
+//       `.science`, `.today`, `.link`, `.work`, `.xyz`, `.tk`, `.ml`, `.ga`,
+//       `.cf`, `.ru`, `.cn`) and RFC-2606 reserved TLDs (`.example`, `.test`,
+//       `.invalid`, `.localhost`) — keep the bare-word.tld match with no path
+//       required. `.com/.net/.org` retained bare-match because a bare
+//       `attacker.com` is a common attack payload shape. `.cloud/.site` retained
+//       because redteam-remaining-8 L4 pins them as abused-TLD attack surface.
+//
+// The first `https?://` alternation catches every scheme-ful URL unchanged.
+//
+// Impact tracked in docs/FP-STUDY.md. Coverage preserved via:
+//   test/redteam-remaining-8.test.ts REDTEAM L4 (bare abused-TLD hosts)
+//   test/capabilities.test.ts URL_REGEX unit block
+const URL_REGEX = /\b(https?:\/\/[^\s'"`<>]+|(?:[a-z0-9-]+\.){1,}(?:app|dev|io|co|name|pro|tech)[:/?#][^\s'"`<>]*|(?:[a-z0-9-]+\.){1,}(?:com|net|org|cloud|site|xyz|ru|cn|tk|ml|ga|cf|invalid|top|pw|zip|click|info|us|biz|mobi|icu|host|online|club|work|stream|party|science|today|link|fit|men|rest|space|store|shop|world|life|guru|example|test|localhost))\b/gi;
 
 /** Heuristic: does this string LOOK like a filesystem path? */
 const LOOKS_LIKE_PATH = /^([~./]|[A-Z]:\\|\/[a-zA-Z._-]|\.\.\/|\.\/|[a-zA-Z_-]+[/\\])/;
