@@ -8,9 +8,9 @@
  *   node dist/agent-panel/cli.js --agent=stub --output=assurance/report/panel-report.json
  *
  * Flags:
- *   --agent=stub           choose the agent (only 'stub' is wired for CI; 'claude' is
- *                          reserved for the future Anthropic-API implementation and
- *                          currently rejects with a clear message).
+ *   --agent=stub           choose the agent (default). `claude` requires
+ *                          ANTHROPIC_API_KEY in the environment and calls the Anthropic
+ *                          Messages API (haiku by default). Never enabled in CI.
  *   --output=<path>        where to write the report JSON. Default:
  *                          assurance/report/panel-report.json (relative to CWD).
  *   --seed=<int>           deterministic seed. Default: 42.
@@ -26,6 +26,7 @@ import { writeFile, mkdir } from 'node:fs/promises';
 import { dirname, resolve as pathResolve } from 'node:path';
 import { runPanel } from './panel.js';
 import { stubAgent } from './stub-agent.js';
+import { createClaudeAgent } from './claude-agent.js';
 import { loadCapabilityMap } from './capability-map.js';
 import type { EvasionAgent, PanelReport } from './types.js';
 
@@ -70,15 +71,14 @@ function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Pick the agent by name. 'claude' is intentionally NOT wired here — it's a future commit
- * gated on the user actually having credentials. Attempting to use it should fail loudly.
+ * Pick the agent by name. 'stub' is the CI default; 'claude' requires ANTHROPIC_API_KEY in
+ * the environment (see claude-agent.ts). --agent=claude is scheduled-tier only — never CI.
  */
 function pickAgent(name: 'stub' | 'claude'): EvasionAgent {
   if (name === 'stub') return stubAgent;
-  throw new Error(
-    "agent=claude is not yet wired; the Anthropic-API integration is a follow-up commit. " +
-      "The panel driver ships with the stub agent as the CI default (packet §5 P4, scheduled tier only).",
-  );
+  // Constructing the agent reads ANTHROPIC_API_KEY and throws with a clear message if it's
+  // missing. Keep the failure loud — silent-fallback-to-stub would hide misconfigurations.
+  return createClaudeAgent();
 }
 
 /**
@@ -137,7 +137,7 @@ async function main(argv: readonly string[]): Promise<void> {
 const HELP_TEXT = `Usage: node dist/agent-panel/cli.js [flags]
 
 Flags:
-  --agent=stub|claude       agent to use (default: stub; claude is not yet wired)
+  --agent=stub|claude       agent to use (default: stub; claude requires ANTHROPIC_API_KEY)
   --output=<path>           output JSON path (default: assurance/report/panel-report.json)
   --seed=<int>              deterministic seed (default: 42)
   --max-per-class=<int>     max hypotheses per capability class (default: 3)

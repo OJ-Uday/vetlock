@@ -7,6 +7,7 @@
 
 export { runPanel } from './panel.js';
 export { stubAgent } from './stub-agent.js';
+export { createClaudeAgent } from './claude-agent.js';
 export { loadCapabilityMap } from './capability-map.js';
 export type {
   CapabilityMap,
@@ -18,3 +19,9 @@ export type {
   PanelReport,
   RejectedHypothesis,
 } from './types.js';
+export type {
+  ClaudeMessageClient,
+  ClaudeMessageCreateParams,
+  ClaudeMessageResponse,
+  CreateClaudeAgentOptions,
+} from './claude-agent.js';

@@ -26,13 +26,24 @@ in the loop. Also acts as the reference implementation for the `EvasionAgent` in
 
 ### `--agent=claude` (scheduled tier, NOT CI)
 
-Reserved for the future Anthropic-API integration. **Not wired yet** — attempting to use
-it currently throws with a clear message. The follow-up commit will:
+The Anthropic-API-backed evasion agent. **Wired via Wave 4-S.** Runs only when the user
+explicitly opts in with `ANTHROPIC_API_KEY` in the environment; if the env var is absent,
+the factory throws with a clear message naming the env var and how to set it.
 
-- Require `ANTHROPIC_API_KEY` in the environment.
-- Ship an `EvasionAgent` implementation that calls the Anthropic Messages API with a
-  cheap model (Haiku or Sonnet, per token & cost discipline).
-- Never invoke the API from CI.
+- Requires `ANTHROPIC_API_KEY` in the environment.
+- Model default: `claude-haiku-4-5-20251001` (cheap, sufficient for evasion-hypothesis
+  brainstorming — the panel is scheduled tier, cost matters). Override via factory
+  `opts.model`.
+- Prompts the model with a system prompt encoding the DEFANGED-ONLY rule, plus the current
+  CAPABILITY-MAP class + sink + description.
+- Asks for a JSON array of `{technique, generatedFixture, rationale}` objects.
+- Every returned fixture is scanned with `scanForDefangViolations`; a single dirty
+  hypothesis rejects the whole batch loudly (the model is not following the constraint —
+  triage before retrying).
+- **Never invoked from CI.** The unit tests inject a mock `ClaudeMessageClient` (no
+  network); `--agent=claude` is only reachable via the CLI when a human sets the env var,
+  and the `assurance-scheduled.yml` workflow does not pass an API key unless the operator
+  configures the secret.
 
 ## CLI
 
