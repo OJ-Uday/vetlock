@@ -1,0 +1,28 @@
+{
+  "name": "@vetlock/assurance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standing adversary for the vetlock engine. Robustness + completeness harness. Not a shipped package.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./oracles": "./dist/oracles/index.js",
+    "./runner": "./dist/runner/index.js",
+    "./report": "./dist/report/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "typecheck": "tsc -p . --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "assurance:report": "node dist/report/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "fast-check": "^3.19.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}
