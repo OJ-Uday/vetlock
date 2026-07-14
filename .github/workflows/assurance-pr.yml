@@ -86,9 +86,14 @@ jobs:
       - name: Post ASSURANCE.md diff as PR comment
         if: github.event_name == 'pull_request' && steps.drift.outputs.changed == 'true'
         uses: actions/github-script@v7
+        env:
+          # Pass the diff via env, NOT template substitution — the diff can contain arbitrary
+          # characters (backticks, brace-like sequences, `pnpm` at the start of a line, etc.)
+          # that break JS parsing when interpolated into a template literal in the script:.
+          ASSURANCE_DIFF: ${{ steps.drift.outputs.diff }}
         with:
           script: |
-            const diff = `${{ steps.drift.outputs.diff }}`;
+            const diff = process.env.ASSURANCE_DIFF || '';
             const body = [
               '### assurance-pr — ASSURANCE.md changed',
               '',
