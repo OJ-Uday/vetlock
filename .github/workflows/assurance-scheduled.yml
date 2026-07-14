@@ -1,0 +1,125 @@
+# assurance-scheduled — the nightly discovery-tier assurance run.
+#
+# Scope: implements ADR-0004 "Scheduled tier: non-blocking, generative, thorough".
+# Runs the full harness (including agent panel + differential adapters when present).
+# Does NOT gate merges. Confirmed novel gaps open GitHub issues for triage; promoted
+# corpus entries later become PR-tier blockers.
+#
+# Non-deterministic. Fresh seed per run, recorded in every artifact.
+name: assurance-scheduled
+
+on:
+  schedule:
+    # 06:00 UTC every day — after most human review activity has quieted so the
+    # scheduled tier doesn't fight PR CI for runners.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: 'Optional explicit seed (default: random per run).'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: assurance-scheduled
+  cancel-in-progress: false
+
+jobs:
+  scheduled:
+    name: Scheduled-tier assurance (non-blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      # ADR-0004: scheduled tier draws a fresh seed per run. Recorded in ASSURANCE.md
+      # so any surprise finding can be replayed.
+      ASSURANCE_SEED: ${{ inputs.seed || github.run_id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run assurance test suite
+        run: pnpm --filter @vetlock/assurance test
+
+      - name: Run adversarial-agent panel (stub mode)
+        # Best-effort: the agent panel arrives incrementally. Fall through cleanly if
+        # the CLI hasn't been built yet — the scheduled tier is non-blocking.
+        run: |
+          panel_cli="assurance/dist/agent-panel/cli.js"
+          if [ -f "$panel_cli" ]; then
+            node "$panel_cli" --agent=stub --out=assurance/report/panel-report.json || true
+          else
+            echo "agent-panel CLI not present ($panel_cli); skipping"
+          fi
+
+      - name: Run differential adapters
+        # Same best-effort pattern as the panel. Differential ledger arrives later.
+        run: |
+          diff_cli="assurance/dist/differential/cli.js"
+          if [ -f "$diff_cli" ]; then
+            node "$diff_cli" --out=assurance/report/differential-ledger.json || true
+          else
+            echo "differential CLI not present ($diff_cli); skipping"
+          fi
+
+      - name: Regenerate ASSURANCE.md
+        run: pnpm --filter @vetlock/assurance assurance:report
+
+      - name: Upload scheduled-tier artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assurance-report-scheduled-${{ github.run_id }}
+          path: |
+            assurance/report/ASSURANCE.md
+            assurance/report/panel-report.json
+            assurance/report/differential-ledger.json
+          if-no-files-found: ignore
+
+      - name: Detect new gap and file issue
+        if: ${{ failure() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `assurance-scheduled: new gap detected (run ${context.runId})`;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              '### Scheduled-tier assurance failed',
+              '',
+              'The nightly discovery-tier run failed. Per ADR-0004 this is non-blocking',
+              'but a confirmed novel gap must be triaged, promoted to the corpus, and',
+              'become a PR-tier regression before this issue closes.',
+              '',
+              `- Run: ${runUrl}`,
+              `- Seed: \`${process.env.ASSURANCE_SEED || 'unknown'}\``,
+              `- Commit: \`${context.sha}\``,
+              '',
+              'Artifacts (ASSURANCE.md, panel-report.json, differential-ledger.json)',
+              'are attached to the workflow run.',
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['assurance', 'scheduled-tier'],
+            });

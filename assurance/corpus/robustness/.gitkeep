@@ -1,0 +1,2 @@
+# P1 lands the first entries. Files under this subtree hold defanged inputs that historically
+# crashed / hung / OOM'd / fail-open'd the engine, plus their named regression tests.

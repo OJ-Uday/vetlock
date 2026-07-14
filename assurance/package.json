@@ -1,0 +1,41 @@
+{
+  "name": "@vetlock/assurance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standing adversary for the vetlock engine. Robustness + completeness harness. Not a shipped package.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./oracles": "./dist/oracles/index.js",
+    "./runner": "./dist/runner/index.js",
+    "./report": "./dist/report/index.js",
+    "./defang": "./dist/defang/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p .",
+    "typecheck": "tsc -p . --noEmit",
+    "pretest": "pnpm --filter @vetlock/core build && pnpm --filter @vetlock/detectors build && tsc -p .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "assurance:report": "node dist/report/cli.js"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
+    "@babel/generator": "^7.29.7",
+    "@babel/parser": "^7.29.7",
+    "@babel/traverse": "^7.29.7",
+    "@babel/types": "^7.29.7",
+    "@types/babel__generator": "^7.27.0",
+    "@types/babel__traverse": "^7.28.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.0",
+    "@vetlock/core": "workspace:*",
+    "@vetlock/detectors": "workspace:*",
+    "fast-check": "^3.19.0",
+    "js-yaml": "^4.3.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.4.0"
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "generatedIso": null,
+  "deltas": [
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "@lottiefiles/lottie-player",
+        "severity": "CRITICAL",
+        "cve": "CVE-2024-53844",
+        "title": "@lottiefiles/lottie-player Web3Modal drainer injection",
+        "rawMessage": "(historical GHSA-4f9r-3jrx-4hgh — seeded ledger, corpus fixture lottie-player-2024)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=lottie-player-2024] lottie-player@2.0.5 org-level takeover has published GHSA. vetlock catches via code.dynamic-loading-added (base64 eval loader) + net.encoded-endpoint. Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "@solana/web3.js",
+        "severity": "CRITICAL",
+        "cve": "CVE-2024-54134",
+        "title": "@solana/web3.js keypair hook exfiltrating seed material",
+        "rawMessage": "(historical GHSA-3v6f-3jgj-mmc6 — seeded ledger, corpus fixture solana-web3-2024)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=solana-web3-2024] @solana/web3.js@1.95.5 has published CVE-2024-54134. vetlock catches via net.new-module + net.encoded-endpoint (base64-encoded exfil URL) + meta.maintainer-change. Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "chalk",
+        "severity": "CRITICAL",
+        "title": "Shai-Hulud worm — postinstall harvests NPM_TOKEN/GITHUB_TOKEN/AWS_* to exfil endpoint",
+        "rawMessage": "(historical GHSA-shai-hulud-2025 — seeded ledger, corpus fixture shai-hulud-2025)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=shai-hulud-2025] chalk@5.3.1 (Shai-Hulud wave) has published GHSA. vetlock catches via install.script-added + env.token-harvest + net.new-endpoint + net.new-module + exec.new-module + meta.maintainer-change — five categories, all behavioral. Advisory-only classification for the differential ledger."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "coa",
+        "severity": "CRITICAL",
+        "cve": "CVE-2021-44906",
+        "title": "coa Embedded Malicious Code (postinstall Windows password-stealer)",
+        "rawMessage": "(historical GHSA-73qr-pfmq-6rp8 — seeded ledger, corpus fixture coa-rc-2021)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=coa-rc-2021] coa@2.0.3 hijack has a published GHSA/CVE. vetlock catches behaviorally via install.script-added + exec.new-module + net.new-module + net.new-endpoint. Advisory-only because vetlock does not proxy the advisory DB."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "colors",
+        "severity": "HIGH",
+        "title": "colors intentional infinite loop / DoS by maintainer (LIBERTY sabotage)",
+        "rawMessage": "(historical GHSA-5rqg-jm4f-cqx7 — seeded ledger, corpus fixture colors-2022)"
+      },
+      "class": "intentional-non-goal",
+      "rationale": "[fixture=colors-2022] colors@1.4.44 protestware sabotage uses ONLY capabilities the package already had — no new net, no new install script, no new fs write, no obfuscation. There is no capability-diff for vetlock to catch. Per corpus/colors-2022/manifest.json known_limitation: \"vetlock is designed as a behavioral DIFFER — this is why we publish this attack as a MISS.\" Documented scope boundary, not a coverage gap. Manual code review remains the line of defense for pure logic sabotage."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "eslint-scope",
+        "severity": "CRITICAL",
+        "cve": "CVE-2018-16487",
+        "title": "eslint-scope Embedded Malicious Code (npmrc token exfiltration)",
+        "rawMessage": "(historical GHSA-9j9m-pvfv-8p85 — seeded ledger, corpus fixture eslint-scope-2018)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=eslint-scope-2018] eslint-scope@3.7.2 credential-theft compromise has published GHSA. vetlock catches independently via fs.new-hotpath-read (~/.npmrc) + net.new-endpoint + obf.entropy-jump + meta.maintainer-change. Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "event-stream",
+        "severity": "CRITICAL",
+        "cve": "CVE-2018-1000237",
+        "title": "event-stream flatmap-stream dependency backdoor (Copay wallet targeted)",
+        "rawMessage": "(historical GHSA-mh6f-8j2x-4483 — seeded ledger, corpus fixture event-stream-2018)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=event-stream-2018] The event-stream / flatmap-stream backdoor has a published CVE. vetlock catches the same incident via deps.new-direct-dep on the transitive flatmap-stream plus meta.maintainer-change. The behavioral signal is exactly what the recursive engine was designed to catch (packet §5 P3 \"transitive injection is not depth-limited\")."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "node-ipc",
+        "severity": "CRITICAL",
+        "cve": "CVE-2022-23812",
+        "title": "node-ipc protestware — geoIP-gated destructive payload (peacenotwar)",
+        "rawMessage": "(historical GHSA-97m3-w2cp-4xx6 — seeded ledger, corpus fixture node-ipc-2022)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=node-ipc-2022] node-ipc@10.1.1 protestware has a published CVE. vetlock catches via net.new-module + net.new-endpoint (geoIP fetch) + fs.new-hotpath-write (destructive file drop). Advisory-only classification because the advisory DB is out of scope."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "rand-user-agent",
+        "severity": "CRITICAL",
+        "title": "rand-user-agent Embedded Malicious Code (reverse shell via new Function())",
+        "rawMessage": "(historical GHSA-pw4f-33xf-4gj7 — seeded ledger, corpus fixture rand-user-agent-2025)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=rand-user-agent-2025] rand-user-agent@2.0.1 has a published GHSA. vetlock catches via net.new-module (net.connect) + code.dynamic-loading-added (new Function()) + net.new-endpoint (C2 host). Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "npm-audit",
+        "package": "ua-parser-js",
+        "severity": "CRITICAL",
+        "cve": "CVE-2021-41265",
+        "title": "ua-parser-js Embedded Malicious Code (preinstall crypto-miner / password-stealer)",
+        "rawMessage": "(historical GHSA-pjwm-rvh2-c87w — seeded ledger, live scan not run; corpus fixture ua-parser-2021)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=ua-parser-2021] ua-parser-js@0.7.29 is a published CVE (advisory-DB hit). vetlock catches the same incident behaviorally via install.script-added + exec.new-module + net.new-endpoint (see corpus/ua-parser-2021/manifest.json). The delta exists because vetlock does not consume advisory feeds — advisory lookup is out of scope by design."
+    },
+    {
+      "finding": {
+        "scanner": "osv-scanner",
+        "package": "flatmap-stream",
+        "severity": "CRITICAL",
+        "cve": "CVE-2018-1000237",
+        "title": "GHSA-mh6f-8j2x-4483: flatmap-stream payload targeting Copay wallets",
+        "rawMessage": "(historical OSV record — seeded ledger, live scan not run)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=event-stream-2018] Same incident, second scanner (and second package — osv reports on the transitive flatmap-stream directly, not just the event-stream root). Same rationale: advisory-DB is out of scope; vetlock uses behavioral signals on the transitive."
+    },
+    {
+      "finding": {
+        "scanner": "osv-scanner",
+        "package": "ua-parser-js",
+        "severity": "CRITICAL",
+        "cve": "CVE-2021-41265",
+        "title": "GHSA-pjwm-rvh2-c87w: Embedded Malicious Code in ua-parser-js",
+        "rawMessage": "(historical OSV record — seeded ledger, live scan not run)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=ua-parser-2021] Same incident, second scanner. osv-scanner queries osv.dev which aggregates GHSA/CVE; same advisory-only classification applies. Recording it separately proves the ledger tracks scanner-level, not incident-level, deltas."
+    }
+  ],
+  "pending": []
+}

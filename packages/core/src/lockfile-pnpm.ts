@@ -50,7 +50,31 @@ interface RawPnpmLock {
  *   /pkg@1.0.0(peer@2.0.0)       (peer suffix stripped)
  */
 export function parsePnpmLockText(yamlText: string): LockGraph {
-  const doc = yaml.load(yamlText) as RawPnpmLock;
+  // FAIL-SAFE WRAPPER: js-yaml.load can throw YAMLException on pathological
+  // input (e.g. `maxDepth (100)` when a hostile lockfile embeds >100 levels
+  // of nested mappings — a pnpm-lock.yaml realistically nests 3-6 levels,
+  // so >100 is syntactically legal but semantically absurd DoS bait).
+  //
+  // Previously the exception escaped unwrapped, crashing every caller with
+  // a raw YAMLException. The engine's fail-safe convention (runDiff's
+  // `analysis.failed` synthetic finding, extractCapabilities' `parseError`
+  // channel) rests on parsers throwing UnsupportedLockfileError for
+  // recoverable "we can't parse this" states — we bring the pnpm parser
+  // in line with that convention.
+  //
+  // Non-Error throws (rare — js-yaml doesn't produce them today, but the
+  // catch is generic for defense-in-depth) are also rewrapped.
+  let doc: RawPnpmLock;
+  try {
+    doc = yaml.load(yamlText) as RawPnpmLock;
+  } catch (err) {
+    const name = err instanceof Error ? err.name : 'ParseError';
+    const message = err instanceof Error ? err.message : String(err);
+    throw new UnsupportedLockfileError(
+      `pnpm-lock.yaml is not parseable (${name}: ${message.slice(0, 200)}) — ` +
+        `common cause: nesting depth exceeds js-yaml's maxDepth (100) safety cap`,
+    );
+  }
   if (!doc || typeof doc !== 'object') {
     throw new UnsupportedLockfileError('pnpm-lock.yaml root is not an object');
   }

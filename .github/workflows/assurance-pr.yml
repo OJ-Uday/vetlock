@@ -1,0 +1,124 @@
+# assurance-pr — the blocking PR-tier assurance gate.
+#
+# Scope: this workflow implements ADR-0004 "PR tier: blocking, deterministic, fast".
+# It runs the @vetlock/assurance test suite (robustness smoke + evasion regressions +
+# coverage gate) and regenerates ASSURANCE.md. If any step fails, the PR is blocked.
+#
+# Contract: no vetlock release ships without a green run of this workflow on the merge
+# commit. Enforced by branch protection — see assurance/README.md "Branch protection".
+#
+# Deterministic. Fixed seed (checked in) makes reproduction from `ASSURANCE.md` trivial.
+name: assurance-pr
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/core/**'
+      - 'packages/detectors/**'
+      - 'assurance/**'
+      - '.github/workflows/assurance-*.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/core/**'
+      - 'packages/detectors/**'
+      - 'assurance/**'
+      - '.github/workflows/assurance-*.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: assurance-pr-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  assurance:
+    name: PR-tier assurance (blocking)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # ADR-0004: PR tier uses a fixed, checked-in seed so any reviewer can reproduce
+      # a finding by re-running the harness with the same seed.
+      ASSURANCE_SEED: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run assurance test suite
+        run: pnpm --filter @vetlock/assurance test
+
+      - name: Regenerate ASSURANCE.md
+        run: pnpm --filter @vetlock/assurance assurance:report
+
+      - name: Detect ASSURANCE.md drift
+        id: drift
+        run: |
+          if ! git diff --quiet -- assurance/report/ASSURANCE.md; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            {
+              echo 'diff<<EOF'
+              git diff -- assurance/report/ASSURANCE.md
+              echo 'EOF'
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post ASSURANCE.md diff as PR comment
+        if: github.event_name == 'pull_request' && steps.drift.outputs.changed == 'true'
+        uses: actions/github-script@v7
+        env:
+          # Pass the diff via env, NOT template substitution — the diff can contain arbitrary
+          # characters (backticks, brace-like sequences, `pnpm` at the start of a line, etc.)
+          # that break JS parsing when interpolated into a template literal in the script:.
+          ASSURANCE_DIFF: ${{ steps.drift.outputs.diff }}
+        with:
+          script: |
+            const diff = process.env.ASSURANCE_DIFF || '';
+            const body = [
+              '### assurance-pr — ASSURANCE.md changed',
+              '',
+              'The PR-tier assurance run regenerated `assurance/report/ASSURANCE.md`',
+              'and the on-disk copy is stale. Regenerate locally with',
+              '`pnpm --filter @vetlock/assurance assurance:report` and commit the result.',
+              '',
+              '<details><summary>Diff</summary>',
+              '',
+              '```diff',
+              diff.slice(0, 60000),
+              '```',
+              '</details>',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Upload ASSURANCE.md artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assurance-report-pr
+          path: assurance/report/ASSURANCE.md
+          if-no-files-found: warn
