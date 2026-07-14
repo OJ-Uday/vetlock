@@ -179,15 +179,55 @@ export async function collectMetrics(): Promise<MetricsSnapshot> {
 
     const empty: BucketCounts = { passed: 0, failed: 0, total: 0 };
 
-    // Enumerated coverage: if the CAPABILITY-MAP (Wave 1B-H) has landed, derive from it. Else
-    // null — this branch alone can't fabricate a coverage number.
+    // Enumerated coverage: if the CAPABILITY-MAP (Wave 1B-H) has landed, derive from it. The
+    // measure is presence-based — "for each enumerated class, does at least one assurance
+    // artifact (a completeness-vector transform) target it?" This is a FLOOR metric (packet
+    // §7): "N/M classes covered" says nothing about whether every SINK in that class is
+    // exercised, only that the class is on the assurance radar at all. A stronger metric
+    // (per-sink coverage) is a future refinement.
     const capabilityMapIndex = pathResolve(root, 'src', 'capability-map', 'index.ts');
-    const enumeratedCoverage: number | null = existsSync(capabilityMapIndex)
-      ? // Placeholder for the integrated calculation. Wave 1B-H's CapabilityMap + CoverageGate
-        // will export a function we can call here. Until then, presence-with-unknown-shape
-        // shouldn't fabricate a number, so we stay null and let the integration wave wire it.
-        null
-      : null;
+    const completenessVectorsIndex = pathResolve(root, 'src', 'completeness-vectors', 'index.ts');
+    let enumeratedCoverage: number | null = null;
+    if (existsSync(capabilityMapIndex) && existsSync(completenessVectorsIndex)) {
+      try {
+        // Dynamic-import the compiled dist so the collector doesn't couple to the source tree
+        // at build time. Both are workspace-local ESM modules with stable `dist/` mirrors.
+        const capModuleUrl = fileURLToPath(import.meta.url);
+        const distRoot = pathResolve(dirname(capModuleUrl), '..');
+        const capabilityMap = (await import(
+          pathResolve(distRoot, 'capability-map', 'index.js')
+        )) as {
+          loadCapabilityMap: () => {
+            classes: Record<string, { sinks: ReadonlyArray<{ id: string }> }>;
+          };
+          CAPABILITY_CLASS_IDS: readonly string[];
+        };
+        const completeness = (await import(
+          pathResolve(distRoot, 'completeness-vectors', 'index.js')
+        )) as {
+          allTransforms: ReadonlyArray<{ targetClass: string }>;
+        };
+        const map = capabilityMap.loadCapabilityMap();
+        // Every class present in the map (STARTUP's shape may include extensions like
+        // fs-read / secret-read / integrity beyond the packet §3.5 canonical nine). We
+        // count against the actual enumerated set, not against a hardcoded floor.
+        const allClasses = new Set(Object.keys(map.classes));
+        // A class is "covered" iff at least one transform targets it. targetClass values
+        // like `code-execution` map straight into map.classes keys.
+        const coveredClasses = new Set(
+          completeness.allTransforms.map((t) => t.targetClass),
+        );
+        // Intersect: covered ∩ actually-enumerated. A transform pointing at a class the
+        // map doesn't enumerate is off-target and doesn't count.
+        const hits = [...coveredClasses].filter((c) => allClasses.has(c)).length;
+        const total = allClasses.size;
+        enumeratedCoverage = total === 0 ? null : hits / total;
+      } catch {
+        // Loading failed (unbuilt dist, shape drift, etc.) → stay null. Report will say "no
+        // data", which is honest — we tried to measure and couldn't.
+        enumeratedCoverage = null;
+      }
+    }
 
     // Differential-ledger note: read the file Wave 1B-I produces at assurance/report/.
     const ledgerPath = pathResolve(root, 'report', 'differential-ledger.json');
