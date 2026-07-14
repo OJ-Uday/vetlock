@@ -59,6 +59,21 @@ async function main(): Promise<void> {
           'Numbers arrive in P1-P4; the release gate lands in P5. See ' +
           '`~/personal/packets/PACKET-VETLOCK-ASSURANCE.md` for the phase plan.',
       },
+      {
+        title: 'P1 progress — engine wired, first generator + first corpus entry',
+        body:
+          'P1 wired the real @vetlock/core engine through two entrypoints (parseLockfileText, ' +
+          'runDiff) and shipped the DEFANGED-ONLY guard (packet rule #2) as an always-on ' +
+          'scan of assurance/corpus/. First robustness generator: `deep-nested-yaml` — ' +
+          'exposed a real gap where @vetlock/core lets js-yaml\'s maxDepth exception escape ' +
+          'unwrapped (should emit an `analysis.failed` finding via the engine\'s existing ' +
+          'fail-safe convention). Gap pinned as corpus entry #1 (`assurance/corpus/robustness/' +
+          'deep-nested-yaml/`) with the assertion-flip instructions for when STARTUP fixes it. ' +
+          'Robustness metric is still `null` because the tier isn\'t fully populating yet ' +
+          '(1 generator ≠ the full §2.1 threat family). It will populate as more generators ' +
+          'land (parser-DoS, ReDoS, graph-DoS, resource-abuse, fail-open probes, hostile ' +
+          'lifecycle scripts). Honest reporting: 1 gap discovered, 1 corpus regression filed.',
+      },
     ],
   };
 
