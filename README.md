@@ -7,7 +7,7 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node ≥ 20](https://img.shields.io/badge/node-%E2%89%A5%2020-brightgreen)](package.json)
-[![Tests: 413 passing](https://img.shields.io/badge/tests-413%20passing-brightgreen)](#tests)
+[![Tests: 417 passing](https://img.shields.io/badge/tests-417%20passing-brightgreen)](#tests)
 [![Corpus: 12/13 caught](https://img.shields.io/badge/corpus-12%2F13%20caught-brightgreen)](docs/DETECTIONS.md)
 [![Benchmark: 92.3%](https://img.shields.io/badge/benchmark-92.3%25-brightgreen)](https://github.com/OJ-Uday/vetlock-benchmark)
 [![Red-team: 39/48 exploits closed](https://img.shields.io/badge/red--team-39%2F48%20closed-brightgreen)](docs/REDTEAM-2026-07-12.md)
