@@ -1,0 +1,144 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "coa",
+      "from": "2.0.2",
+      "to": "2.0.3",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'coa' has 4 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "evidence": [
+        {
+          "file": "postinstall.js",
+          "line": 1,
+          "snippet": "imports child_process"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "coa"
+        ]
+      ]
+    },
+    {
+      "detector": "install.script-added",
+      "category": "INSTALL",
+      "package": "coa",
+      "from": "2.0.2",
+      "to": "2.0.3",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Lifecycle script \"postinstall\" was added. [GHSA: GHSA-mh6f-8j2x-4483]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "postinstall: node postinstall.js"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "coa"
+        ]
+      ]
+    },
+    {
+      "detector": "meta.maintainer-change",
+      "category": "META",
+      "package": "coa",
+      "from": "2.0.2",
+      "to": "2.0.3",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'coa' has 4 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "maintainers: [orig@example] → [orig@example, takeover@example.invalid]"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "coa"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "coa",
+      "from": "2.0.2",
+      "to": "2.0.3",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint appeared: https://loader.example.invalid [escalated: package 'coa' has 4 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "evidence": [
+        {
+          "file": "postinstall.js",
+          "line": 1,
+          "snippet": "https://loader.example.invalid"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "coa"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "coa",
+      "from": "2.0.2",
+      "to": "2.0.3",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started using network module \"https\". [escalated: package 'coa' has 4 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "evidence": [
+        {
+          "file": "postinstall.js",
+          "line": 1,
+          "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "coa"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "coa": {
+      "maxSeverity": "BLOCK",
+      "count": 5
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "coa",
+      "nodeKeyOld": "node_modules/coa",
+      "nodeKeyNew": "node_modules/coa",
+      "oldVersion": "2.0.2",
+      "newVersion": "2.0.3",
+      "oldIntegrity": "sha512-p2H74Y4jdonGJMZQS8eYvXS49VsCRUrCd6h52mSMYhK63WPGpzgralOYUjMzigDXLMqFlUGEeTTlqOb59huJdw==",
+      "newIntegrity": "sha512-cUPrnCAsGh6LhVdWjDDWTTHVyPAGE6u4FLPtHmK8GUBhcz4YtuzNrnCSoTjP0YQ55Arjrf+imsS25lkRJc40tw=="
+    }
+  ],
+  "errors": []
+}

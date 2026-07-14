@@ -1,0 +1,120 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "evader-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: NPM_TOKEN",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 5,
+          "snippet": "const t = e[K];"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "evader-lib"
+        ]
+      ]
+    },
+    {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "evader-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'evader-lib' has 2 WARN findings across 2 categories]",
+      "evidence": [
+        {
+          "file": "util.js",
+          "line": 1,
+          "snippet": "imports child_process"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "evader-lib"
+        ]
+      ]
+    },
+    {
+      "detector": "net.encoded-endpoint",
+      "category": "NET",
+      "package": "evader-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint concealed via hex encoding: https://exfil.example.invalid/x",
+      "evidence": [
+        {
+          "file": "net.js",
+          "line": 4,
+          "snippet": "hex(\"68747470733a2f2f657866696c2e6578616d706c652e696e76616c69642f\") → https://exfil.example.invalid/x"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "evader-lib"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "evader-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Package started using network module \"https\". [escalated: package 'evader-lib' has 2 WARN findings across 2 categories]",
+      "evidence": [
+        {
+          "file": "net.js",
+          "line": 1,
+          "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "evader-lib"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "evader-lib": {
+      "maxSeverity": "BLOCK",
+      "count": 4
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "evader-lib",
+      "nodeKeyOld": "node_modules/evader-lib",
+      "nodeKeyNew": "node_modules/evader-lib",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "oldIntegrity": "sha512-3GrUW6qC4ypAWVu6xm6AgNXo+biLTw6D4/HBb/GK0fuRASad9IR4sM6FQsyR91Euy64iz6kTOzLoRM4sbypZpg==",
+      "newIntegrity": "sha512-W/dG4164uTivbzHN8CbIHROBKoivA/RxtoKpsAnNcjZm5CIjseGxtAB88oAoaooUSt86oD7CLs8n8YjQ4/YYgw=="
+    }
+  ],
+  "errors": []
+}

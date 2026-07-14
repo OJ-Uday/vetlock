@@ -1,12 +1,21 @@
 /**
  * Universal finding schema — every detector emits values shaped like this.
  * Evidence is MANDATORY (non-empty); the schema validator enforces it.
- * Direction 'removed' never exceeds INFO (diff-framing invariant).
+ *
+ * Direction 'removed' never exceeds INFO in diff mode (diff-framing invariant).
+ * Direction 'absolute' is scan-mode's posture framing — no severity cap; the
+ * detector's default severity applies (see ADR 0012 scan-mode).
  */
 
 export type Severity = 'BLOCK' | 'WARN' | 'INFO';
 export type Confidence = 'high' | 'medium' | 'low';
-export type Direction = 'added' | 'changed' | 'removed';
+/**
+ * `added` / `changed` / `removed` — the diff-frame directions from `runDiff`.
+ * `absolute` — the scan-frame direction from `runScan` (single-input mode,
+ * ADR 0012). Semantically: "the package does X" rather than "the package
+ * started doing X." Same detector output, different framing at the renderer.
+ */
+export type Direction = 'added' | 'changed' | 'removed' | 'absolute';
 
 export type DetectorCategory =
   | 'NET'

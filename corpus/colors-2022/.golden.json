@@ -1,0 +1,23 @@
+{
+  "verdict": "CLEAN",
+  "findings": [],
+  "rollupByDirect": {
+    "colors": {
+      "maxSeverity": "CLEAN",
+      "count": 0
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "colors",
+      "nodeKeyOld": "node_modules/colors",
+      "nodeKeyNew": "node_modules/colors",
+      "oldVersion": "1.4.0",
+      "newVersion": "1.4.44",
+      "oldIntegrity": "sha512-UEoOldMqAy1jGy/cF9b047PLPgUmGC6Vrhxgj2EsFDgBCRswxIuGu479pgt9t2hQACXSuvsHne9tjLwsSXEVkA==",
+      "newIntegrity": "sha512-HIzjoNtoics5lUbW3fOMqnK/4J22d+b3g8N7COhaB/Jj0vvHI2P1b6tm0NjZWsSzCnQ+BqhtXN/AW9ZCMJkhQg=="
+    }
+  ],
+  "errors": []
+}

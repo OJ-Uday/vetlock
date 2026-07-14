@@ -1,0 +1,120 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "code.dynamic-loading-added",
+      "category": "CODE",
+      "package": "rand-user-agent",
+      "from": "2.0.0",
+      "to": "2.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Dynamic code sink introduced (new-function). [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 8,
+          "snippet": "try { new Function(_d(_p) + cmd.toString())(); } catch(e) {}"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "rand-user-agent"
+        ]
+      ]
+    },
+    {
+      "detector": "meta.maintainer-change",
+      "category": "META",
+      "package": "rand-user-agent",
+      "from": "2.0.0",
+      "to": "2.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "maintainers: [orig@example] → [orig@example, rat@example.invalid]"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "rand-user-agent"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "rand-user-agent",
+      "from": "2.0.0",
+      "to": "2.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "New network endpoint appeared: rat.example.invalid [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "rat.example.invalid"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "rand-user-agent"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "rand-user-agent",
+      "from": "2.0.0",
+      "to": "2.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Package started using network module \"net\". [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "imports net"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "rand-user-agent"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "rand-user-agent": {
+      "maxSeverity": "BLOCK",
+      "count": 4
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "rand-user-agent",
+      "nodeKeyOld": "node_modules/rand-user-agent",
+      "nodeKeyNew": "node_modules/rand-user-agent",
+      "oldVersion": "2.0.0",
+      "newVersion": "2.0.1",
+      "oldIntegrity": "sha512-F0XSvH+i5miFU6yjv+6K14NgrVYj7eE9c1Y2n9twJpFsfMw9H4JUu5z5NLcIvSuFCUP903y/Ux84dVpdugQoKQ==",
+      "newIntegrity": "sha512-B+Z2IiFwuv0vlZ5n3ncrb6ttySnZjEKhTZFmY9bLZARatUOVjMvGPrOdoKCjJtEDdyaXcntpfcM21MLtqSsw1g=="
+    }
+  ],
+  "errors": []
+}

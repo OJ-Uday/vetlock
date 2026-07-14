@@ -1,0 +1,182 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "net.encoded-endpoint",
+      "category": "NET",
+      "package": "flatmap-stream",
+      "from": null,
+      "to": "0.1.1",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint concealed via base64 encoding: exfil.example.invalid",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 6,
+          "snippet": "base64(\"aG9zdG5hbWU9ZXhmaWwuZXhhbXBsZS5pbnZhbGlkO3BhdGg9L2NvbGxlY3Q7\") → exfil.example.invalid"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "event-stream",
+          "flatmap-stream"
+        ]
+      ]
+    },
+    {
+      "detector": "obf.new-obfuscated-file",
+      "category": "OBF",
+      "package": "flatmap-stream",
+      "from": null,
+      "to": "0.1.1",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "low",
+      "message": "Newly-installed package ships obfuscated file index.js: 1 suspicious high-entropy literal(s) [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS findings in this package]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "1 suspicious high-entropy literal(s)"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "event-stream",
+          "flatmap-stream"
+        ]
+      ]
+    },
+    {
+      "detector": "meta.maintainer-change",
+      "category": "META",
+      "package": "event-stream",
+      "from": "3.3.5",
+      "to": "3.3.6",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "high",
+      "message": "Publisher/maintainer set changed between versions. [GHSA: GHSA-mh63-6h87-95cp]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "maintainers: [dominic@upstream.example] → [right9ctrl@example.invalid]"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "event-stream"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "flatmap-stream",
+      "from": null,
+      "to": "0.1.1",
+      "direction": "added",
+      "severity": "WARN",
+      "confidence": "low",
+      "message": "Newly-installed package contacts network endpoint: http://exfil.example.invalid/collect",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "http://exfil.example.invalid/collect"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "event-stream",
+          "flatmap-stream"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "flatmap-stream",
+      "from": null,
+      "to": "0.1.1",
+      "direction": "added",
+      "severity": "WARN",
+      "confidence": "low",
+      "message": "Newly-installed package imports network module \"http\".",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "imports http"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "event-stream",
+          "flatmap-stream"
+        ]
+      ]
+    },
+    {
+      "detector": "deps.new-direct-dep",
+      "category": "DEPS",
+      "package": "event-stream",
+      "from": "3.3.5",
+      "to": "3.3.6",
+      "direction": "changed",
+      "severity": "INFO",
+      "confidence": "high",
+      "message": "New direct dependency added to package: flatmap-stream@^0.1 [GHSA: GHSA-mh63-6h87-95cp]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "\"flatmap-stream\": \"^0.1\""
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "event-stream"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "event-stream": {
+      "maxSeverity": "BLOCK",
+      "count": 6
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "event-stream",
+      "nodeKeyOld": "node_modules/event-stream",
+      "nodeKeyNew": "node_modules/event-stream",
+      "oldVersion": "3.3.5",
+      "newVersion": "3.3.6",
+      "oldIntegrity": "sha512-do+KV1KIFH2LamDo+KeGtpPF0BgsrnaUgRwBAHBcWCf7HcJihpmZQViBS405A5QhmZ1XkrMAXtiA8TFp/uE3MQ==",
+      "newIntegrity": "sha512-s6DjvE4jb7efbXAMCD5srnjqskIm2MP8BxD9/siGBJZ37UoWwqR0wON1lHjkzXYWbdjREC1VEnN62R6Y0Fi3HA=="
+    },
+    {
+      "kind": "added",
+      "name": "flatmap-stream",
+      "nodeKeyOld": null,
+      "nodeKeyNew": "node_modules/flatmap-stream",
+      "oldVersion": null,
+      "newVersion": "0.1.1",
+      "oldIntegrity": null,
+      "newIntegrity": "sha512-NuNy7SIs3/2VZTjBJKYwHUoGJ7nWU26CzO46yFNzb5CloxI27r7yIs0bIg02cyLyV0QRYDFrBsWu2A3DnwVgLg=="
+    }
+  ],
+  "errors": []
+}

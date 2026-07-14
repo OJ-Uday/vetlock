@@ -73,7 +73,7 @@ describe('META detector', () => {
 });
 
 describe('NET detector', () => {
-  it('flags a new URL endpoint added', () => {
+  it('flags a new URL endpoint added (WARN — v0.4.1 FP-STUDY §3b downgrade)', () => {
     const oldFile = mkFile({ path: 'index.js', urlLiterals: ['https://ok.example.com/api'] });
     const newFile = mkFile({
       path: 'index.js',
@@ -84,7 +84,10 @@ describe('NET detector', () => {
       new: mkSnap({ name: 'chalk', version: '5.3.1', files: [newFile] }),
     };
     const findings = netDetector.run(pair, { direction: 'changed' });
-    expect(findings.some((f) => f.detector === 'net.new-endpoint' && f.severity === 'BLOCK')).toBe(true);
+    // As of v0.4.1: net.new-endpoint is WARN natively (FP-STUDY §3b). It
+    // promotes to BLOCK via compound-suspicion when co-occurring with
+    // INSTALL/EXEC/ENV/FS in the same package — see index.ts.
+    expect(findings.some((f) => f.detector === 'net.new-endpoint' && f.severity === 'WARN')).toBe(true);
     for (const f of findings) expect(validateFinding(f)).toBeNull();
   });
   it("is silent when URLs match (diff-framing: 'axios uses the network of course')", () => {
@@ -115,7 +118,10 @@ describe('EXEC detector', () => {
     };
     const findings = execDetector.run(pair, { direction: 'changed' });
     expect(findings).toHaveLength(1);
-    expect(findings[0]!.severity).toBe('BLOCK');
+    // As of v0.4.2: exec.new-module is WARN natively (FP-STUDY §3d). It
+    // promotes to BLOCK via compound-suspicion when co-occurring with
+    // NET/INSTALL/ENV/FS — see index.ts.
+    expect(findings[0]!.severity).toBe('WARN');
     expect(validateFinding(findings[0]!)).toBeNull();
   });
 });

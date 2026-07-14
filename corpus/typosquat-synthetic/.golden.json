@@ -1,0 +1,120 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "deps.typosquat-candidate",
+      "category": "DEPS",
+      "package": "crossenv",
+      "from": null,
+      "to": "1.0.0",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package name \"crossenv\" is edit-distance 1 from popular package \"cross-env\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: typosquat candidate has 2+ WARN-tier signals across 2+ categories]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "\"crossenv\" (distance 1 from \"cross-env\")"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "crossenv"
+        ]
+      ]
+    },
+    {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "crossenv",
+      "from": null,
+      "to": "1.0.0",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "low",
+      "message": "Newly-installed package uses process/execution module \"child_process\". [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "imports child_process"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "crossenv"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "crossenv",
+      "from": null,
+      "to": "1.0.0",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "low",
+      "message": "Newly-installed package contacts network endpoint: https://exfil.example.invalid/env [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "https://exfil.example.invalid/env"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "crossenv"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "crossenv",
+      "from": null,
+      "to": "1.0.0",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "low",
+      "message": "Newly-installed package imports network module \"https\". [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "crossenv"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "crossenv": {
+      "maxSeverity": "BLOCK",
+      "count": 4
+    }
+  },
+  "changes": [
+    {
+      "kind": "added",
+      "name": "crossenv",
+      "nodeKeyOld": null,
+      "nodeKeyNew": "node_modules/crossenv",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "oldIntegrity": null,
+      "newIntegrity": "sha512-q5rytaYtAQXSLaEF0alDjyzdWAzPryLSX53bK8VkXVNe09CbhCPXdIGLKAbh9UZ2KSTHmGS86jS9qhp6c5k70A=="
+    }
+  ],
+  "errors": []
+}

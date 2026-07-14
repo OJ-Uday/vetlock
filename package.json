@@ -12,6 +12,8 @@
     "typecheck": "pnpm -r --workspace-concurrency=1 typecheck",
     "check": "pnpm build && pnpm test",
     "corpus:replay": "node packages/cli/dist/replay-corpus.js",
+    "corpus:goldens": "node packages/cli/dist/corpus/generate-goldens.js",
+    "corpus:capmap": "node packages/cli/src/corpus/generate-capability-map-doc.cjs",
     "clean": "rm -rf packages/*/dist packages/*/node_modules node_modules"
   },
   "devDependencies": {
