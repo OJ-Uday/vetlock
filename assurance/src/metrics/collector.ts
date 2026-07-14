@@ -229,20 +229,29 @@ export async function collectMetrics(): Promise<MetricsSnapshot> {
       }
     }
 
-    // Differential-ledger note: read the file Wave 1B-I produces at assurance/report/.
+    // Differential-ledger note: read the file the differential subsystem produces at
+    // assurance/report/differential-ledger.json. Every entry in the file's `deltas` array is
+    // by construction already classified (that's what LedgerFile.deltas MEANS — see
+    // src/differential/ledger.ts, where `classify()` is the only path into that array). The
+    // separate `pending` array holds unclassified findings; if it's non-empty the ledger is
+    // NOT clean (packet §5 P3 done-gate).
     const ledgerPath = pathResolve(root, 'report', 'differential-ledger.json');
     let differentialLedgerNote: string | null = null;
     if (existsSync(ledgerPath)) {
       try {
         const ledger = JSON.parse(readFileSync(ledgerPath, 'utf-8')) as {
-          deltas?: ReadonlyArray<{ classified?: boolean }>;
+          deltas?: ReadonlyArray<{ class?: string }>;
+          pending?: ReadonlyArray<unknown>;
         };
         const deltas = ledger.deltas ?? [];
-        const classified = deltas.filter((d) => d.classified === true).length;
-        differentialLedgerNote =
-          deltas.length === 0
-            ? '0 deltas'
-            : `${deltas.length} deltas, ${classified} classified`;
+        const pending = ledger.pending ?? [];
+        if (deltas.length === 0 && pending.length === 0) {
+          differentialLedgerNote = '0 deltas';
+        } else if (pending.length === 0) {
+          differentialLedgerNote = `${deltas.length} deltas, all classified`;
+        } else {
+          differentialLedgerNote = `${deltas.length} classified, ${pending.length} PENDING (ledger not clean)`;
+        }
       } catch {
         // Malformed ledger file → keep null; the report will show "no data" rather than lying.
         differentialLedgerNote = null;

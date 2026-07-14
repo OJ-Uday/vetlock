@@ -17,3 +17,5 @@ export type {
 export { DifferentialLedger } from './ledger.js';
 export { NpmAuditScanner } from './npm-audit.js';
 export { OsvScanner } from './osv-scanner.js';
+export { seededDeltas, seededCorpusIds } from './seeded-deltas.js';
+export { populateLedgerFromSeededDeltas } from './populate-ledger.js';
