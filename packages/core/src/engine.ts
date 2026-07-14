@@ -41,6 +41,20 @@ export interface EngineOptions {
   concurrency?: number;
   /** Per-package total timeout in ms (default 90_000). */
   timeoutMs?: number;
+  /**
+   * Timeout (ms) for the fetch step only — resolving a package's tarball via
+   * `fetchOverride` or the default `fetchTarball` — separate from `timeoutMs`,
+   * which guards the analyze step. Default 30_000ms.
+   *
+   * FAIL-CLOSED INVARIANT: a fetch that hangs (a Promise that never settles)
+   * or that runs longer than this timeout must never hang the engine forever
+   * or let the run render CLEAN. We race the fetch against an
+   * `AbortSignal.timeout()` guard; on timeout the resulting rejection flows
+   * through the same per-package catch as any other fetch error, which the
+   * engine turns into a BLOCK-tier `analysis.failed` finding (see the
+   * REDTEAM S4 fix in runDiff, below).
+   */
+  analyzerTimeoutMs?: number;
   /** Cache instance; default uses ~/.cache/vetlock/analysis. */
   cache?: SnapshotCache;
   /**
@@ -463,9 +477,19 @@ async function analyzeOne(
 
   opts.onProgress?.({ kind: 'analyze', packageName: ref.name, version: ref.version });
 
-  const tarballPath = opts.fetchOverride
-    ? await opts.fetchOverride(ref)
-    : await fetchTarball(ref);
+  // FAIL-CLOSED INVARIANT (P1-B): a fetch step (fetchOverride, or the default
+  // fetchTarball) that hangs forever must not hang the engine forever, and
+  // must never let the run render CLEAN. We race the fetch against an
+  // AbortSignal.timeout() guard; on expiry the race rejects with a
+  // timeout-shaped error, which flows into the same catch in runDiff's
+  // worker loop as any other fetch failure — turning into a BLOCK-tier
+  // `analysis.failed` finding via the existing REDTEAM S4 fail-closed path.
+  const fetchTimeoutMs = opts.analyzerTimeoutMs ?? 30_000;
+  const tarballPath = await withFetchTimeout(
+    opts.fetchOverride ? opts.fetchOverride(ref) : fetchTarball(ref),
+    fetchTimeoutMs,
+    `${ref.name}@${ref.version}`,
+  );
   try {
     const timeout = opts.timeoutMs ?? 90_000;
     const snap = await withTimeout(
@@ -490,6 +514,28 @@ async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise
   return await new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`analyze ${label} timed out after ${ms}ms`)), ms);
     p.then((v) => { clearTimeout(timer); resolve(v); }, (e) => { clearTimeout(timer); reject(e); });
+  });
+}
+
+/**
+ * Races the fetch step (fetchOverride or fetchTarball) against an
+ * `AbortSignal.timeout()` guard. `fetchOverride`'s signature takes no signal
+ * argument, so we cannot cancel the underlying I/O directly — but we CAN stop
+ * waiting on it, which is what matters for the fail-closed invariant: a fetch
+ * that never resolves (or resolves too slowly) must reject rather than hang
+ * the worker-pool loop in runDiff() forever. The rejection message is
+ * timeout-shaped ("timed out after") so callers/tests can distinguish a
+ * timeout from any other fetch error.
+ */
+async function withFetchTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  const signal = AbortSignal.timeout(ms);
+  return await new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(new Error(`fetch ${label} timed out after ${ms}ms`));
+    signal.addEventListener('abort', onAbort, { once: true });
+    p.then(
+      (v) => { signal.removeEventListener('abort', onAbort); resolve(v); },
+      (e) => { signal.removeEventListener('abort', onAbort); reject(e); },
+    );
   });
 }
 
