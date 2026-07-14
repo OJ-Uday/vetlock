@@ -10,7 +10,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using process/execution module \"child_process\". [escalated: package 'coa' has 4 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'coa' has 3 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "postinstall.js",
@@ -58,36 +58,12 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'coa' has 4 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'coa' has 3 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "package.json",
           "line": 1,
           "snippet": "maintainers: [orig@example] → [orig@example, takeover@example.invalid]"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "coa"
-        ]
-      ]
-    },
-    {
-      "detector": "net.new-endpoint",
-      "category": "NET",
-      "package": "coa",
-      "from": "2.0.2",
-      "to": "2.0.3",
-      "direction": "changed",
-      "severity": "BLOCK",
-      "confidence": "high",
-      "message": "New network endpoint appeared: https://loader.example.invalid [escalated: package 'coa' has 4 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
-      "evidence": [
-        {
-          "file": "postinstall.js",
-          "line": 1,
-          "snippet": "https://loader.example.invalid"
         }
       ],
       "provenance": [
@@ -106,12 +82,36 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using network module \"https\". [escalated: package 'coa' has 4 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "Package started using network module \"https\". [escalated: package 'coa' has 3 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "postinstall.js",
           "line": 1,
           "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "coa"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "coa",
+      "from": "2.0.2",
+      "to": "2.0.3",
+      "direction": "changed",
+      "severity": "INFO",
+      "confidence": "high",
+      "message": "New network endpoint appeared: https://loader.example.invalid [GHSA: GHSA-mh6f-8j2x-4483]",
+      "evidence": [
+        {
+          "file": "postinstall.js",
+          "line": 1,
+          "snippet": "https://loader.example.invalid"
         }
       ],
       "provenance": [

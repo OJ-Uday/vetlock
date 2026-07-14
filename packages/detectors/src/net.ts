@@ -3,7 +3,7 @@
  *
  * Two sub-findings:
  *   - net.new-module    (WARN, medium) — a network module now imported that wasn't before
- *   - net.new-endpoint  (WARN, medium)  — a URL literal now present that wasn't before
+ *   - net.new-endpoint  (WARN/INFO, medium)  — a URL literal now present that wasn't before
  *
  * v0.4.1 FP-STUDY §3b — `net.new-endpoint` downgraded from BLOCK to WARN.
  * Rationale: on the 27-bump routine-upgrade study, a single new URL literal
@@ -15,6 +15,21 @@
  * suspicion escalator in index.ts promotes it back to BLOCK when the shape
  * looks actually malicious.
  *
+ * v0.5.0 — URL AST context tracking. `net.new-endpoint` severity is now
+ * calibrated by *how* the URL literal is used, per `FileCapabilities.
+ * urlLiteralContexts` (packages/core/src/capabilities.ts):
+ *   - 'network-arg' (passed straight to fetch/axios/request/...) or
+ *     'config-value' (assigned to a url/endpoint/baseURL/... key) → WARN,
+ *     unchanged from pre-v0.5.0 behavior — this is where a real exfil
+ *     endpoint would actually be used.
+ *   - 'literal' (a bare string, not consumed as a network target) or
+ *     'comment' (only appears in a source comment) → downgraded to INFO —
+ *     these are the `Cursor.app` / docs-link / changelog-URL shapes that
+ *     don't represent an actual outbound call.
+ * When `urlLiteralContexts` is absent (non-JS/JSON files, or files that
+ * failed to parse) we keep the pre-v0.5.0 default of WARN — no context
+ * information means no basis for downgrading.
+ *
  * URL literals dedup across files; first-seen evidence is used.
  *
  * On ADDED packages (pair.old === null), we still emit findings — a newly-
@@ -22,7 +37,7 @@
  * We downgrade confidence in that mode to reflect the higher noise floor.
  */
 
-import type { Detector, Finding, PackageSnapshot, SnapshotPair } from '@vetlock/core';
+import type { Detector, Finding, PackageSnapshot, SnapshotPair, Severity } from '@vetlock/core';
 import { directionFor } from './direction.js';
 
 export const netDetector: Detector = {
@@ -66,12 +81,12 @@ export const netDetector: Detector = {
         from: dir.from,
         to: pair.new.version,
         direction: dir.direction,
-        severity: 'WARN',
+        severity: severityForContext(evidence.context),
         confidence: isAdded ? 'low' : 'medium',
         message: isAdded
           ? `Newly-installed package contacts network endpoint: ${url}`
           : `New network endpoint appeared: ${url}`,
-        evidence: [evidence],
+        evidence: [{ file: evidence.file, line: evidence.line, snippet: evidence.snippet }],
         provenance: [],
       });
     }
@@ -79,6 +94,12 @@ export const netDetector: Detector = {
     return out;
   },
 };
+
+/** Map a URL's AST usage context to the finding severity. See module docstring. */
+function severityForContext(context: string | undefined): Severity {
+  if (context === 'literal' || context === 'comment') return 'INFO';
+  return 'WARN';
+}
 
 function collectModules(
   snap: PackageSnapshot,
@@ -95,11 +116,18 @@ function collectModules(
 
 function collectUrls(
   snap: PackageSnapshot,
-): Map<string, { file: string; line: number; snippet: string }> {
-  const map = new Map<string, { file: string; line: number; snippet: string }>();
+): Map<string, { file: string; line: number; snippet: string; context?: string }> {
+  const map = new Map<string, { file: string; line: number; snippet: string; context?: string }>();
   for (const f of snap.files) {
     for (const u of f.urlLiterals) {
-      if (!map.has(u)) map.set(u, { file: f.path, line: 1, snippet: u.slice(0, 240) });
+      if (!map.has(u)) {
+        map.set(u, {
+          file: f.path,
+          line: 1,
+          snippet: u.slice(0, 240),
+          context: f.urlLiteralContexts?.[u],
+        });
+      }
     }
   }
   return map;

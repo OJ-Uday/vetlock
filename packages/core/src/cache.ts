@@ -53,7 +53,11 @@ import * as os from 'node:os';
 import * as crypto from 'node:crypto';
 import type { PackageSnapshot } from './finding.js';
 
-export const SNAPSHOT_FORMAT_VERSION = 1;
+// v0.5.0: FileCapabilities gained `urlLiteralContexts` (URL AST context
+// tracking — see packages/core/src/capabilities.ts). Bumped so stale
+// on-disk snapshots built by pre-v0.5.0 vetlock (which lack that field) are
+// treated as cache misses instead of silently masking the new field.
+export const SNAPSHOT_FORMAT_VERSION = 2;
 
 /**
  * On-disk wire format: the snapshot plus an HMAC over it. Older cache files

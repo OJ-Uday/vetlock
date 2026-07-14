@@ -5,6 +5,88 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/).
 
+## [0.5.0] — 2026-07-14
+
+**FP-tune release (3/3) — target hit.** Below the ≤15% BLOCK-rate goal on
+routine top-100 npm bumps: **14.3%** measured. Third and final FP-focused
+release in the v0.4.x → v0.5.x sequence; the remaining BLOCKs are legit
+compound-suspicion (bundler bumps with CODE + NET + OBF co-occurrence that
+a developer SHOULD glance at). Corpus attack-catch stays at 12/13 across
+all four versions.
+
+### URL AST context tracking
+
+The core change: `FileCapabilities` gained an optional
+`urlLiteralContexts: Record<string, 'network-arg' | 'config-value' | 'literal' | 'comment'>`
+map alongside `urlLiterals`. The JS/TS extraction pass in
+`packages/core/src/capabilities.ts` tags each URL literal by how the AST
+actually consumes it:
+
+- **`network-arg`** — passed straight into a call whose callee/property is a
+  network verb (`fetch`, `axios`, `request`, `get`, `post`, `put`, `delete`,
+  `http`, `https`, `superagent`, `connect`, `trace`, `head`, `options`).
+- **`config-value`** — value of an object property whose key is a URL-config
+  name (`url`, `href`, `endpoint`, `baseURL`, `uri`, `api`, `host`, `server`,
+  `target`, `dest`, `destination`).
+- **`literal`** — plain string, not consumed as a network target.
+- **`comment`** — appears only inside a source comment (walked via Babel's
+  `ast.comments`).
+
+When a URL shows up in more than one context across a file the highest-signal
+tag wins: `network-arg` > `config-value` > `literal` > `comment`.
+
+### Detector effect
+
+`net.new-endpoint` in `packages/detectors/src/net.ts` picks severity by
+context:
+
+- `network-arg` or `config-value` → **WARN** (unchanged behavior — that's
+  where a real exfil endpoint would actually be used, and compound-suspicion
+  escalation in `runAll` still promotes to BLOCK when co-occurring with
+  INSTALL/EXEC/ENV/FS).
+- `literal` or `comment` → **INFO** (audit-visible, doesn't drive escalation).
+- Undefined (`.json` files, parse failures, non-JS sources) → WARN, same as
+  before v0.5.0.
+
+Corpus fixtures that shifted WARN → INFO in v0.5.0 (all comment-only or
+non-network-arg URL matches, not the primary attack signal): `coa`'s dead-code
+`https.get(url)` under `if (false)`, `eslint-scope`'s `build.js` string,
+`ua-parser-js`'s dead-code miner URL, `typosquat-synthetic`'s crossenv
+string, `hardened-evader-2026`'s bare-tld string, `shai-hulud-2025`'s
+config-key URL. Every BLOCK-tier corpus attack still fires — their exfil
+URLs are `network-arg` tagged.
+
+### Cache format bumped to v2
+
+`SNAPSHOT_FORMAT_VERSION` in `packages/core/src/cache.ts`: 1 → 2. Pre-v0.5.0
+on-disk snapshots lack `urlLiteralContexts` and would silently mask the new
+field; treating them as cache misses forces a re-extract.
+
+### Measured
+
+|                       | v0.4.0    | v0.4.1    | v0.4.2    | v0.5.0    |
+|-----------------------|-----------|-----------|-----------|-----------|
+| BLOCK on routine bumps| 48.1%     | 33.3%     | 17.9%     | **14.3%** |
+| WARN                  | 3.7%      | 18.5%     | 32.1%     | 25.0%     |
+| INFO                  | 0%        | 3.7%      | 3.6%      | **21.4%** |
+| CLEAN                 | 48.1%     | 44.4%     | 46.4%     | 39.3%     |
+| Corpus attacks caught | 12/13     | 12/13     | 12/13     | 12/13     |
+| Total tests           | 424 green | 424 green | 424 green | **433 green** |
+
+Nine new tests (`packages/core/test/capabilities-url-context.test.ts`)
+cover the 4 context tags across literal/template/comment/nested-object
+positions.
+
+### Not in this release (P4c-scoped, next)
+
+The Python/PyPI ecosystem adapter has an in-flight implementation
+(`~/personal/vetlock-p4c-pypi` worktree, ~3000 LOC) that needs to be rebased
+onto v0.5.0 and shipped separately as v0.6.0. Two workflow retries at P4c
+this session had orchestrator-side interruptions before completion; a
+prior end-to-end attempt landed the code but was never merged.
+
+---
+
 ## [0.4.2] — 2026-07-14
 
 **FP-tune release (2/3).** Second measured pass at the FP problem. v0.4.1 got
