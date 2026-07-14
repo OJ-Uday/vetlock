@@ -22,3 +22,5 @@ export type {
 } from './types.js';
 
 export { loadCapabilityMap, CAPABILITY_CLASS_IDS, _resetStartupHandoffWarning } from './loader.js';
+
+export { CoverageGate, type EntryPointAxis } from './coverage-gate.js';
