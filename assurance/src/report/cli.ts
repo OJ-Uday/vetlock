@@ -63,26 +63,40 @@ async function main(): Promise<void> {
       {
         title: 'P0 status — foundations only',
         body:
-          'This is the P0 baseline report. Only the shared oracle set, the bounded runner, ' +
-          'and this generator exist. No robustness corpus, no evasion mutation engine, no ' +
-          'metamorphic pairs, no differential adapters, and no adversarial-agent panel yet. ' +
-          'Numbers arrive in P1-P4; the release gate lands in P5. See ' +
+          'The oracle set, bounded runner, and stamped report generator constitute the P0 ' +
+          'foundations layer. As of 2026-07-14, P0 landed and P1-P5 were scaffolded in one ' +
+          'parallel-agent wave; see the P0-P5 progress note below.',
+      },
+      {
+        title: 'P0-P5 progress (2026-07-14 integration)',
+        body:
+          'The full six-phase packet has been scaffolded end-to-end. P0 foundations: 6 oracles, ' +
+          'bounded runner (worker_threads + child_process fallback for V8-abort scenarios), ' +
+          'stamped report generator. P1 robustness: defang guard (rule #2), 10+ generators ' +
+          '(deep-nested-yaml — real gap found + pinned as corpus entry #1; npm-deep-json, ' +
+          'yarn-classic-deep, yarn-berry-deep, redos, tar-bomb, gzip-bomb, graph-dos), ' +
+          'never-execute-under-stress canary, engine wiring for parseLockfileText / runDiff / ' +
+          'extractCapabilities / analyzeTarball, harness self-invariants (fast-check property ' +
+          'suite). P2 completeness: CAPABILITY-MAP artifact (41 members enumerated, STARTUP §3.5 ' +
+          'handoff hook), coverage gate, 8 completeness-vector transforms across 3 families. ' +
+          'P3 metamorphic + differential: 5 pair families, npm-audit + osv-scanner adapters, ' +
+          'classified delta ledger. P4 agent panel: stub-mode orchestration driver with defang ' +
+          'guard defense. P5 release gate: two-tier GitHub Actions workflows (assurance-pr.yml ' +
+          'blocking, assurance-scheduled.yml nightly), README badge + link, CODEOWNERS. ' +
+          'Real metrics now flow into this report via collectMetrics(). See ' +
           '`~/personal/packets/PACKET-VETLOCK-ASSURANCE.md` for the phase plan.',
       },
       {
-        title: 'P1 progress — engine wired, first generator + first corpus entry',
+        title: 'Corpus entries so far',
         body:
-          'P1 wired the real @vetlock/core engine through two entrypoints (parseLockfileText, ' +
-          'runDiff) and shipped the DEFANGED-ONLY guard (packet rule #2) as an always-on ' +
-          'scan of assurance/corpus/. First robustness generator: `deep-nested-yaml` — ' +
-          'exposed a real gap where @vetlock/core lets js-yaml\'s maxDepth exception escape ' +
-          'unwrapped (should emit an `analysis.failed` finding via the engine\'s existing ' +
-          'fail-safe convention). Gap pinned as corpus entry #1 (`assurance/corpus/robustness/' +
-          'deep-nested-yaml/`) with the assertion-flip instructions for when STARTUP fixes it. ' +
-          'Robustness metric is still `null` because the tier isn\'t fully populating yet ' +
-          '(1 generator ≠ the full §2.1 threat family). It will populate as more generators ' +
-          'land (parser-DoS, ReDoS, graph-DoS, resource-abuse, fail-open probes, hostile ' +
-          'lifecycle scripts). Honest reporting: 1 gap discovered, 1 corpus regression filed.',
+          '`assurance/corpus/robustness/deep-nested-yaml/` — pnpm-lock.yaml with 100-level ' +
+          'YAML nesting crashes `parseLockfileText` because @vetlock/core does not catch ' +
+          'js-yaml\'s maxDepth exception. STARTUP owns the fix (wrap js-yaml.load in a try/catch ' +
+          'that emits an `analysis.failed` finding). Regression test at ' +
+          'assurance/test/robustness/no-crash.test.ts pins current behavior; assertion flips ' +
+          'when the engine wraps the exception. ' +
+          '`assurance/corpus/robustness/redos-safety-note/` — engine regex surface probed CLEAN ' +
+          '(regenerate this test when the engine\'s regex surface changes).',
       },
     ],
   };
