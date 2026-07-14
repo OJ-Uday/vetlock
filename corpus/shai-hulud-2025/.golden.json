@@ -1,0 +1,336 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: NPM_TOKEN",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 14,
+          "snippet": "const token = process.env.NPM_TOKEN;"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: GITHUB_TOKEN",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 15,
+          "snippet": "const ghToken = process.env.GITHUB_TOKEN;"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: AWS_ACCESS_KEY_ID",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 16,
+          "snippet": "const aws = process.env.AWS_ACCESS_KEY_ID;"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: HOME",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 17,
+          "snippet": "const home = process.env.HOME;"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: whole-object process.env enumeration",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 18,
+          "snippet": "const envDump = Object.keys(process.env);"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: AWS_SECRET_ACCESS_KEY",
+      "evidence": [
+        {
+          "file": "postinstall.js",
+          "line": 8,
+          "snippet": "const aws = process.env.AWS_SECRET_ACCESS_KEY;"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started using process/execution module \"child_process\".",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "imports child_process"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "fs.new-hotpath-write",
+      "category": "FS",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New file-system write to sensitive path: /.npmrc",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "fs.writeFile(\"/.npmrc\", ...)"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "install.script-added",
+      "category": "INSTALL",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Lifecycle script \"postinstall\" was added.",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "postinstall: node postinstall.js"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "meta.maintainer-change",
+      "category": "META",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'chalk' has 2 WARN findings across 2 categories]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "maintainers: [team@chalk.example] → [attacker@example.invalid]"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/collect",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "https://exfil.example.invalid/collect"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/webhook",
+      "evidence": [
+        {
+          "file": "postinstall.js",
+          "line": 1,
+          "snippet": "https://exfil.example.invalid/webhook"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Package started using network module \"https\". [escalated: package 'chalk' has 2 WARN findings across 2 categories]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "chalk": {
+      "maxSeverity": "BLOCK",
+      "count": 13
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "chalk",
+      "nodeKeyOld": "node_modules/chalk",
+      "nodeKeyNew": "node_modules/chalk",
+      "oldVersion": "5.3.0",
+      "newVersion": "5.3.1",
+      "oldIntegrity": "sha512-Bwoy2v18yzJYTzo+m0qasCBLAXgDV8Rq20O3H4WvYrQCt4kNOGZ6TRMWEU4S95sLldRww4rgmYq45eckdpv0jg==",
+      "newIntegrity": "sha512-ogJcJF1EER/72MKyH8yab5552DxL76Wxu3qBmA5FbKvCl3cBGpIrPuju4iWXYZuuH5n1VaQNpuPLUEt8PXiehg=="
+    }
+  ],
+  "errors": []
+}

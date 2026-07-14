@@ -1,0 +1,96 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "fs.new-hotpath-write",
+      "category": "FS",
+      "package": "node-ipc",
+      "from": "10.1.0",
+      "to": "10.1.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New file-system write to sensitive path: ~/Desktop/WITH-LOVE-FROM-AMERICA.txt [GHSA: GHSA-8v38-pw62-9cw2]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "fs.writeFile(\"~/Desktop/WITH-LOVE-FROM-AMERICA.txt\", ...)"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "node-ipc"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "node-ipc",
+      "from": "10.1.0",
+      "to": "10.1.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint appeared: https://api.geoip.example.invalid/country [GHSA: GHSA-8v38-pw62-9cw2]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "https://api.geoip.example.invalid/country"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "node-ipc"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "node-ipc",
+      "from": "10.1.0",
+      "to": "10.1.1",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "high",
+      "message": "Package started using network module \"https\". [GHSA: GHSA-8v38-pw62-9cw2]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "node-ipc"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "node-ipc": {
+      "maxSeverity": "BLOCK",
+      "count": 3
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "node-ipc",
+      "nodeKeyOld": "node_modules/node-ipc",
+      "nodeKeyNew": "node_modules/node-ipc",
+      "oldVersion": "10.1.0",
+      "newVersion": "10.1.1",
+      "oldIntegrity": "sha512-aqlQBl5GzeMC049+rznufgACofqJFhESrp9kC/ylxII9WbciHh8dEp9Y7ttaQWkFybmaKgP8E+EWv71FCVKPgA==",
+      "newIntegrity": "sha512-k+NOnoUjxbLU+8A+uXJtmVLZjt6QwHVUf2mjz48xlr8TchMZYdVkCXYdHHxp2LibAS/qYOb9goPO6i0VomPW7A=="
+    }
+  ],
+  "errors": []
+}
