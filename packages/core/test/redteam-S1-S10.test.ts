@@ -176,12 +176,37 @@ describe('REDTEAM S10: integrity tripwire fires when old integrity is blank', ()
     expect(changes.find((c) => c.kind === 'integrity-changed')).toBeUndefined();
   });
 
-  it('does NOT fire when new integrity is blank (nothing to compare against)', () => {
+  it('FIRES when new integrity is blank but old was populated (REDTEAM F3 FIX — ground-truth-vanishes signal)', () => {
+    // F3 is the mirror of S10: attacker publishes a version that still has
+    // real integrity in the OLD lockfile, then omits integrity from the NEW
+    // lockfile so the tripwire has "nothing to compare against." Previously
+    // this test asserted that as intentional; it was pinning a vulnerable
+    // behavior. Corrected rule: any (oldIntegrity, newIntegrity) transition
+    // where at least one side is populated AND they don't match is a signal.
+    // An attacker who deliberately drops integrity is asking the analyzer
+    // not to compare — which IS the signal that a compare would fail.
     const oldG = parseLockfile(mkLock({
       'node_modules/chalk': { version: '5.3.0', integrity: 'sha512-x' },
     }));
     const newG = parseLockfile(mkLock({
-      'node_modules/chalk': { version: '5.3.0' /* new integrity blank */ },
+      'node_modules/chalk': { version: '5.3.0' /* new integrity DELIBERATELY MISSING */ },
+    }));
+    const changes = computeChangeset(oldG, newG);
+    const intg = changes.find((c) => c.kind === 'integrity-changed');
+    expect(intg, 'integrity-changed must fire when newIntegrity was blank (F3 mirror)').toBeDefined();
+    expect(intg!.name).toBe('chalk');
+    expect(intg!.oldIntegrity).toBe('sha512-x');
+    expect(intg!.newIntegrity).toBe('');
+  });
+
+  it('does NOT fire when BOTH integrities are blank (no ground truth either way)', () => {
+    // Legitimate case: an older lockfile format that doesn't record integrity
+    // at all. No signal because there's genuinely nothing to compare.
+    const oldG = parseLockfile(mkLock({
+      'node_modules/chalk': { version: '5.3.0' /* both blank */ },
+    }));
+    const newG = parseLockfile(mkLock({
+      'node_modules/chalk': { version: '5.3.0' /* both blank */ },
     }));
     const changes = computeChangeset(oldG, newG);
     expect(changes.find((c) => c.kind === 'integrity-changed')).toBeUndefined();

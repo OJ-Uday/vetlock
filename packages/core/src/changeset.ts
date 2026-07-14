@@ -58,17 +58,25 @@ export function computeChangeset(oldG: LockGraph, newG: LockGraph): Change[] {
   // that oldIntegrity is '' at parse time, then ship any tarball on the new
   // side and the tripwire never fires.
   //
-  // Corrected rule: fire whenever new integrity is present AND differs from
-  // old, INCLUDING the case where old was blank. A blank-then-populated
-  // integrity for the SAME version string means "vetlock previously had no
-  // ground truth for this artifact and now does" — that transition IS the
-  // signal, and it deserves a BLOCK-tier finding (integrity.now-known) rather
-  // than being silently ignored.
+  // REDTEAM F3 FIX (the mirror case): the earlier post-S10 rule `if (!n.integrity) continue`
+  // gave the attacker the mirror trick — populate the OLD side with real
+  // integrity, then OMIT integrity from the NEW side, and the tripwire again
+  // never fires (see the `[F3]` regression test in redteam-S1-S10.test.ts).
+  //
+  // Corrected rule: fire whenever the pair of (oldIntegrity, newIntegrity) is
+  // not-equal AND at least one side is populated. Both-blank produces no
+  // signal (nothing to compare). Everything else IS a signal:
+  //   - populated → different-populated : same-version tamper (S10 original)
+  //   - blank → populated                : ground-truth-appears (S10 fix)
+  //   - populated → blank                : ground-truth-vanishes (F3 fix)
+  //     An attacker who deliberately drops integrity on their new lockfile is
+  //     asking the analyzer to not compare anything — which is itself the
+  //     signal that a compare would fail.
   for (const [id, n] of newByNameVer) {
     const o = oldByNameVer.get(id);
     if (!o) continue;
-    if (!n.integrity) continue; // no new integrity to compare against — can't tell
-    if (n.integrity === o.integrity) continue; // matches exactly, no signal
+    if (!n.integrity && !o.integrity) continue; // both blank — no ground truth on either side
+    if (n.integrity === o.integrity) continue;  // matches exactly, no signal
     // Everything else is a change we must surface.
     changes.push({
       kind: 'integrity-changed',
@@ -78,7 +86,7 @@ export function computeChangeset(oldG: LockGraph, newG: LockGraph): Change[] {
       oldVersion: o.version,
       newVersion: n.version,
       oldIntegrity: o.integrity, // may be '' — that's a valid signal
-      newIntegrity: n.integrity,
+      newIntegrity: n.integrity, // may be '' — F3-mirror signal
     });
   }
 
