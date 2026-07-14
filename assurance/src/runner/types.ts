@@ -54,9 +54,11 @@ export type SyntheticScenario =
  *   runDiff             — full-flow: two lockfile texts + a detector strategy. The detector
  *                         closure can't cross the worker boundary, so the caller picks a
  *                         symbolic `detectorMode` and the worker constructs the closure
- *                         locally. P1.1 supports 'none' (no-op) — later phases add 'all'
- *                         (real detectors from @vetlock/detectors when wired) and
- *                         'parse-only' (config-driven subset).
+ *                         locally. Wave 4-R now supports 'all' — dynamic-imports
+ *                         @vetlock/detectors and wires runAll(pair) as runDetectors. 'none'
+ *                         (no-op) remains for parser-DoS / ReDoS probes. 'parse-only'
+ *                         (config-driven subset that skips fetch-dependent detectors) is
+ *                         reserved as a future addition.
  *   extractCapabilities — text-in, FileCapabilities-out (per-file AST scan). Wave 3-O
  *                         addition. Unblocks Wave 1B-J's metamorphic tests, which need a
  *                         way to hand hostile-but-defanged source text to the engine's
@@ -87,8 +89,19 @@ export type EngineScenario =
       readonly newLockfileText: string;
       readonly oldLockfilePath?: string;
       readonly newLockfilePath?: string;
-      /** Which detector closure the worker constructs. See doc above. */
-      readonly detectorMode: 'none';
+      /**
+       * Which detector closure the worker constructs.
+       *   'none' — no-op detector closure; used for parser-DoS / ReDoS / graph-DoS
+       *            robustness probes where detector output is irrelevant.
+       *   'all'  — dynamic-imports @vetlock/detectors and wires runAll(pair) as the
+       *            engine's runDetectors callback. This is what evasion-catch-rate +
+       *            enumerated-coverage metrics need: real findings from real detectors.
+       *   'parse-only' — reserved TODO. Would run a filtered subset that skips
+       *            fetch-dependent detectors while still exercising the manifest/deps
+       *            detectors that don't need tarball bodies. Not wired in Wave 4-R;
+       *            add here + in both runEngine handlers when a caller needs it.
+       */
+      readonly detectorMode: 'none' | 'all';
       /** Fetch is disabled by default (this is an assurance harness — nothing hits the network).
        *  When true, the worker installs a fetchOverride that resolves to a benign empty tarball
        *  for every request; caller-supplied fetch is not accepted (structured-clone problem). */

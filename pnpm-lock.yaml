@@ -56,6 +56,9 @@ importers:
       '@vetlock/core':
         specifier: workspace:*
         version: link:../packages/core
+      '@vetlock/detectors':
+        specifier: workspace:*
+        version: link:../packages/detectors
       fast-check:
         specifier: ^3.19.0
         version: 3.23.2

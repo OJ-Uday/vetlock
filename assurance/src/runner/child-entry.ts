@@ -239,7 +239,30 @@ async function runEngine(
     if (typeof runDiff !== 'function') {
       throw new Error(`[child-entry] enginePath ${scenario.enginePath} does not export runDiff`);
     }
-    const runDetectors = () => [];
+    // Detector closure is constructed here in the child, not shipped across stdin — the
+    // stdin protocol is JSON, so closures don't survive the boundary. Caller picks a
+    // symbolic detectorMode and we build the closure locally.
+    //
+    //   'none' — no-op closure (zero findings). Used by parser-DoS / graph-DoS probes.
+    //   'all'  — dynamic-import @vetlock/detectors + wire runAll(pair). Wave 4-R.
+    //
+    // Mirrors worker.ts exactly — same closure shape, same fallback error semantics.
+    let runDetectors: (pair: unknown, packageName: string) => EngineFinding[];
+    if (scenario.detectorMode === 'all') {
+      const detectorsMod: unknown = await import('@vetlock/detectors');
+      const detectors = detectorsMod as {
+        runAll?: (pair: unknown) => EngineFinding[];
+      };
+      if (typeof detectors.runAll !== 'function') {
+        throw new Error(
+          '[child-entry] @vetlock/detectors does not export runAll — detectorMode "all" cannot be constructed',
+        );
+      }
+      const runAll = detectors.runAll;
+      runDetectors = (pair, _pkg) => runAll(pair);
+    } else {
+      runDetectors = () => [];
+    }
     const fetchOverride =
       scenario.disableFetch === false
         ? undefined
