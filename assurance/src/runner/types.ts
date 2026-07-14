@@ -45,20 +45,29 @@ export type SyntheticScenario =
     };
 
 /**
- * Engine scenarios (P1 wires the actual @vetlock/core surface). Two variants matching the
- * engine's natural entrypoints, plus room to grow.
+ * Engine scenarios (P1 wires the actual @vetlock/core surface). Variants match the engine's
+ * natural entrypoints, plus room to grow.
  *
- *   parseLockfileText — pure text-in, DetectionResult-out. No detectors, no fetch, no
- *                       filesystem. Ideal target for parser-DoS / ReDoS / malformed-lockfile
- *                       robustness generators (packet §5 P1 first move).
- *   runDiff           — full-flow: two lockfile texts + a detector strategy. The detector
- *                       closure can't cross the worker boundary, so the caller picks a
- *                       symbolic `detectorMode` and the worker constructs the closure
- *                       locally. P1.1 supports 'none' (no-op) — later phases add 'all'
- *                       (real detectors from @vetlock/detectors when wired) and 'parse-only'
- *                       (config-driven subset).
+ *   parseLockfileText   — pure text-in, DetectionResult-out. No detectors, no fetch, no
+ *                         filesystem. Ideal target for parser-DoS / ReDoS / malformed-
+ *                         lockfile robustness generators (packet §5 P1 first move).
+ *   runDiff             — full-flow: two lockfile texts + a detector strategy. The detector
+ *                         closure can't cross the worker boundary, so the caller picks a
+ *                         symbolic `detectorMode` and the worker constructs the closure
+ *                         locally. P1.1 supports 'none' (no-op) — later phases add 'all'
+ *                         (real detectors from @vetlock/detectors when wired) and
+ *                         'parse-only' (config-driven subset).
+ *   extractCapabilities — text-in, FileCapabilities-out (per-file AST scan). Wave 3-O
+ *                         addition. Unblocks Wave 1B-J's metamorphic tests, which need a
+ *                         way to hand hostile-but-defanged source text to the engine's
+ *                         AST scanner and inspect the emitted capability set.
+ *   analyzeTarball      — tarball-path-in, PackageSnapshot-out (full pipeline: extract +
+ *                         per-file scan + manifest read). Wave 3-O addition. Unblocks the
+ *                         archive test vectors (Wave 3-M) which need to feed adversarial
+ *                         tarballs (path-traversal, symlinks, size-bombs) through the real
+ *                         extractor + analyzer end-to-end.
  *
- * Both variants share `enginePath` so the worker can resolve them from a bare specifier
+ * All variants share `enginePath` so the worker can resolve them from a bare specifier
  * ('@vetlock/core') or an absolute path (useful when testing a specific dist tree).
  */
 export type EngineScenario =
@@ -84,6 +93,26 @@ export type EngineScenario =
        *  When true, the worker installs a fetchOverride that resolves to a benign empty tarball
        *  for every request; caller-supplied fetch is not accepted (structured-clone problem). */
       readonly disableFetch?: boolean;
+    }
+  | {
+      readonly kind: 'engine:extractCapabilities';
+      /** ESM specifier or absolute path the worker will `import()`. */
+      readonly enginePath: string;
+      /** Repo-relative path label shown in emitted findings (never opened on disk). */
+      readonly relPath: string;
+      /** Source text handed to the AST scanner. */
+      readonly text: string;
+      /** Optional sha256 of the bytes — passed through to extractCapabilities verbatim. */
+      readonly sha256?: string;
+      /** Optional byte count — defaults to text.length when omitted. */
+      readonly bytes?: number;
+    }
+  | {
+      readonly kind: 'engine:analyzeTarball';
+      /** ESM specifier or absolute path the worker will `import()`. */
+      readonly enginePath: string;
+      /** Absolute path to a tarball on disk. The engine extracts + scans it in-process. */
+      readonly tarballPath: string;
     };
 
 export type Scenario = SyntheticScenario | EngineScenario;
