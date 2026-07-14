@@ -4,6 +4,116 @@
   "deltas": [
     {
       "finding": {
+        "scanner": "guarddog",
+        "package": "@lottiefiles/lottie-player",
+        "severity": "HIGH",
+        "title": "threat-runtime-obfuscation-base64exec + threat-runtime-dynamic-loader match on lottie-player@2.0.5",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, corpus fixture lottie-player-2024. Rules: threat-runtime-obfuscation-base64exec (atob → eval on injected Web3Modal drainer), threat-runtime-dynamic-loader (fetch-then-eval on remote payload).)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=lottie-player-2024] guarddog fires threat-runtime-obfuscation-base64exec + threat-runtime-dynamic-loader on the base64-eval Web3Modal drainer injection. vetlock catches via code.dynamic-loading-added (new Function/base64 eval) + net.encoded-endpoint. Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "@solana/web3.js",
+        "severity": "HIGH",
+        "title": "threat-runtime-obfuscation-base64exec + threat-network-exfiltration match on @solana/web3.js@1.95.5",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, corpus fixture solana-web3-2024. Rules: threat-runtime-obfuscation-base64exec (base64-decoded exfil URL), threat-network-exfiltration (keypair hook posts seed material).)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=solana-web3-2024] guarddog fires threat-runtime-obfuscation-base64exec (base64-encoded exfil URL) + threat-network-exfiltration on the seed-material posting shape. vetlock catches via net.new-module + net.encoded-endpoint + meta.maintainer-change. Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "chalk",
+        "severity": "HIGH",
+        "title": "threat-runtime-environment-read + threat-network-exfil-sysinfo + threat-npm-preinstall-script match on chalk@5.3.1",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, corpus fixture shai-hulud-2025. Rules: threat-npm-preinstall-script (postinstall added), threat-runtime-environment-read (NPM_TOKEN/GITHUB_TOKEN/AWS_* harvest), threat-network-exfil-sysinfo (hostname + tokens sent to exfil endpoint).)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=shai-hulud-2025] guarddog fires threat-npm-preinstall-script + threat-runtime-environment-read + threat-network-exfil-sysinfo on the Shai-Hulud worm payload. vetlock catches via install.script-added + env.token-harvest + net.new-endpoint + net.new-module + exec.new-module + meta.maintainer-change. Both engines produce dense evidence; delta is modality (tarball scan vs diff scan). Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "coa",
+        "severity": "HIGH",
+        "title": "threat-npm-preinstall-script + threat-process-powershell-encoded match on coa@2.0.3",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, corpus fixture coa-rc-2021. Rules: threat-npm-preinstall-script, threat-process-powershell-encoded on the Windows password-stealer payload.)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=coa-rc-2021] guarddog fires threat-npm-preinstall-script (postinstall hook added to package.json) and threat-process-powershell-encoded (PowerShell -enc download cradle in the payload). vetlock catches behaviorally via install.script-added + exec.new-module + net.new-module + net.new-endpoint. Advisory-only: same modality distinction as ua-parser row above."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "colors",
+        "severity": "LOW",
+        "title": "guarddog produces no risk-level hit on colors@1.4.44",
+        "rawMessage": "(historical guarddog outcome — no threat/capability correlation fires on pure logic sabotage. Recorded to document that guarddog also misses this class.)"
+      },
+      "class": "intentional-non-goal",
+      "rationale": "[fixture=colors-2022] colors@1.4.44 protestware sabotage uses only capabilities the package already had — infinite loop in the ANSI-code formatter. guarddog’s risk engine needs a capability × threat correlation and finds none (no new network, no new install script, no obfuscation, no exec). Both engines miss this by design. Per corpus/colors-2022/manifest.json known_limitation: \"vetlock is designed as a behavioral DIFFER\". Documented scope boundary for the whole class of pure-logic sabotage — manual code review remains the line of defense."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "eslint-scope",
+        "severity": "HIGH",
+        "title": "threat-runtime-obfuscation-base64exec + threat-filesystem-read match on eslint-scope@3.7.2",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, corpus fixture eslint-scope-2018. Rules: threat-runtime-obfuscation-base64exec (Buffer.from(...base64).toString() → eval), threat-filesystem-read (~/.npmrc token exfil).)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=eslint-scope-2018] guarddog fires threat-runtime-obfuscation-base64exec on the eval-of-decoded-string payload and threat-filesystem-read on the ~/.npmrc read. vetlock catches via fs.new-hotpath-read + net.new-endpoint + obf.entropy-jump + meta.maintainer-change. Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "flatmap-stream",
+        "severity": "HIGH",
+        "title": "threat-runtime-obfuscation-base64exec + capability-network-outbound match on flatmap-stream@0.1.1",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, corpus fixture event-stream-2018. Rules: threat-runtime-obfuscation-base64exec (Buffer.from(...base64) → new Function payload decoder), capability-network-outbound (Copay wallet exfil to attacker server).)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=event-stream-2018] guarddog fires threat-runtime-obfuscation-base64exec on the encrypted-payload decoder in flatmap-stream, correlated with capability-network-outbound. vetlock catches via deps.new-direct-dep on the transitive flatmap-stream plus meta.maintainer-change plus obf.entropy-jump. Both engines catch it; different modalities."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "node-ipc",
+        "severity": "HIGH",
+        "title": "threat-filesystem-destruction + threat-network-outbound match on node-ipc@10.1.1",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, corpus fixture node-ipc-2022. Rules: threat-filesystem-destruction (recursive overwrite of user files based on geo-lookup), threat-network-outbound (geoIP HTTP call).)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=node-ipc-2022] guarddog fires threat-filesystem-destruction (protestware overwrite of user files) + threat-network-outbound (geoIP lookup determines target). vetlock catches via net.new-module + net.new-endpoint (geoIP fetch) + fs.new-hotpath-write (destructive file drop). Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "rand-user-agent",
+        "severity": "HIGH",
+        "title": "threat-network-reverse-shell + capability-process-spawn match on rand-user-agent@2.0.1",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, corpus fixture rand-user-agent-2025. Rules: threat-network-reverse-shell (net.connect + child_process.spawn(/bin/sh) shape), capability-process-spawn.)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=rand-user-agent-2025] guarddog fires threat-network-reverse-shell on the net.connect + shell-spawn pair (the canonical reverse-shell fingerprint). vetlock catches via net.new-module (net.connect) + code.dynamic-loading-added (new Function() payload wrapper) + net.new-endpoint (C2 host). Advisory-only."
+    },
+    {
+      "finding": {
+        "scanner": "guarddog",
+        "package": "ua-parser-js",
+        "severity": "HIGH",
+        "title": "threat-process-cryptomining + threat-npm-preinstall-script match on ua-parser-js@0.7.29",
+        "rawMessage": "(historical guarddog rule matches — seeded ledger, live scan not run; corpus fixture ua-parser-2021. Rules: threat-process-cryptomining (xmrig fingerprint), threat-npm-preinstall-script (preinstall shell-out).)"
+      },
+      "class": "advisory-only",
+      "rationale": "[fixture=ua-parser-2021] guarddog fires threat-process-cryptomining on the xmrig binary drop + threat-npm-preinstall-script on the preinstall hook in package.json. vetlock catches the same incident on the DIFF channel via install.script-added + exec.new-module + net.new-endpoint (see corpus/ua-parser-2021/manifest.json). The delta exists because vetlock scans the manifest diff, not the archived tarball’s YARA-visible fingerprints. Complementary coverage; documented scope boundary."
+    },
+    {
+      "finding": {
         "scanner": "npm-audit",
         "package": "@lottiefiles/lottie-player",
         "severity": "CRITICAL",
