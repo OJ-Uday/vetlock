@@ -5,6 +5,72 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/).
 
+## [0.7.0] — 2026-07-14
+
+**P5 — Hosted API (engine-as-service).** vetlock is now runnable as a
+long-lived HTTP service alongside the CLI. Zero-dep Node HTTP server;
+per-scan subprocess sandbox with SIGKILL-on-timeout and unconditional temp-
+dir teardown; async job queue with 24h result TTL; Fly.io scale-to-zero
+deploy. `$0/mo at idle, ~$5/mo at 1000 scans/day` — see
+`packages/api/docs/DEPLOY.md` for the full cost curve.
+
+### New package: `@vetlock/api`
+
+- **`packages/api/src/server.ts`** — `node:http` HTTP server with three routes:
+  * `POST /scan` — accepts `{ lockfile_before, lockfile_after, ecosystem? }`, returns `202 + { scanId, statusUrl }`. Body cap 1 MB, per-IP rate limit 5/min, content-type must be `application/json`.
+  * `GET /scan/:scanId` — polling endpoint. `202 + { stage, elapsedMs }` while pending; `200 + { verdict, findings, elapsedMs }` once done; `404` for unknown ids; `410 + { status: 'expired' }` past TTL.
+  * `GET /health` — `{ ok: true, version: VETLOCK_VERSION }`.
+- **`packages/api/src/scan-queue.ts`** — `ScanQueue` class with constructor-injected backend. Default `DefaultScanBackend` calls `runDiff` from `@vetlock/core`. Records go `pending → done|error → expired` (24h TTL). Non-Error rejections are captured as `error.message` strings.
+- **`packages/api/src/sandbox.ts`** — `runScanInSandbox` for ADR 0008 per-scan process isolation:
+  * `mkdtemp()`'s a fresh `vetlock-scan-*` dir under `os.tmpdir()`.
+  * Materializes both lockfiles as `0o600` files inside.
+  * Spawns `dist/scan-runner.js` as a detached Node subprocess (`spawn(process.execPath, ...)`) with `--max-old-space-size=512`, empty env, no shell, stdin closed.
+  * Wall-clock timeout enforced by the PARENT — `setTimeout` → `process.kill(-pid, 'SIGKILL')` on the whole process group.
+  * Stdout capped at 4 MB (defense against runaway subprocess flooding parent RAM).
+  * Sandbox dir removed unconditionally in `finally` — successful, failed, and timed-out scans all leave zero disk trace.
+- **`packages/api/src/scan-runner.ts`** — the sandboxed subprocess entrypoint. Reads two argv paths, calls `runDiff`, writes `ScanResult` as JSON to stdout, exits 0. On error: `{ error: string }` + exit 1. Never writes to any file. Never catches-and-continues.
+- **`packages/api/src/index.ts`** — re-exports for the test surface + external consumers.
+- **`packages/api/package.json`** — `@vetlock/api@0.7.0`, private, no runtime deps beyond `@vetlock/core`, `@vetlock/detectors`, `zod`. NO express/fastify/hono — every runtime dep is supply-chain risk we scan for.
+
+### Tests
+
+- 510 → **540 green.** 30 new API tests across three files:
+  * `server.test.ts` (8) — request/response shape, rate limit, 413/415, 404/410.
+  * `sandbox.test.ts` (13) — happy path, failure paths (non-zero exit, silent exit, unparseable JSON, missing runner), timeout enforcement + teardown-on-timeout, tmpdir isolation, empty-env, concurrent-run distinctness.
+  * `scan-queue.test.ts` (9) — enqueue UUIDs, lifecycle transitions, error capture, TTL expiration, concurrency.
+- No core/detectors/cli tests changed. Corpus attack-catch stays at 12/13.
+
+### Deploy
+
+- **`packages/api/Dockerfile`** — multi-stage build (builder: `node:20-alpine` + `pnpm --filter deploy --prod`; runtime: minimal `node:20-alpine` copy of pruned tree). Non-root `node` user, HEALTHCHECK on `/health`, `EXPOSE 8080`. Runs `node dist/server.js` — no shell in CMD.
+- **`packages/api/fly.toml`** — scale-to-zero (`min_machines_running=0`, `auto_stop_machines="stop"`), `shared-cpu-1x`/256MB, HTTPS-only, HTTP-check every 30s. Ready for `flyctl deploy`.
+- **`packages/api/docs/DEPLOY.md`** — local dev + local Docker + Fly.io deploy runbook, cost curve at 10/100/1000/10k/100k scans/day, security invariants summary.
+
+### Design decisions worth flagging
+
+- **In-process vs. subprocess backend split.** Default `ScanQueue` uses the
+  in-process `DefaultScanBackend` (calls `runDiff` directly). The subprocess
+  sandbox in `sandbox.ts` is the **production hardening path** — wiring
+  `ScanQueue` to use it by default is deferred to v0.7.1 (small, mechanical,
+  wants its own review pass on ScanQueue).
+- **Why not `--experimental-permission`.** Node 20/22's permission model is
+  still experimental; composing `--allow-fs-read` for the subprocess +
+  Node's own install dir is fragile. The parent-side unconditional `rm -rf`
+  + empty-env subprocess is enough defense-in-depth for v0.7.0. Tracked as
+  a v0.8 target.
+- **No new npm deps.** `@vetlock/api` only depends on packages that were
+  already in the workspace (`@vetlock/core`, `@vetlock/detectors`, `zod`).
+  A supply-chain scanner adding express as a runtime dep would be self-
+  contradictory.
+
+### Roadmap
+
+- **v0.7.1** — wire `ScanQueue` → `runScanInSandbox` by default. Adds real per-scan isolation to the wire path.
+- **v0.7.2** — replace in-memory job store with SQLite (persist across restarts, still zero-op).
+- **P6 (v0.8+) — GitHub App**. Separate repo `OJ-Uday/vetlock-app`. Uses `repository_dispatch` → user's own GHA quota → `npx vetlock diff` → posts check-run + PR comment. `$0/mo at launch`. Note: the P6 workflow this session got killed mid-flight; no `~/personal/vetlock-app/` scaffolding landed yet.
+
+---
+
 ## [0.6.0] — 2026-07-14
 
 **Second-ecosystem release (P4c). PyPI/Python adapter alongside npm.** Vetlock is
