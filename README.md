@@ -9,6 +9,7 @@
 [![Node ≥ 20](https://img.shields.io/badge/node-%E2%89%A5%2020-brightgreen)](package.json)
 [![Tests: 405 passing](https://img.shields.io/badge/tests-405%20passing-brightgreen)](#tests)
 [![Corpus: 12/13 caught](https://img.shields.io/badge/corpus-12%2F13%20caught-brightgreen)](docs/DETECTIONS.md)
+[![Benchmark: 92.3%](https://img.shields.io/badge/benchmark-92.3%25-brightgreen)](https://github.com/OJ-Uday/vetlock-benchmark)
 [![Red-team: 31 exploits closed](https://img.shields.io/badge/red--team-31%20confirmed%20closed-brightgreen)](docs/REDTEAM-2026-07-12.md)
 [![Zero telemetry](https://img.shields.io/badge/telemetry-zero-blue)](#privacy)
 [![NEVER-EXECUTE canary](https://img.shields.io/badge/canary-NEVER--EXECUTE-red)](docs/adr/0005-never-execute.md)
@@ -578,12 +579,26 @@ Vulnerabilities in vetlock itself: see [`SECURITY.md`](SECURITY.md).
 - 🚫 [`docs/DETECTIONS.md`](docs/DETECTIONS.md) — replay results against 13 corpus attacks (auto-generated)
 - 🔴 [`docs/REDTEAM-2026-07-12.md`](docs/REDTEAM-2026-07-12.md) — full red-team review + 35 confirmed exploits
 - 🛡️ [`docs/SECURITY-DECISIONS.md`](docs/SECURITY-DECISIONS.md) — "correctness over performance on security boundaries" principle
+- 🚀 [`LAUNCH-CHECKLIST.md`](LAUNCH-CHECKLIST.md) — the tickable P9 gate (living doc)
 - 📋 [`docs/adr/`](docs/adr/) — Architecture Decision Records
   - [0001-name](docs/adr/0001-name.md) — why "vetlock"
   - [0002-language-ts](docs/adr/0002-language-ts.md) — why TypeScript
   - [0003-parser-babel](docs/adr/0003-parser-babel.md) — parser choice
   - [0004-pacote-fetch](docs/adr/0004-pacote-fetch.md) — fetcher choice
-  - [0005-never-execute](docs/adr/0005-never-execute.md) — the NEVER-EXECUTE invariant
+  - [0005-never-execute](docs/adr/0005-never-execute.md) — the NEVER-EXECUTE invariant (the soul test)
+  - [0006-open-core-boundary](docs/adr/0006-open-core-boundary.md) — engine is the product, wrapper is thin
+  - [0007-github-app](docs/adr/0007-github-app.md) — GitHub App as the PLG entry point
+  - [0008-ephemeral-analysis](docs/adr/0008-ephemeral-analysis.md) — hosted-tier privacy architecture
+  - [0009-ecosystem-adapter](docs/adr/0009-ecosystem-adapter.md) — cross-ecosystem extensibility (npm → PyPI → ...)
+  - [0010-company-name](docs/adr/0010-company-name.md) — availability audit, name posture
+  - [0011-completeness-doctrine](docs/adr/0011-completeness-doctrine.md) — the governing law (capability *classes*, not signatures)
+  - [0012-scan-mode](docs/adr/0012-scan-mode.md) — `vetlock scan` (single-input, capability profile)
+  - [0013-osif](docs/adr/0013-osif.md) — the Open Supply-chain Incident Format
+
+## Related repos
+
+- 🌐 [**OJ-Uday/osif-spec**](https://github.com/OJ-Uday/osif-spec) — Open Supply-chain Incident Format (CC0). A shared machine-readable vocabulary for describing supply-chain attack mechanics.
+- 📊 [**OJ-Uday/vetlock-benchmark**](https://github.com/OJ-Uday/vetlock-benchmark) — Public detection benchmark scoreboard. Any scanner scored against the same corpus. vetlock: 92.3%. npm-audit: 53.8%.
 
 ---
 
