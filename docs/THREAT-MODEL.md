@@ -106,3 +106,49 @@ We assume an attacker who has read this document. Consequences:
   observed evasions and the detectors added to counter them. Until then: assume the current
   detector set will lose an arms race and instrument for FP monitoring (P8 FP study) so we
   notice when we get quieter than we should be.
+
+## The Completeness Doctrine (ADR 0011)
+
+We answer the "next spelling" arms race by refusing to play it. Detectors target
+capability *classes* via the CAPABILITY-MAP's enumerated sinks and entry-points,
+prefer chokepoints (dataflow-aware convergence points) over enumeration where
+possible, and a CI-enforced coverage gate fails when any enumerated sink/entry-
+point lacks a detector + test binding. When a red-teamer or the ASSURANCE
+harness finds a new evasion the response is procedural: add the sink to
+`capability-map.json`, add its detector/test binding, coverage returns to 100%.
+
+Consequence for THIS threat model: every T1–T6 adversary above eventually
+maps onto specific `entry_point` and `capabilities_gained` values in the map.
+The threat model names the classes; the doctrine ensures each named class is
+*whole*.
+
+## Scan-mode threats (ADR 0012)
+
+`vetlock scan` operates on a single input (a package version or a whole
+lockfile) — no diff frame. Everything above still applies, with two caveats:
+
+- **No integrity tripwire.** Same-version-different-tarball attacks require a
+  before/after to compare; scan mode structurally can't detect them. The
+  README calls this out and points users to `vetlock diff` for that case.
+- **Posture-framed severity, not diff-framed.** Scan mode can't say "started
+  doing X"; it says "does X." A norm baseline can flag anomalies (a leaf
+  utility that harvests tokens is anomalous even without a prior version),
+  but until the norm-baseline dataset exists (v2 feature) scan mode honestly
+  degrades to "capabilities reported, no norm comparison."
+
+NEVER-EXECUTE (ADR 0005) and safe-extract (ADR 0004) still apply in scan mode.
+
+## OSIF and the shared vocabulary (ADR 0013)
+
+Every attack described above has a corresponding OSIF document — the industry
+lacks a shared machine-readable vocabulary for how supply-chain attacks WORK
+(the mechanics: entry point, capabilities gained, evasion techniques, delivery
+through the graph, indicators). vetlock's corpus is the seed corpus of OSIF
+documents; the spec is neutral (CC0, offered to OpenSSF).
+
+Consequence for THIS threat model: when we add a new corpus fixture, it ships
+with its OSIF document, and both cite the same `entry_point`/`capabilities_gained`
+enumerations as the CAPABILITY-MAP. A threat that vetlock claims to catch is
+therefore describable by anyone; a competitor's claim can be scored against
+the same OSIF-described attacks (the public benchmark from §5.2).
+
