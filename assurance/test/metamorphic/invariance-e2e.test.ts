@@ -27,16 +27,23 @@
  * worker, the FileCapabilities → Findings adapter, and the identity oracle without
  * touching the network, filesystem, or any live payload.
  *
- * KNOWN GAPS (packet rule #6):
- * ----------------------------
- * The battery surfaced ONE real completeness gap on 2026-07-14:
+ * CLOSED GAP (assurance Wave 5-W, 2026-07-14):
+ * --------------------------------------------
+ * The battery originally surfaced ONE real completeness gap on 2026-07-14:
  *
- *   • equivalent-expression-string-concat-vs-template — the analyzer emits an extra
- *     intermediate URL literal for the string-concatenation form. See
+ *   • equivalent-expression-string-concat-vs-template — the analyzer emitted an
+ *     extra intermediate URL literal for the string-concatenation form. Fixed in
+ *     Wave 5-W by having the post-fold sweep skip any folded node whose parent is
+ *     also folded (the parent's folded value is a strict superset). The dedicated
+ *     GAP-pinning assertion below has been FLIPPED to `expect(pass).toBe(true)` —
+ *     it now proves the fix instead of pinning the failing behavior. See
  *     assurance/corpus/metamorphic/equivalent-expression-string-concat-vs-template/README.md
- *     for the full write-up. The per-pair test for that id is routed to a dedicated
- *     GAP-pinning assertion below; the assertion flips green when STARTUP fixes the
- *     constant-folding pass in packages/core/src/capabilities.ts.
+ *     for the full write-up (marked CLOSED).
+ *
+ * The pair is intentionally still routed through a dedicated test (not folded back
+ * into `cleanPairs`) so a future regression would show up as a targeted failure
+ * with the corpus reference right there in the assertion — not just as one of 20
+ * anonymous per-pair failures.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -60,15 +67,19 @@ const BOUNDS: Bounds = { wallMs: 5_000, heapMb: 128, seed: 42 };
 const PAIR_REL_PATH = 'pair.js';
 
 /**
- * Pair ids known to violate the metamorphic invariant against the current engine. Each id
- * has a corpus entry under assurance/corpus/metamorphic/<id>/ with README + fixtures.
- * These pairs are excluded from the "all pairs pass" tests and are covered by dedicated
- * GAP-pinning tests below (which assert the CURRENT failing behavior — they flip green
- * when STARTUP fixes the analyzer).
+ * Pair ids that at some point violated the metamorphic invariant and are now
+ * routed to a dedicated fix-holds test below (in ADDITION to the generic
+ * cleanPairs loop). Kept empty for now: the only recorded gap
+ * (equivalent-expression-string-concat-vs-template) was closed in assurance
+ * Wave 5-W, so the pair rejoins cleanPairs but retains a targeted assertion
+ * further down that gives it a named regression home with the corpus
+ * reference in the diagnostic.
+ *
+ * When a NEW pair fails the generic loop, add its id here to exclude it from
+ * cleanPairs, then add a targeted GAP-pinning test that flips to `pass=true`
+ * once STARTUP closes the fix.
  */
-const KNOWN_GAP_IDS: ReadonlySet<string> = new Set([
-  'equivalent-expression-string-concat-vs-template',
-]);
+const KNOWN_GAP_IDS: ReadonlySet<string> = new Set([]);
 
 /**
  * Feed one source string through the bounded runner's engine:extractCapabilities
@@ -156,44 +167,49 @@ describe('metamorphic-invariance (packet §5 P3)', () => {
   );
 
   // ------------------------------------------------------------------------------------------
-  // KNOWN GAPS (packet rule #6) — pin the current failing behavior; assertion flips when the
-  // engine is fixed. Each gap has a corpus entry with the full write-up and a fixture.
+  // CLOSED GAPS (packet rule #6) — each pair below at some point violated the metamorphic
+  // invariant, was captured as a corpus entry, and has since been fixed in the engine. The
+  // dedicated test remains so a future regression would surface as a targeted failure with
+  // the corpus reference immediately visible in the diagnostic (rather than as one of 20
+  // anonymous per-pair failures in the generic cleanPairs loop).
   // ------------------------------------------------------------------------------------------
 
   it(
-    'GAP: equivalent-expression-string-concat-vs-template — engine emits extra intermediate URL literal for concat form',
+    'CLOSED (Wave 5-W): equivalent-expression-string-concat-vs-template — engine no longer emits intermediate URL literal',
     async () => {
-      // The analyzer's constant-folding pass over "http://" + host + "/api" emits an
-      // intermediate value ("http://example.com") as its own URL literal before folding
-      // in "/api". The template-literal form folds in one pass and skips the intermediate.
+      // Was: the analyzer's constant-folding pass over "http://" + host + "/api" emitted an
+      // intermediate value ("http://example.com") as its own URL literal before folding in
+      // "/api". The template-literal form folded in one pass and skipped the intermediate.
       // Both programs are runtime-equivalent — same imports, same call, same argument.
-      // See assurance/corpus/metamorphic/equivalent-expression-string-concat-vs-template/README.md.
+      //
+      // Fix (Wave 5-W, packages/core/src/capabilities.ts iterateFolds): the post-fold
+      // sweep now skips any folded node whose parent is also folded — the parent's folded
+      // value is a strict superset, so all URL / path / encoded-URL signal is preserved
+      // and the metamorphic-shape asymmetry is eliminated.
+      //
+      // See assurance/corpus/metamorphic/equivalent-expression-string-concat-vs-template/README.md
+      // (marked CLOSED with the fix commit SHA).
       const gapPair = battery.find(
         (p) => p.id === 'equivalent-expression-string-concat-vs-template',
       );
       // Guard: if the battery seed/count/order ever changes and this pair no longer
       // appears, we want to know immediately rather than silently skip.
-      expect(gapPair, 'expected gap pair to appear in battery(2026, 20)').toBeDefined();
+      expect(gapPair, 'expected closed-gap pair to appear in battery(2026, 20)').toBeDefined();
       if (!gapPair) return;
 
       const outcomeA = await analyzeSource(gapPair.a);
       const outcomeB = await analyzeSource(gapPair.b);
       const result = oracleIdentityInvariant(outcomeA, outcomeB);
 
-      // What the engine currently does:
-      expect(result.pass).toBe(false);
-      expect(result.reason).toMatch(/findings count differs \(4 vs 3\)/);
+      // The fix must hold: the oracle passes, both forms produce identical findings.
+      expect(result.pass).toBe(true);
 
-      // What the HARNESS is doing correctly: it caught the gap. Both A and B produced
-      // an `ok` outcome (no crash, no fail-safe, no timeout) — the invariant fails on
-      // the COUNT of URL literals, not on the runner's own robustness axes.
+      // Structural sanity: both A and B produced an `ok` outcome (no crash, no fail-safe,
+      // no timeout). If this ever regresses to false=findings-differ, the reason string
+      // will surface the exact count asymmetry (e.g. "findings count differs (3 vs 2)"),
+      // pointing straight back at capabilities.ts iterateFolds.
       expect(outcomeA.kind).toBe('ok');
       expect(outcomeB.kind).toBe('ok');
-
-      // When STARTUP fixes packages/core/src/capabilities.ts to emit only final folded
-      // URL literals (dropping the "http://" + host intermediate), replace the block
-      // above with:
-      //     expect(result.pass).toBe(true);
     },
     30_000,
   );
