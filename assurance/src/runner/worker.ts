@@ -171,9 +171,37 @@ async function runEngine(scenario: Extract<Scenario, { kind: `engine:${string}` 
     if (typeof runDiff !== 'function') {
       throw new Error(`[worker] enginePath ${scenario.enginePath} does not export runDiff`);
     }
-    // Detector closure is constructed worker-side. Mode 'none' = a no-op closure that
-    // returns zero findings. Later phases will register 'all' (@vetlock/detectors wired).
-    const runDetectors = () => [];
+    // Detector closure is constructed worker-side because closures don't cross the worker
+    // boundary via structured-clone. The caller picks a symbolic detectorMode and we build
+    // the actual function here.
+    //
+    //   'none' — no-op closure (zero findings). Used by parser-DoS / ReDoS / graph-DoS
+    //            probes where the detector layer is irrelevant.
+    //   'all'  — dynamic-import @vetlock/detectors and wire its runAll(pair). This is
+    //            what evasion + enumerated-coverage tests need: real findings from the
+    //            real detector pipeline. Wave 4-R adds this mode.
+    //
+    // The engine's runDetectors signature is `(pair, packageName) => Finding[]`; runAll
+    // only takes `pair` — the second arg is passed for future detectors that want to
+    // route by package but is otherwise ignored today. Matches the wiring used by
+    // packages/cli/src/cli.ts and every runAll site in the repo.
+    let runDetectors: (pair: unknown, packageName: string) => EngineFinding[];
+    if (scenario.detectorMode === 'all') {
+      const detectorsMod: unknown = await import('@vetlock/detectors');
+      const detectors = detectorsMod as {
+        runAll?: (pair: unknown) => EngineFinding[];
+      };
+      if (typeof detectors.runAll !== 'function') {
+        throw new Error(
+          '[worker] @vetlock/detectors does not export runAll — detectorMode "all" cannot be constructed',
+        );
+      }
+      const runAll = detectors.runAll;
+      runDetectors = (pair, _pkg) => runAll(pair);
+    } else {
+      // 'none' — no-op closure.
+      runDetectors = () => [];
+    }
     const fetchOverride = scenario.disableFetch === false
       ? undefined
       : async () => {
