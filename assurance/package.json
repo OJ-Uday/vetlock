@@ -10,7 +10,8 @@
     ".": "./dist/index.js",
     "./oracles": "./dist/oracles/index.js",
     "./runner": "./dist/runner/index.js",
-    "./report": "./dist/report/index.js"
+    "./report": "./dist/report/index.js",
+    "./defang": "./dist/defang/index.js"
   },
   "scripts": {
     "build": "tsc -p .",
