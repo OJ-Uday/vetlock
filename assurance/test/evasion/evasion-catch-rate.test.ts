@@ -101,6 +101,25 @@ const CAUGHT_SOURCES: Readonly<Record<string, string>> = {
   // this class yet — see NO_ENGINE_DETECTOR_YET below. Same source shape kept for when
   // detection lands (require("ps-list") is the canonical entry-point).
   'process-enumeration': 'const psList = require("ps-list");\nawait psList();\n',
+  // Wave 7-HH: fs-read. `fs.readFile("<hot-path>", cb)` populates fsReadTargets;
+  // adaptFileCapabilities buckets it under env/secret-read, and the oracle's
+  // CLASS_ALIASES maps env/secret-read ↔ fs-read so a request for either class
+  // matches the emitted finding.
+  'fs-read':
+    'const fs = require("fs"); fs.readFile("/etc/passwd", (err, data) => {});\n',
+  // Wave 7-HH: packet-canonical obfuscation/decode (slash-form). Uses `atob(x)`
+  // (bare-identifier) with a base64 literal that DECODES to a reserved-TLD URL —
+  // this is what triggers `encodedUrls` in the engine, which surfaces as an
+  // `obfuscation/decode` finding via adaptFileCapabilities. The base64 is:
+  //   Buffer.from("http://example.com/").toString("base64") = 'aHR0cDovL2V4YW1wbGUuY29tLw=='
+  // (28 chars — passes the 24-char lower bound on encodedUrls detection, well
+  // below the defang guard's 80-char large-payload threshold, decoded URL is
+  // reserved per RFC 2606).
+  'obfuscation/decode':
+    'const decoded = atob("aHR0cDovL2V4YW1wbGUuY29tLw==");\n',
+  // Wave 7-HH: packet-canonical env/secret-read (slash-form). Same process.env fixture
+  // as `secret-read`; adaptFileCapabilities emits env/secret-read directly.
+  'env/secret-read': 'const token = process.env.NPM_TOKEN;\n',
 };
 
 /**
@@ -130,6 +149,29 @@ const NO_ENGINE_DETECTOR_YET: ReadonlySet<string> = new Set<string>([
   // computes it during runDiff), not a source-level signal. extractCapabilities can't
   // see graph-level shape from a single source string.
   'named-alias-to-node-modules-path',
+  // Wave 7-HH: advisory-known-vuln transform — the class is emitted by the
+  // deps.new-direct-dep detector during runDiff against a curated GHSA advisory
+  // dataset. `engine:extractCapabilities` (per-file text-in) can't reach that
+  // pipeline: the transform rewrites a package.json version but there's no way
+  // to feed BEFORE and AFTER snapshots + advisory data through a single-file
+  // scenario. When an assurance runDiff-with-advisories scenario ships, this
+  // migrates out.
+  'advisory-version-shift',
+  // Wave 7-HH: all 5 python-* transforms. The assurance runner dispatches
+  // `engine:extractCapabilities` to `engine.extractCapabilities` (the JavaScript
+  // AST scanner), NOT to `engine.extractPythonCapabilities`. Feeding a `.py` file
+  // through the JS extractor either parseErrors or produces no findings — either
+  // way, the finding-survives oracle has nothing to compare. When the assurance
+  // surface grows a Python-routed scenario, these migrate out.
+  'py-exec-to-eval-compile',
+  'py-os-environ-to-getenv',
+  'py-urllib-to-requests',
+  'py-hyphen-to-underscore-name',
+  // Wave 7-HH: py-setup-py-to-pyproject targets a full-package (tarball) install-hook
+  // flow — even when a Python-routed scenario exists, the transform's output is a
+  // multi-file marker (setup.py + pyproject.toml), and detection would need an
+  // analyzeTarball-style pipeline. Stays here until both land.
+  'py-setup-py-to-pyproject',
 ]);
 
 /**
