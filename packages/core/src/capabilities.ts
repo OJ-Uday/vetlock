@@ -1264,9 +1264,29 @@ export function extractCapabilities(
 }
 
 /**
- * Yield every (node, foldedValue) pair from the fold map. We visit the tree
- * once and check `folds.has(node)` for each — WeakMap has no way to enumerate
- * keys directly, but our traversal touches every node.
+ * Yield every (node, foldedValue) pair from the fold map, SKIPPING any node
+ * whose immediate parent is also folded. The parent's folded value is the
+ * concatenation of the child's plus its siblings — so URL / path signal
+ * present in the child is already emitted by the parent's sweep. Emitting
+ * both is a metamorphic gap: for a source of shape
+ *
+ *     http.request("http://" + host + "/api")
+ *
+ * the constant-folding pass folds the inner `"http://" + host` sub-expression
+ * (parent = BinaryExpression, itself folded) AND the outer whole-argument
+ * BinaryExpression (parent = CallExpression, not folded). The inner-fold
+ * emission is `"http://example.com"` — an intermediate value that has no
+ * runtime existence. The template-literal shape `` `http://${host}/api` ``
+ * folds in ONE pass with no inner-fold intermediate, so it emits only the
+ * outer `"http://example.com/api"`. Both programs are runtime-equivalent, so
+ * emitting the extra intermediate breaks the metamorphic invariant.
+ *
+ * Fix (assurance Wave 5-W → captured pair
+ * assurance/corpus/metamorphic/equivalent-expression-string-concat-vs-template):
+ * only emit the OUTERMOST folded value in each subtree — the value that has
+ * no folded ancestor. This preserves every URL / path / encoded-URL signal
+ * (the outer value strictly contains the inner) while making the sweep
+ * shape-invariant across concat vs template forms of the same runtime string.
  */
 function* iterateFolds(
   folds: WeakMap<t.Node, string>,
@@ -1277,7 +1297,12 @@ function* iterateFolds(
   traverseFn(ast, {
     enter(path: NodePath) {
       const f = folds.get(path.node);
-      if (f !== undefined) results.push([path.node, f]);
+      if (f === undefined) return;
+      // If this node's parent is also folded, its parent's sweep will emit
+      // a superset of anything we'd emit here — skip to avoid the concat
+      // vs template asymmetry described above.
+      if (path.parent && folds.has(path.parent as t.Node)) return;
+      results.push([path.node, f]);
     },
   });
   for (const r of results) yield r;
