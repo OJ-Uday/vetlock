@@ -118,7 +118,10 @@ describe('EXEC detector', () => {
     };
     const findings = execDetector.run(pair, { direction: 'changed' });
     expect(findings).toHaveLength(1);
-    expect(findings[0]!.severity).toBe('BLOCK');
+    // As of v0.4.2: exec.new-module is WARN natively (FP-STUDY §3d). It
+    // promotes to BLOCK via compound-suspicion when co-occurring with
+    // NET/INSTALL/ENV/FS — see index.ts.
+    expect(findings[0]!.severity).toBe('WARN');
     expect(validateFinding(findings[0]!)).toBeNull();
   });
 });

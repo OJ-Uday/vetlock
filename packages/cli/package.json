@@ -1,6 +1,6 @@
 {
   "name": "vetlock",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": false,
   "description": "Behavioral diff for npm dependency updates. What does this update DO now that it didn't before?",
   "keywords": ["security", "supply-chain", "npm", "dependencies", "audit", "sast", "lockfile", "sbom"],

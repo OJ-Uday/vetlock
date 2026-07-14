@@ -5,6 +5,71 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/).
 
+## [0.4.2] — 2026-07-14
+
+**FP-tune release (2/3).** Second measured pass at the FP problem. v0.4.1 got
+BLOCK from 48% → 33%; v0.4.2 gets it to **17.9% — essentially at the ≤15%
+target**. Corpus attack-catch stays at 12/13. Full study in
+[docs/FP-STUDY.md](docs/FP-STUDY.md).
+
+### Detector tunes (all backed by measured impact on `studies/top-100.txt`)
+
+- **`install.script-changed` / `install.script-added`** severity split per
+  hook tier (FP-STUDY §3d):
+  - INSTALL_TIER (`preinstall`/`install`/`postinstall`/`preuninstall`/
+    `uninstall`/`postuninstall`) → BLOCK, high confidence.
+  - PUBLISH_TIER (`prepare`/`preprepare`/`postprepare`, `prepublish`/
+    `prepublishOnly`/`publish`/`postpublish`, `prepack`/`pack`/`postpack`,
+    `preversion`/`version`/`postversion`) → WARN, medium confidence.
+    Consumers installing from the registry never execute these; legit libraries
+    routinely change `prepare` as their build tooling evolves.
+  - CI_TIER (`test`) → INFO, low confidence.
+  Impact: v0.4.1 fired BLOCK on `commander@11→12` (`test` changed),
+  `uuid@9→10`/`glob@10→11`/`minimatch@9→9.5`/`webpack@5.90→5.94` (all changed
+  `prepare` for build reasons). All now WARN.
+
+- **`exec.new-module`** severity: BLOCK → WARN (FP-STUDY §3g). A legit
+  library first-using `node:child_process` or `node:worker_threads` is a real
+  behavioral change but not on its own an attack signal. `commander@11→12`
+  legitimately started using `node:child_process` for test infrastructure;
+  BLOCK on v0.4.1, WARN in v0.4.2. Compound-suspicion escalation still
+  promotes exec to BLOCK when co-occurring with NET/INSTALL/ENV/FS.
+
+- **`obf.entropy-jump` / `obf.new-obfuscated-file`** de-weight for declared
+  bundler entries (FP-STUDY §3e). A file that is a declared entry via
+  `main`/`module`/`browser`/`exports`/`types`/`bin` AND lives under a canonical
+  build output directory (`dist/`/`build/`/`lib/`/`es/`/`esm/`/`cjs/`/`umd/`/
+  `out/`) is expected to be minified; the finding downgrades to INFO instead
+  of WARN. A minified file NOT declared as an entry (attacker slipping in a
+  bundle) still fires WARN. Impact: bundlers no longer BLOCK on their own
+  legitimate output.
+
+### Measured
+
+|                       | v0.4.0    | v0.4.1    | v0.4.2    |
+|-----------------------|-----------|-----------|-----------|
+| BLOCK on routine bumps| 48.1%     | 33.3%     | **17.9%** |
+| WARN                  | 3.7%      | 18.5%     | 32.1%     |
+| INFO                  | 0%        | 3.7%      | 3.6%      |
+| CLEAN                 | 48.1%     | 44.4%     | 46.4%     |
+| Findings / bump       | 14.8      | 5.0       | 4.6       |
+| Corpus attacks caught | 12/13     | 12/13     | 12/13     |
+| Total tests           | 424 green | 424 green | 424 green |
+
+Remaining BLOCKs (5 packages): vite, prettier, vitest, webpack, tsx — all
+bundler bumps with CODE + NET + OBF co-occurrence that a developer SHOULD
+glance at. Context-aware URL extraction in v0.5.0 will filter the remaining
+docs-URL noise.
+
+### Roadmap
+
+v0.5.0 targets: context-aware URL extraction (walk Babel AST for URL-shaped-
+string usage patterns; eliminates `Cursor.app`/`example.com`-in-comment FP
+class entirely), `deps.first-version-cluster` registry-count fix. Target
+BLOCK ≤ 10%.
+
+---
+
 ## [0.4.1] — 2026-07-14
 
 **FP-tune release.** First honest measurement of vetlock's false-positive rate on

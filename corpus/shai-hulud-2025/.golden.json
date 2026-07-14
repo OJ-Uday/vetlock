@@ -153,8 +153,8 @@
       "to": "5.3.1",
       "direction": "changed",
       "severity": "BLOCK",
-      "confidence": "high",
-      "message": "Package started using process/execution module \"child_process\".",
+      "confidence": "medium",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "index.js",
@@ -226,7 +226,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'chalk' has 4 WARN findings across 2 categories]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "package.json",
@@ -250,7 +250,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "New network endpoint appeared: https://exfil.example.invalid/collect [escalated: package 'chalk' has 4 WARN findings across 2 categories]",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/collect [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "index.js",
@@ -274,7 +274,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "New network endpoint appeared: https://exfil.example.invalid/webhook [escalated: package 'chalk' has 4 WARN findings across 2 categories]",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/webhook [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "postinstall.js",
@@ -298,7 +298,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Package started using network module \"https\". [escalated: package 'chalk' has 4 WARN findings across 2 categories]",
+      "message": "Package started using network module \"https\". [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
       "evidence": [
         {
           "file": "index.js",

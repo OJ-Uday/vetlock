@@ -10,7 +10,7 @@
       "direction": "added",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package name \"crossenv\" is edit-distance 1 from popular package \"cross-env\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: added package also ships BLOCK-tier capabilities]",
+      "message": "Package name \"crossenv\" is edit-distance 1 from popular package \"cross-env\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: typosquat candidate has 2+ WARN-tier signals across 2+ categories]",
       "evidence": [
         {
           "file": "package.json",
@@ -33,8 +33,8 @@
       "to": "1.0.0",
       "direction": "added",
       "severity": "BLOCK",
-      "confidence": "medium",
-      "message": "Newly-installed package uses process/execution module \"child_process\".",
+      "confidence": "low",
+      "message": "Newly-installed package uses process/execution module \"child_process\". [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
       "evidence": [
         {
           "file": "index.js",
@@ -56,9 +56,9 @@
       "from": null,
       "to": "1.0.0",
       "direction": "added",
-      "severity": "WARN",
+      "severity": "BLOCK",
       "confidence": "low",
-      "message": "Newly-installed package contacts network endpoint: https://exfil.example.invalid/env",
+      "message": "Newly-installed package contacts network endpoint: https://exfil.example.invalid/env [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
       "evidence": [
         {
           "file": "index.js",
@@ -80,9 +80,9 @@
       "from": null,
       "to": "1.0.0",
       "direction": "added",
-      "severity": "WARN",
+      "severity": "BLOCK",
       "confidence": "low",
-      "message": "Newly-installed package imports network module \"https\".",
+      "message": "Newly-installed package imports network module \"https\". [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
       "evidence": [
         {
           "file": "index.js",
