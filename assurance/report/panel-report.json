@@ -1,0 +1,240 @@
+{
+  "runAt": "2026-07-14T09:22:44.591Z",
+  "agent": "stub",
+  "seed": 42,
+  "hypothesesProposed": 12,
+  "hypothesesAdmitted": 12,
+  "hypothesesRejected": 0,
+  "evasionsFound": 12,
+  "runs": [
+    {
+      "hypothesis": {
+        "id": "stub-child_process.exec-0-s42",
+        "targetClass": "code-execution",
+        "targetSink": "child_process.exec",
+        "technique": "identifier-split-and-concat",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /evade-code-execution@0.1.0:\n    resolution:\n      integrity: sha512-AAAA\n      tarball: https://packages.invalid/evade-code-execution/-/evade-code-execution-0.1.0.tgz\n    description: 'proposes to evade child_process.exec by splitting the identifier'\n",
+        "proposedBy": "stub",
+        "rationale": "Split the sink identifier across two string literals concatenated at runtime. Static string-match detectors miss the split token."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 244.96587499999998,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-child_process.exec-1-s42",
+        "targetClass": "code-execution",
+        "targetSink": "child_process.exec",
+        "technique": "nested-manifest-relocation",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /nested-code-execution@0.2.0:\n    resolution:\n      integrity: sha512-BBBB\n      tarball: https://packages.test/nested-code-execution/-/nested-code-execution-0.2.0.tgz\n    peerDependencies:\n      inert-marker: '*'\n    description: 'moves child_process.exec into a nested script hook — echo hello only'\n",
+        "proposedBy": "stub",
+        "rationale": "Move the sink invocation from index.js into a nested package.json 'scripts' entry the walker misses. Detector visits main entry but skips deep scripts."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 226.664,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-child_process.exec-2-s42",
+        "targetClass": "code-execution",
+        "targetSink": "child_process.exec",
+        "technique": "unicode-homoglyph",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /homoglyph-code-execution@0.3.0:\n    resolution:\n      integrity: sha512-CCCC\n      tarball: https://packages.example/homoglyph-code-execution/-/homoglyph-code-execution-0.3.0.tgz\n    description: 'homoglyph on child_process.exec — cyrillic o replaces latin o in the identifier'\n",
+        "proposedBy": "stub",
+        "rationale": "Replace ASCII characters in the sink identifier with visually identical unicode homoglyphs. Detector's exact-match table doesn't include the mixed-script variant."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 230.150667,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-http.request-0-s42",
+        "targetClass": "net-egress",
+        "targetSink": "http.request",
+        "technique": "identifier-split-and-concat",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /evade-net-egress@0.1.0:\n    resolution:\n      integrity: sha512-AAAA\n      tarball: https://packages.invalid/evade-net-egress/-/evade-net-egress-0.1.0.tgz\n    description: 'proposes to evade http.request by splitting the identifier'\n",
+        "proposedBy": "stub",
+        "rationale": "Split the sink identifier across two string literals concatenated at runtime. Static string-match detectors miss the split token."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 229.52250000000004,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-http.request-1-s42",
+        "targetClass": "net-egress",
+        "targetSink": "http.request",
+        "technique": "nested-manifest-relocation",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /nested-net-egress@0.2.0:\n    resolution:\n      integrity: sha512-BBBB\n      tarball: https://packages.test/nested-net-egress/-/nested-net-egress-0.2.0.tgz\n    peerDependencies:\n      inert-marker: '*'\n    description: 'moves http.request into a nested script hook — echo hello only'\n",
+        "proposedBy": "stub",
+        "rationale": "Move the sink invocation from index.js into a nested package.json 'scripts' entry the walker misses. Detector visits main entry but skips deep scripts."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 241.1210000000001,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-http.request-2-s42",
+        "targetClass": "net-egress",
+        "targetSink": "http.request",
+        "technique": "unicode-homoglyph",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /homoglyph-net-egress@0.3.0:\n    resolution:\n      integrity: sha512-CCCC\n      tarball: https://packages.example/homoglyph-net-egress/-/homoglyph-net-egress-0.3.0.tgz\n    description: 'homoglyph on http.request — cyrillic o replaces latin o in the identifier'\n",
+        "proposedBy": "stub",
+        "rationale": "Replace ASCII characters in the sink identifier with visually identical unicode homoglyphs. Detector's exact-match table doesn't include the mixed-script variant."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 224.73487499999987,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-fs.writeFile-0-s42",
+        "targetClass": "fs-write",
+        "targetSink": "fs.writeFile",
+        "technique": "identifier-split-and-concat",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /evade-fs-write@0.1.0:\n    resolution:\n      integrity: sha512-AAAA\n      tarball: https://packages.invalid/evade-fs-write/-/evade-fs-write-0.1.0.tgz\n    description: 'proposes to evade fs.writeFile by splitting the identifier'\n",
+        "proposedBy": "stub",
+        "rationale": "Split the sink identifier across two string literals concatenated at runtime. Static string-match detectors miss the split token."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 227.19799999999987,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-fs.writeFile-1-s42",
+        "targetClass": "fs-write",
+        "targetSink": "fs.writeFile",
+        "technique": "nested-manifest-relocation",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /nested-fs-write@0.2.0:\n    resolution:\n      integrity: sha512-BBBB\n      tarball: https://packages.test/nested-fs-write/-/nested-fs-write-0.2.0.tgz\n    peerDependencies:\n      inert-marker: '*'\n    description: 'moves fs.writeFile into a nested script hook — echo hello only'\n",
+        "proposedBy": "stub",
+        "rationale": "Move the sink invocation from index.js into a nested package.json 'scripts' entry the walker misses. Detector visits main entry but skips deep scripts."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 255.40258300000005,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-fs.writeFile-2-s42",
+        "targetClass": "fs-write",
+        "targetSink": "fs.writeFile",
+        "technique": "unicode-homoglyph",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /homoglyph-fs-write@0.3.0:\n    resolution:\n      integrity: sha512-CCCC\n      tarball: https://packages.example/homoglyph-fs-write/-/homoglyph-fs-write-0.3.0.tgz\n    description: 'homoglyph on fs.writeFile — cyrillic o replaces latin o in the identifier'\n",
+        "proposedBy": "stub",
+        "rationale": "Replace ASCII characters in the sink identifier with visually identical unicode homoglyphs. Detector's exact-match table doesn't include the mixed-script variant."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 231.15612499999997,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-process.env-0-s42",
+        "targetClass": "env/secret-read",
+        "targetSink": "process.env",
+        "technique": "identifier-split-and-concat",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /evade-env/secret-read@0.1.0:\n    resolution:\n      integrity: sha512-AAAA\n      tarball: https://packages.invalid/evade-env/secret-read/-/evade-env/secret-read-0.1.0.tgz\n    description: 'proposes to evade process.env by splitting the identifier'\n",
+        "proposedBy": "stub",
+        "rationale": "Split the sink identifier across two string literals concatenated at runtime. Static string-match detectors miss the split token."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 231.90883399999984,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-process.env-1-s42",
+        "targetClass": "env/secret-read",
+        "targetSink": "process.env",
+        "technique": "nested-manifest-relocation",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /nested-env/secret-read@0.2.0:\n    resolution:\n      integrity: sha512-BBBB\n      tarball: https://packages.test/nested-env/secret-read/-/nested-env/secret-read-0.2.0.tgz\n    peerDependencies:\n      inert-marker: '*'\n    description: 'moves process.env into a nested script hook — echo hello only'\n",
+        "proposedBy": "stub",
+        "rationale": "Move the sink invocation from index.js into a nested package.json 'scripts' entry the walker misses. Detector visits main entry but skips deep scripts."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 238.3237909999998,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    },
+    {
+      "hypothesis": {
+        "id": "stub-process.env-2-s42",
+        "targetClass": "env/secret-read",
+        "targetSink": "process.env",
+        "technique": "unicode-homoglyph",
+        "generatedFixture": "lockfileVersion: '6.0'\nsettings:\n  autoInstallPeers: true\npackages:\n  /homoglyph-env/secret-read@0.3.0:\n    resolution:\n      integrity: sha512-CCCC\n      tarball: https://packages.example/homoglyph-env/secret-read/-/homoglyph-env/secret-read-0.3.0.tgz\n    description: 'homoglyph on process.env — cyrillic o replaces latin o in the identifier'\n",
+        "proposedBy": "stub",
+        "rationale": "Replace ASCII characters in the sink identifier with visually identical unicode homoglyphs. Detector's exact-match table doesn't include the mixed-script variant."
+      },
+      "outcome": {
+        "kind": "ok",
+        "findings": [],
+        "wallMs": 233.88558300000022,
+        "peakRssBytes": 134217728,
+        "seed": 42
+      },
+      "evaded": true
+    }
+  ],
+  "rejected": []
+}
