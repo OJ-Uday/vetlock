@@ -1,12 +1,16 @@
 /**
  * Report generator CLI — writes assurance/report/ASSURANCE.md.
  *
- * P0's report is the foundations tier: no metrics are measured yet, so every rate is null and
- * renders as "no data (tier not yet active)". Later phases (P1-P5) will populate the numbers.
+ * The CLI is the impure wrapper around the pure `generateReport` function. Its job is to
+ * (a) measure — via `collectMetrics` (see ../metrics/collector.ts) — what actually happened
+ * when the assurance suite ran, and (b) stamp — capture git SHA, node version, timestamp,
+ * and seed as of *this* invocation. Then it hands a fully-populated ReportInput to the
+ * generator and writes the output to `assurance/report/ASSURANCE.md`.
  *
- * The stamp fields (git SHA, node version, timestamp, seed) come from environment / process
- * introspection here — but the generator itself is a pure function of ReportInput, so the
- * reproducibility invariant remains testable in isolation.
+ * Reproducibility invariant: because the generator is pure and the stamp includes git SHA
+ * (which is committed content) + seed (an env var), two runs at the same commit with the same
+ * seed produce byte-identical Metrics sections. Only the timestamp naturally differs. This is
+ * what `assurance-report-generated.test.ts` asserts.
  */
 
 import { writeFile, mkdir } from 'node:fs/promises';
@@ -14,6 +18,7 @@ import { execSync } from 'node:child_process';
 import { dirname, resolve as pathResolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateReport, type ReportInput } from './generator.js';
+import { collectMetrics } from '../metrics/index.js';
 
 function getGitSha(): string {
   try {
@@ -34,6 +39,11 @@ async function main(): Promise<void> {
   const now = new Date();
   const timestampIso = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
+  // Measure. collectMetrics spawns vitest with the JSON reporter and buckets the results by
+  // test-directory root (test/robustness/, test/evasion/, test/metamorphic/). Empty buckets
+  // stay null → the generator renders them as "no data (tier not yet active)".
+  const measured = await collectMetrics();
+
   const input: ReportInput = {
     stamp: {
       timestampIso,
@@ -43,11 +53,11 @@ async function main(): Promise<void> {
       tier: 'foundations',
     },
     metrics: {
-      robustnessPassRate: null,
-      enumeratedCoverage: null,
-      evasionCatchRate: null,
-      metamorphicInvariance: null,
-      differentialLedgerNote: null,
+      robustnessPassRate: measured.robustnessPassRate,
+      enumeratedCoverage: measured.enumeratedCoverage,
+      evasionCatchRate: measured.evasionCatchRate,
+      metamorphicInvariance: measured.metamorphicInvariance,
+      differentialLedgerNote: measured.differentialLedgerNote,
     },
     notes: [
       {
