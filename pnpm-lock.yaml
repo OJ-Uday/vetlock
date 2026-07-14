@@ -32,6 +32,9 @@ importers:
       '@types/node':
         specifier: ^20.11.0
         version: 20.19.43
+      '@vetlock/core':
+        specifier: workspace:*
+        version: link:../packages/core
       fast-check:
         specifier: ^3.19.0
         version: 3.23.2

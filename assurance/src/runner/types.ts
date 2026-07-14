@@ -45,19 +45,46 @@ export type SyntheticScenario =
     };
 
 /**
- * Engine scenario (P1 introduces the actual wiring). The worker will `import()` the module
- * at `enginePath` and call `entry(input)`. Kept in the union so the runner API is stable
- * from P0 forward.
+ * Engine scenarios (P1 wires the actual @vetlock/core surface). Two variants matching the
+ * engine's natural entrypoints, plus room to grow.
+ *
+ *   parseLockfileText — pure text-in, DetectionResult-out. No detectors, no fetch, no
+ *                       filesystem. Ideal target for parser-DoS / ReDoS / malformed-lockfile
+ *                       robustness generators (packet §5 P1 first move).
+ *   runDiff           — full-flow: two lockfile texts + a detector strategy. The detector
+ *                       closure can't cross the worker boundary, so the caller picks a
+ *                       symbolic `detectorMode` and the worker constructs the closure
+ *                       locally. P1.1 supports 'none' (no-op) — later phases add 'all'
+ *                       (real detectors from @vetlock/detectors when wired) and 'parse-only'
+ *                       (config-driven subset).
+ *
+ * Both variants share `enginePath` so the worker can resolve them from a bare specifier
+ * ('@vetlock/core') or an absolute path (useful when testing a specific dist tree).
  */
-export interface EngineScenario {
-  readonly kind: 'engine';
-  /** ESM specifier or absolute path the worker will `import()`. */
-  readonly enginePath: string;
-  /** Name of the export to call. */
-  readonly entry: string;
-  /** Argument to pass to the entry — must be structured-clone-safe. */
-  readonly input: unknown;
-}
+export type EngineScenario =
+  | {
+      readonly kind: 'engine:parseLockfileText';
+      /** ESM specifier or absolute path the worker will `import()`. */
+      readonly enginePath: string;
+      /** Lockfile content to parse. */
+      readonly text: string;
+      /** Filename hint used by the engine's parser dispatcher (e.g. 'pnpm-lock.yaml'). */
+      readonly filename?: string;
+    }
+  | {
+      readonly kind: 'engine:runDiff';
+      readonly enginePath: string;
+      readonly oldLockfileText: string;
+      readonly newLockfileText: string;
+      readonly oldLockfilePath?: string;
+      readonly newLockfilePath?: string;
+      /** Which detector closure the worker constructs. See doc above. */
+      readonly detectorMode: 'none';
+      /** Fetch is disabled by default (this is an assurance harness — nothing hits the network).
+       *  When true, the worker installs a fetchOverride that resolves to a benign empty tarball
+       *  for every request; caller-supplied fetch is not accepted (structured-clone problem). */
+      readonly disableFetch?: boolean;
+    };
 
 export type Scenario = SyntheticScenario | EngineScenario;
 

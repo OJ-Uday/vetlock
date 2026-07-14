@@ -128,11 +128,92 @@ function runFailSafe(
   return { channel: 'fail-safe', reason, findings, wallMs: 0 };
 }
 
-// P1 wires this into the actual engine. For P0 we stub it so the type completes and
-// unknown engine scenarios don't slip through as undefined.
-async function runEngine(_scenario: Extract<Scenario, { kind: 'engine' }>): Promise<WorkerOutcome> {
-  throw new Error('engine scenario not wired in P0 — see PACKET-VETLOCK-ASSURANCE P1');
+// P1 wires the actual engine scenarios. The worker imports @vetlock/core (or a caller-
+// supplied enginePath), calls the requested entrypoint, and adapts the result into the
+// worker outcome channels. Findings translation lives in engine-adapter (parent-side) but
+// is duplicated in the worker so we don't have to send the whole engine finding shape
+// across structured-clone.
+import {
+  adaptFindings,
+  findingsSignalFailSafe,
+  extractFailSafeReason,
+} from './engine-adapter.js';
+import type { Finding as EngineFinding } from '@vetlock/core';
+
+async function runEngine(scenario: Extract<Scenario, { kind: `engine:${string}` }>): Promise<WorkerOutcome> {
+  const start = performance.now();
+  const mod: unknown = await import(scenario.enginePath);
+  const engine = mod as Record<string, unknown>;
+
+  if (scenario.kind === 'engine:parseLockfileText') {
+    const parseLockfileText = engine.parseLockfileText as
+      | ((text: string, filename?: string) => unknown)
+      | undefined;
+    if (typeof parseLockfileText !== 'function') {
+      throw new Error(
+        `[worker] enginePath ${scenario.enginePath} does not export parseLockfileText`,
+      );
+    }
+    // Pure parser call — returns DetectionResult. The parser produces no findings; success
+    // is expressed as an ok outcome with an empty findings array. The intent for callers is
+    // "did this hostile input crash the parser?" — the answer surfaces via the runner's
+    // outcome kind (crash/timeout/oom vs ok).
+    parseLockfileText(scenario.text, scenario.filename);
+    return { channel: 'ok', findings: [], wallMs: performance.now() - start };
+  }
+
+  if (scenario.kind === 'engine:runDiff') {
+    const runDiff = engine.runDiff as
+      | ((oldText: string, newText: string, opts: unknown) => Promise<unknown>)
+      | undefined;
+    if (typeof runDiff !== 'function') {
+      throw new Error(`[worker] enginePath ${scenario.enginePath} does not export runDiff`);
+    }
+    // Detector closure is constructed worker-side. Mode 'none' = a no-op closure that
+    // returns zero findings. Later phases will register 'all' (@vetlock/detectors wired).
+    const runDetectors = () => [];
+    const fetchOverride = scenario.disableFetch === false
+      ? undefined
+      : async () => {
+          // No-op fetch — the assurance harness must not touch the network. Callers that
+          // legitimately want to exercise fetching will pass fixtures via cache instead.
+          throw new Error('[assurance] engine fetch is disabled in the harness');
+        };
+    const opts = {
+      runDetectors,
+      oldLockfilePath: scenario.oldLockfilePath,
+      newLockfilePath: scenario.newLockfilePath,
+      fetchOverride,
+    };
+    const result = (await runDiff(scenario.oldLockfileText, scenario.newLockfileText, opts)) as {
+      findings: readonly EngineFinding[];
+    };
+    const engineFindings = result.findings ?? [];
+    // The engine's fail-safe channel is a finding with detector === 'analysis.failed'.
+    // When it fires, translate to the WorkerFailSafeOutcome so the parent's oracleFailSafe
+    // sees the give-up path (not silent-green).
+    if (findingsSignalFailSafe(engineFindings)) {
+      return {
+        channel: 'fail-safe',
+        reason: extractFailSafeReason(engineFindings),
+        findings: adaptFindings(engineFindings),
+        wallMs: performance.now() - start,
+      };
+    }
+    return {
+      channel: 'ok',
+      findings: adaptFindings(engineFindings),
+      wallMs: performance.now() - start,
+    };
+  }
+
+  // Exhaustiveness — any new engine:* kind added to the union must have a case here.
+  const _exhaustive: never = scenario;
+  throw new Error(`[worker] unknown engine scenario kind: ${JSON.stringify(_exhaustive)}`);
 }
+
+// The engine's Finding shape lives in @vetlock/core; imported above via `import type` so
+// the worker doesn't pay any runtime cost for the reference.
 
 // -- entrypoint ------------------------------------------------------------------------------
 
@@ -157,7 +238,8 @@ async function main(): Promise<void> {
     case 'synthetic:fail-safe':
       outcome = runFailSafe(scenario);
       break;
-    case 'engine':
+    case 'engine:parseLockfileText':
+    case 'engine:runDiff':
       outcome = await runEngine(scenario);
       break;
     default: {
