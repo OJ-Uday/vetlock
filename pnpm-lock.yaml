@@ -29,6 +29,9 @@ importers:
 
   assurance:
     devDependencies:
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
       '@types/node':
         specifier: ^20.11.0
         version: 20.19.43
@@ -38,6 +41,9 @@ importers:
       fast-check:
         specifier: ^3.19.0
         version: 3.23.2
+      js-yaml:
+        specifier: ^4.3.0
+        version: 4.3.0
       typescript:
         specifier: ^5.4.0
         version: 5.9.3

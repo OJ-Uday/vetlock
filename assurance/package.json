@@ -22,9 +22,11 @@
     "assurance:report": "node dist/report/cli.js"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.11.0",
     "@vetlock/core": "workspace:*",
     "fast-check": "^3.19.0",
+    "js-yaml": "^4.3.0",
     "typescript": "^5.4.0",
     "vitest": "^1.4.0"
   }
