@@ -7,10 +7,10 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node ≥ 20](https://img.shields.io/badge/node-%E2%89%A5%2020-brightgreen)](package.json)
-[![Tests: 405 passing](https://img.shields.io/badge/tests-405%20passing-brightgreen)](#tests)
+[![Tests: 410 passing](https://img.shields.io/badge/tests-410%20passing-brightgreen)](#tests)
 [![Corpus: 12/13 caught](https://img.shields.io/badge/corpus-12%2F13%20caught-brightgreen)](docs/DETECTIONS.md)
 [![Benchmark: 92.3%](https://img.shields.io/badge/benchmark-92.3%25-brightgreen)](https://github.com/OJ-Uday/vetlock-benchmark)
-[![Red-team: 31 exploits closed](https://img.shields.io/badge/red--team-31%20confirmed%20closed-brightgreen)](docs/REDTEAM-2026-07-12.md)
+[![Red-team: 37/48 exploits closed](https://img.shields.io/badge/red--team-37%2F48%20closed-brightgreen)](docs/REDTEAM-2026-07-12.md)
 [![Zero telemetry](https://img.shields.io/badge/telemetry-zero-blue)](#privacy)
 [![NEVER-EXECUTE canary](https://img.shields.io/badge/canary-NEVER--EXECUTE-red)](docs/adr/0005-never-execute.md)
 [![npm provenance](https://img.shields.io/badge/npm-provenance-blueviolet)](https://docs.npmjs.com/generating-provenance-statements)
