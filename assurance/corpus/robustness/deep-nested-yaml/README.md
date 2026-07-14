@@ -1,6 +1,7 @@
 # deep-nested-yaml — pnpm-lock.yaml with pathological YAML nesting
 
 **First entry in the assurance robustness corpus** (packet §5 P1). Landed with P1.3.
+**Status: GAP CLOSED — wave 4-T (see bottom of file for commit SHA).**
 
 ## What this demonstrates
 
@@ -8,11 +9,11 @@ A `pnpm-lock.yaml`-shaped YAML document with `child:` keys nested 100+ levels de
 pnpm-lock files nest 3-6 levels, so this input is syntactically legal but semantically
 absurd — exactly the shape an attacker delivers.
 
-## Current engine behavior (as of 2026-07-14, `origin/main@c20a66d`)
+## Engine behavior BEFORE fix (2026-07-14, `origin/main@c20a66d`)
 
-`@vetlock/core`'s `parseLockfileText` dispatches to `parsePnpmLockText` for `pnpm-lock.yaml`
-inputs, which calls `js-yaml`. `js-yaml` has a built-in `maxDepth: 100` guard and throws a
-`YAMLException` when exceeded. The engine does not catch this — the exception escapes to the
+`@vetlock/core`'s `parseLockfileText` dispatched to `parsePnpmLockText` for `pnpm-lock.yaml`
+inputs, which called `js-yaml`. `js-yaml` has a built-in `maxDepth: 100` guard and throws a
+`YAMLException` when exceeded. The engine did not catch this — the exception escaped to the
 caller.
 
 **Assurance runner outcome:** `kind: 'crash'`, `error.name: 'YAMLException'`,
@@ -20,6 +21,21 @@ caller.
 
 **Oracle verdict:** `oracleNoCrash` FAIL, `oracleFailSafe` FAIL. `oracleNoHang` and
 `oracleNoOom` pass (the exception fires within milliseconds, well under bounds).
+
+## Engine behavior AFTER fix (wave 4-T)
+
+`parsePnpmLockText` now wraps `yaml.load()` in a try/catch. Any parse error — including
+`YAMLException` with the `maxDepth (100)` message — is rethrown as
+`UnsupportedLockfileError`. The assurance runner (`worker.ts` + `child-entry.ts`)
+recognizes `UnsupportedLockfileError` on the `engine:parseLockfileText` path and translates
+it to the `fail-safe` channel, mirroring how it already handles
+`extractCapabilities.parseError` and `runDiff` `analysis.failed`.
+
+**Assurance runner outcome:** `kind: 'fail-safe'`, with a single BLOCK-severity
+`analysis-failed` finding whose reason references `maxDepth`.
+
+**Oracle verdict:** all four (`oracleNoCrash`, `oracleFailSafe`, `oracleNoHang`,
+`oracleNoOom`) PASS.
 
 ## Why blocking this matters (attack class in the wild)
 
@@ -53,7 +69,8 @@ const outcome = await runBounded(
   },
   { wallMs: 5_000, heapMb: 128, seed: 42 },
 );
-// outcome.kind === 'crash', outcome.error.name === 'YAMLException'
+// AFTER wave 4-T: outcome.kind === 'fail-safe', with an analysis-failed BLOCK finding.
+// (BEFORE: outcome.kind === 'crash', outcome.error.name === 'YAMLException'.)
 ```
 
 ## Fixture
@@ -63,15 +80,10 @@ for offline replay + defang-guard scanning (must remain empty of live network/ex
 
 ## Regression test
 
-`assurance/test/robustness/no-crash.test.ts::deep-nested-yaml GAP: depth=100`. When STARTUP
-wraps `js-yaml.load` in a try/catch that emits `analysis.failed`, flip the assertion:
+`assurance/test/robustness/no-crash.test.ts::deep-nested-yaml`. Assertion post-flip:
 
 ```ts
-// BEFORE (documenting the gap):
-expect(outcome.kind).toBe('crash');
-expect(outcome.error.name).toBe('YAMLException');
-
-// AFTER (proving the fix):
+// Now (wave 4-T fix landed):
 expect(outcome.kind).toBe('fail-safe');
 expect(oracleFailSafe(outcome).pass).toBe(true);
 ```
@@ -79,6 +91,10 @@ expect(oracleFailSafe(outcome).pass).toBe(true);
 ## Status
 
 - **Found:** 2026-07-14 (assurance P1.3)
-- **Filed as engine gap:** pending. STARTUP owns the fix; the assurance test pins the
-  current behavior until STARTUP commits a fail-safe wrapper.
+- **Filed as engine gap:** 2026-07-14 (wave 4-T)
+- **Fix landed:** 2026-07-14, branch `wave4-t-startup-fix-yaml-maxdepth`, engine-side
+  commit `d8b100a` (core: wrap js-yaml.load in fail-safe; rewrap YAMLException as
+  UnsupportedLockfileError). Assurance-side assertion flip lands in the follow-up
+  commit on the same branch.
 - **Superseded by:** (empty — corpus entries are never superseded lightly)
+

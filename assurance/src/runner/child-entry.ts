@@ -211,7 +211,24 @@ async function runEngine(
         `[child-entry] enginePath ${scenario.enginePath} does not export parseLockfileText`,
       );
     }
-    parseLockfileText(scenario.text, scenario.filename);
+    // FAIL-SAFE CONVENTION (wave 4-T): UnsupportedLockfileError is a documented
+    // "can't parse this — block conservatively" signal; route it to the fail-safe
+    // channel instead of letting it escape as crash. Mirrors worker.ts.
+    try {
+      parseLockfileText(scenario.text, scenario.filename);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'UnsupportedLockfileError') {
+        return {
+          channel: 'fail-safe',
+          reason: err.message,
+          findings: [
+            { capabilityClass: 'analysis-failed', severity: 'BLOCK', reason: err.message },
+          ],
+          wallMs: performance.now() - start,
+        };
+      }
+      throw err;
+    }
     return { channel: 'ok', findings: [], wallMs: performance.now() - start };
   }
 

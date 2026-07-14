@@ -160,7 +160,28 @@ async function runEngine(scenario: Extract<Scenario, { kind: `engine:${string}` 
     // is expressed as an ok outcome with an empty findings array. The intent for callers is
     // "did this hostile input crash the parser?" — the answer surfaces via the runner's
     // outcome kind (crash/timeout/oom vs ok).
-    parseLockfileText(scenario.text, scenario.filename);
+    //
+    // FAIL-SAFE CONVENTION (wave 4-T): UnsupportedLockfileError is the engine's
+    // documented signal "I can't parse this — block conservatively." It's semantically
+    // the same shape as extractCapabilities' `parseError` channel and analyzeTarball's
+    // fail-safe path: a KNOWN parse failure, not an escaped exception. Route it to the
+    // fail-safe channel so the deep-nested-yaml corpus (and future pnpm/yarn parse-gap
+    // fixtures) can observe the engine give up cleanly instead of crashing.
+    try {
+      parseLockfileText(scenario.text, scenario.filename);
+    } catch (err) {
+      if (err instanceof Error && err.name === 'UnsupportedLockfileError') {
+        return {
+          channel: 'fail-safe',
+          reason: err.message,
+          findings: [
+            { capabilityClass: 'analysis-failed', severity: 'BLOCK', reason: err.message },
+          ],
+          wallMs: performance.now() - start,
+        };
+      }
+      throw err;
+    }
     return { channel: 'ok', findings: [], wallMs: performance.now() - start };
   }
 
