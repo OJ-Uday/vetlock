@@ -34,36 +34,12 @@
       "direction": "added",
       "severity": "BLOCK",
       "confidence": "low",
-      "message": "Newly-installed package uses process/execution module \"child_process\". [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
+      "message": "Newly-installed package uses process/execution module \"child_process\". [escalated: package 'crossenv' has 2 WARN findings across 2 categories]",
       "evidence": [
         {
           "file": "index.js",
           "line": 1,
           "snippet": "imports child_process"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "crossenv"
-        ]
-      ]
-    },
-    {
-      "detector": "net.new-endpoint",
-      "category": "NET",
-      "package": "crossenv",
-      "from": null,
-      "to": "1.0.0",
-      "direction": "added",
-      "severity": "BLOCK",
-      "confidence": "low",
-      "message": "Newly-installed package contacts network endpoint: https://exfil.example.invalid/env [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
-      "evidence": [
-        {
-          "file": "index.js",
-          "line": 1,
-          "snippet": "https://exfil.example.invalid/env"
         }
       ],
       "provenance": [
@@ -82,12 +58,36 @@
       "direction": "added",
       "severity": "BLOCK",
       "confidence": "low",
-      "message": "Newly-installed package imports network module \"https\". [escalated: package 'crossenv' has 3 WARN findings across 2 categories]",
+      "message": "Newly-installed package imports network module \"https\". [escalated: package 'crossenv' has 2 WARN findings across 2 categories]",
       "evidence": [
         {
           "file": "index.js",
           "line": 1,
           "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "crossenv"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "crossenv",
+      "from": null,
+      "to": "1.0.0",
+      "direction": "added",
+      "severity": "INFO",
+      "confidence": "low",
+      "message": "Newly-installed package contacts network endpoint: https://exfil.example.invalid/env",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "https://exfil.example.invalid/env"
         }
       ],
       "provenance": [

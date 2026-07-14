@@ -6,9 +6,9 @@
 
 ## Summary
 
-- **Total enumerated primitives:** 48
-- **With corpus fixture(s):** 25 (52%)
-- **Soft-warn (no corpus yet):** 23
+- **Total enumerated primitives:** 56
+- **With corpus fixture(s):** 25 (45%)
+- **Soft-warn (no corpus yet):** 31
 
 | Class | Sink count | Entry-point count | Total |
 |---|---:|---:|---:|
@@ -23,6 +23,11 @@
 | `net-egress` | 8 | 0 | 8 |
 | `obfuscation-decode` | 2 | 0 | 2 |
 | `publisher-trust` | 0 | 1 | 1 |
+| `python-code-exec` | 2 | 0 | 2 |
+| `python-env-access` | 1 | 0 | 1 |
+| `python-install-hook` | 2 | 0 | 2 |
+| `python-net-egress` | 2 | 0 | 2 |
+| `python-supply-chain` | 1 | 0 | 1 |
 | `secret-read` | 5 | 0 | 5 |
 | `typosquat` | 0 | 1 | 1 |
 
@@ -154,6 +159,57 @@
 
 **Notes:**
 - `maintainer-change`: S3 FIX — trust-store with parse-based email matching (exact domain-or-subdomain); S6 FIX — populated → empty is BLOCK when old was trusted
+
+## `python-code-exec`
+
+| ID | Kind | Detector(s) | Corpus | Chokepoint |
+|---|---|---|---|---|
+| `b64-plus-exec` | sink | `code.dynamic-loading-added` | _(soft-warn)_ | `capabilities.dynamicCode (kind: char-arithmetic-decoder)` |
+| `marshal-loads` | sink | `code.dynamic-loading-added` | _(soft-warn)_ | `capabilities.dynamicCode (kind: new-function)` |
+
+**Notes:**
+- `b64-plus-exec`: P4c — co-occurrence of base64.b64decode(...) and exec()/eval() in the same file is the Python analog of the JS char-arithmetic-decoder shape (REDTEAM L11): an encoded payload unpacked and executed at import time.
+- `marshal-loads`: P4c — marshal.loads deserializes raw Python bytecode (.pyc payload) directly, the Python equivalent of `new Function(codeBytes)` — a common way to hide a malicious payload as compiled bytecode instead of readable source.
+
+## `python-env-access`
+
+| ID | Kind | Detector(s) | Corpus | Chokepoint |
+|---|---|---|---|---|
+| `os-environ-read` | sink | `env.token-harvest` | _(soft-warn)_ | `capabilities.envAccesses (Python PY_SENSITIVE_ENV_KEYS — PYPI_TOKEN/TWINE_PASSWORD/DJANGO_SECRET_KEY/etc — feeds the same shared EnvAccess shape)` |
+
+**Notes:**
+- `os-environ-read`: P4c — covers keyed reads (os.environ[...] / .get / os.getenv) AND whole-object enumeration (dict(os.environ), for-in, {**os.environ}), mirroring the npm process-env-token and process-env-enumerate entries but for the Python-specific sensitive-key set.
+
+## `python-install-hook`
+
+| ID | Kind | Detector(s) | Corpus | Chokepoint |
+|---|---|---|---|---|
+| `pyproject-entry-points` | sink | `install.script-added` | _(soft-warn)_ | `pyproject.toml analyzePyproject() extracts entryPoints[] — the pip/Poetry equivalent of npm's manifest.bin` |
+| `setup-py-cmdclass` | sink | `install.script-added` | _(soft-warn)_ | `setup.py analyzeSetupPy() ports a cmdclass= override into manifest.scripts.install so the SAME install.script-added detector fires without a new detector` |
+
+**Notes:**
+- `pyproject-entry-points`: P4c — [project.scripts] / [tool.poetry.scripts] / entry-points console_scripts install a console command onto the user's PATH at install time — the Python analog of npm's package.json `bin` field entry point.
+- `setup-py-cmdclass`: P4c — setup.py declaring a custom cmdclass overriding install's run(self) is pip's install-lifecycle-hijack primitive, the direct analog of npm's scripts.postinstall/scripts.install entry points.
+
+## `python-net-egress`
+
+| ID | Kind | Detector(s) | Corpus | Chokepoint |
+|---|---|---|---|---|
+| `socket-first-use` | sink | `net.new-module` | _(soft-warn)_ | `capabilities.networkModules` |
+| `urllib-first-use` | sink | `net.new-module` | _(soft-warn)_ | `capabilities.networkModules (shared with npm — PY_NETWORK_MODULES feeds the same FileCapabilities.networkModules field)` |
+
+**Notes:**
+- `socket-first-use`: P4c — raw socket import/use is the lowest-level Python network primitive and the DNS-style covert-exfil channel (socket.gethostbyname/getaddrinfo mirrors the npm dns.lookup/resolve sink).
+- `urllib-first-use`: P4c — a PyPI package's FIRST use of urllib/requests/httpx/aiohttp/urllib3 (stdlib or third-party HTTP client) that wasn't present in the prior version. Reuses net.new-module verbatim — the Python-source extractor (capability-pypi.ts) populates the same ecosystem-agnostic FileCapabilities.networkModules field npm detectors already consume.
+
+## `python-supply-chain`
+
+| ID | Kind | Detector(s) | Corpus | Chokepoint |
+|---|---|---|---|---|
+| `typosquat-underscore-hyphen` | sink | `deps.typosquat-candidate` | _(soft-warn)_ | `deps.typosquat-candidate — PEP 503 normalization treats '-', '_', and '.' as equivalent, so a PyPI-specific edit-distance/normalization pass is needed alongside the existing Damerau-Levenshtein check to catch confusables that normalize identically on PyPI but are visually/typographically distinct package names` |
+
+**Notes:**
+- `typosquat-underscore-hyphen`: P4c — PyPI name normalization (PEP 503) folds '-', '_', and '.' together, so `python-requests` and `python_requests` resolve to DIFFERENT install targets despite looking like the same package — a confusion npm's typosquat detector (which assumes npm's stricter unique-name registry) doesn't need to handle.
 
 ## `secret-read`
 

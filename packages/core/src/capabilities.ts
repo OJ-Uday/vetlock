@@ -58,6 +58,76 @@ const FS_MODULES = new Set([
   'fs', 'fs/promises', 'node:fs', 'node:fs/promises', 'graceful-fs',
 ]);
 
+// v0.5.0 URL AST context tracking (FP-STUDY §3b follow-up). A URL literal
+// passed straight into a network call (`fetch(url)`, `axios.get(url)`, ...)
+// or assigned to a config-shaped key (`{ baseURL: url }`) is much
+// higher-signal than the same string sitting in an arbitrary variable or a
+// source comment. These sets name the callee/property and object-key shapes
+// that count as "used as a network target" vs. "used as config".
+const NETWORK_CALL_NAMES = new Set([
+  'fetch', 'request', 'get', 'post', 'put', 'delete', 'head', 'options',
+  'connect', 'trace', 'axios', 'http', 'https', 'superagent',
+]);
+const CONFIG_KEY_NAMES = new Set([
+  'url', 'href', 'endpoint', 'baseURL', 'uri', 'api', 'host', 'server',
+  'target', 'dest', 'destination',
+]);
+
+/** Ranking used to pick the highest-signal tag when a URL string appears in
+ * more than one context across a file. */
+const URL_CONTEXT_PRIORITY: Record<UrlLiteralContext, number> = {
+  'network-arg': 3,
+  'config-value': 2,
+  literal: 1,
+  comment: 0,
+};
+type UrlLiteralContext = 'network-arg' | 'config-value' | 'literal' | 'comment';
+
+/** Record `ctx` for `url` in `map`, keeping the highest-signal tag on collision. */
+function noteUrlContext(
+  map: Map<string, UrlLiteralContext>,
+  url: string,
+  ctx: UrlLiteralContext,
+): void {
+  const existing = map.get(url);
+  if (!existing || URL_CONTEXT_PRIORITY[ctx] > URL_CONTEXT_PRIORITY[existing]) {
+    map.set(url, ctx);
+  }
+}
+
+/**
+ * Classify a string/template literal node as 'network-arg' (direct argument
+ * to a call whose callee/property name looks like a network verb),
+ * 'config-value' (value of an object property whose key looks like a URL
+ * config field), or 'literal' (neither — a plain string literal). Comment
+ * URLs are handled separately since comments aren't part of the AST that
+ * @babel/traverse walks.
+ */
+function contextForLiteralNode(path: NodePath): 'network-arg' | 'config-value' | 'literal' {
+  const node = path.node as t.Node;
+  const parent = path.parent;
+
+  if (t.isCallExpression(parent) && (parent.arguments as t.Node[]).includes(node)) {
+    const callee = parent.callee;
+    if (t.isIdentifier(callee) && NETWORK_CALL_NAMES.has(callee.name)) return 'network-arg';
+    if (
+      t.isMemberExpression(callee) &&
+      t.isIdentifier(callee.property) &&
+      NETWORK_CALL_NAMES.has(callee.property.name)
+    ) {
+      return 'network-arg';
+    }
+  }
+
+  if (t.isObjectProperty(parent) && parent.value === node) {
+    const key = parent.key;
+    if (t.isIdentifier(key) && CONFIG_KEY_NAMES.has(key.name)) return 'config-value';
+    if (t.isStringLiteral(key) && CONFIG_KEY_NAMES.has(key.value)) return 'config-value';
+  }
+
+  return 'literal';
+}
+
 // Sensitive keys under process.env — used by ENV detector (packages/detectors).
 // Exported so the detector layer has one source of truth.
 //
@@ -375,6 +445,8 @@ export function extractCapabilities(
   const execMods = new Set<string>();
   const fsMods = new Set<string>();
   const urls = new Set<string>();
+  /** Highest-signal context tag per URL — see v0.5.0 URL AST context tracking. */
+  const urlContexts = new Map<string, UrlLiteralContext>();
   const encodedUrls: import('./finding.js').EncodedUrl[] = [];
   const envAccesses: EnvAccess[] = [];
   const dynamicCode: DynamicCodeSite[] = [];
@@ -1093,7 +1165,14 @@ export function extractCapabilities(
     StringLiteral(path: NodePath<t.StringLiteral>) {
       const val = path.node.value;
       if (val.length > 0 && val.length < 2048) {
-        for (const m of val.matchAll(URL_REGEX)) urls.add(m[0]);
+        const matches = [...val.matchAll(URL_REGEX)];
+        if (matches.length > 0) {
+          const ctx = contextForLiteralNode(path);
+          for (const m of matches) {
+            urls.add(m[0]);
+            noteUrlContext(urlContexts, m[0], ctx);
+          }
+        }
       }
       if (val.length >= 24 && val.length <= 4096) {
         const dec = tryDecodeUrl(val);
@@ -1122,8 +1201,16 @@ export function extractCapabilities(
       }
     },
     TemplateLiteral(path: NodePath<t.TemplateLiteral>) {
+      const matches: string[] = [];
       for (const q of path.node.quasis) {
-        for (const m of q.value.cooked?.matchAll(URL_REGEX) ?? []) urls.add(m[0]);
+        for (const m of q.value.cooked?.matchAll(URL_REGEX) ?? []) matches.push(m[0]);
+      }
+      if (matches.length > 0) {
+        const ctx = contextForLiteralNode(path);
+        for (const m of matches) {
+          urls.add(m);
+          noteUrlContext(urlContexts, m, ctx);
+        }
       }
     },
   });
@@ -1133,6 +1220,17 @@ export function extractCapabilities(
       ...base,
       parseError: `traverse failed: ${msg.slice(0, 200)}`,
     };
+  }
+
+  // URLs appearing only inside comments — never part of the AST @babel/traverse
+  // walks, so they're handled as a separate pass over `ast.comments`. Tagged
+  // 'comment' unless the same URL string was already seen in a higher-signal
+  // context elsewhere in the file (see URL_CONTEXT_PRIORITY / noteUrlContext).
+  for (const comment of ast.comments ?? []) {
+    for (const m of comment.value.matchAll(URL_REGEX)) {
+      urls.add(m[0]);
+      noteUrlContext(urlContexts, m[0], 'comment');
+    }
   }
 
   // ---- POST-FOLD SWEEP ----
@@ -1254,6 +1352,7 @@ export function extractCapabilities(
     execModules: [...execMods].sort(),
     fsModules: [...fsMods].sort(),
     urlLiterals: [...urls].sort(),
+    urlLiteralContexts: Object.fromEntries(urlContexts),
     encodedUrls,
     envAccesses,
     dynamicCode,

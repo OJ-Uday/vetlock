@@ -136,6 +136,17 @@ export interface FileCapabilities {
   /** Distinct string literals reaching URL/domain shape. */
   urlLiterals: string[];
   /**
+   * Per-URL AST context tag, keyed by the same URL string as in `urlLiterals`.
+   * Optional — only populated by the JS/TS AST extraction pass (not for
+   * .json files or files that fail to parse). Used by detectors to calibrate
+   * severity: a URL passed straight to fetch()/axios() etc. ('network-arg') or
+   * assigned to a config-shaped key ('config-value') is much higher-signal
+   * than one sitting in a plain string literal ('literal') or a comment
+   * ('comment'). When a URL appears in more than one context, the
+   * highest-signal tag wins: network-arg > config-value > literal > comment.
+   */
+  urlLiteralContexts?: Record<string, 'network-arg' | 'config-value' | 'literal' | 'comment'>;
+  /**
    * URLs recovered from base64/hex decoding of long high-entropy string
    * literals. These are structurally suspect: real code rarely encodes URLs.
    */

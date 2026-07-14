@@ -96,12 +96,36 @@
           "evader-lib"
         ]
       ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "evader-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "INFO",
+      "confidence": "medium",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/x",
+      "evidence": [
+        {
+          "file": "net.js",
+          "line": 1,
+          "snippet": "https://exfil.example.invalid/x"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "evader-lib"
+        ]
+      ]
     }
   ],
   "rollupByDirect": {
     "evader-lib": {
       "maxSeverity": "BLOCK",
-      "count": 4
+      "count": 5
     }
   },
   "changes": [

@@ -5,6 +5,258 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/).
 
+## [0.7.0] — 2026-07-14
+
+**P5 — Hosted API (engine-as-service).** vetlock is now runnable as a
+long-lived HTTP service alongside the CLI. Zero-dep Node HTTP server;
+per-scan subprocess sandbox with SIGKILL-on-timeout and unconditional temp-
+dir teardown; async job queue with 24h result TTL; Fly.io scale-to-zero
+deploy. `$0/mo at idle, ~$5/mo at 1000 scans/day` — see
+`packages/api/docs/DEPLOY.md` for the full cost curve.
+
+### New package: `@vetlock/api`
+
+- **`packages/api/src/server.ts`** — `node:http` HTTP server with three routes:
+  * `POST /scan` — accepts `{ lockfile_before, lockfile_after, ecosystem? }`, returns `202 + { scanId, statusUrl }`. Body cap 1 MB, per-IP rate limit 5/min, content-type must be `application/json`.
+  * `GET /scan/:scanId` — polling endpoint. `202 + { stage, elapsedMs }` while pending; `200 + { verdict, findings, elapsedMs }` once done; `404` for unknown ids; `410 + { status: 'expired' }` past TTL.
+  * `GET /health` — `{ ok: true, version: VETLOCK_VERSION }`.
+- **`packages/api/src/scan-queue.ts`** — `ScanQueue` class with constructor-injected backend. Default `DefaultScanBackend` calls `runDiff` from `@vetlock/core`. Records go `pending → done|error → expired` (24h TTL). Non-Error rejections are captured as `error.message` strings.
+- **`packages/api/src/sandbox.ts`** — `runScanInSandbox` for ADR 0008 per-scan process isolation:
+  * `mkdtemp()`'s a fresh `vetlock-scan-*` dir under `os.tmpdir()`.
+  * Materializes both lockfiles as `0o600` files inside.
+  * Spawns `dist/scan-runner.js` as a detached Node subprocess (`spawn(process.execPath, ...)`) with `--max-old-space-size=512`, empty env, no shell, stdin closed.
+  * Wall-clock timeout enforced by the PARENT — `setTimeout` → `process.kill(-pid, 'SIGKILL')` on the whole process group.
+  * Stdout capped at 4 MB (defense against runaway subprocess flooding parent RAM).
+  * Sandbox dir removed unconditionally in `finally` — successful, failed, and timed-out scans all leave zero disk trace.
+- **`packages/api/src/scan-runner.ts`** — the sandboxed subprocess entrypoint. Reads two argv paths, calls `runDiff`, writes `ScanResult` as JSON to stdout, exits 0. On error: `{ error: string }` + exit 1. Never writes to any file. Never catches-and-continues.
+- **`packages/api/src/index.ts`** — re-exports for the test surface + external consumers.
+- **`packages/api/package.json`** — `@vetlock/api@0.7.0`, private, no runtime deps beyond `@vetlock/core`, `@vetlock/detectors`, `zod`. NO express/fastify/hono — every runtime dep is supply-chain risk we scan for.
+
+### Tests
+
+- 510 → **540 green.** 30 new API tests across three files:
+  * `server.test.ts` (8) — request/response shape, rate limit, 413/415, 404/410.
+  * `sandbox.test.ts` (13) — happy path, failure paths (non-zero exit, silent exit, unparseable JSON, missing runner), timeout enforcement + teardown-on-timeout, tmpdir isolation, empty-env, concurrent-run distinctness.
+  * `scan-queue.test.ts` (9) — enqueue UUIDs, lifecycle transitions, error capture, TTL expiration, concurrency.
+- No core/detectors/cli tests changed. Corpus attack-catch stays at 12/13.
+
+### Deploy
+
+- **`packages/api/Dockerfile`** — multi-stage build (builder: `node:20-alpine` + `pnpm --filter deploy --prod`; runtime: minimal `node:20-alpine` copy of pruned tree). Non-root `node` user, HEALTHCHECK on `/health`, `EXPOSE 8080`. Runs `node dist/server.js` — no shell in CMD.
+- **`packages/api/fly.toml`** — scale-to-zero (`min_machines_running=0`, `auto_stop_machines="stop"`), `shared-cpu-1x`/256MB, HTTPS-only, HTTP-check every 30s. Ready for `flyctl deploy`.
+- **`packages/api/docs/DEPLOY.md`** — local dev + local Docker + Fly.io deploy runbook, cost curve at 10/100/1000/10k/100k scans/day, security invariants summary.
+
+### Design decisions worth flagging
+
+- **In-process vs. subprocess backend split.** Default `ScanQueue` uses the
+  in-process `DefaultScanBackend` (calls `runDiff` directly). The subprocess
+  sandbox in `sandbox.ts` is the **production hardening path** — wiring
+  `ScanQueue` to use it by default is deferred to v0.7.1 (small, mechanical,
+  wants its own review pass on ScanQueue).
+- **Why not `--experimental-permission`.** Node 20/22's permission model is
+  still experimental; composing `--allow-fs-read` for the subprocess +
+  Node's own install dir is fragile. The parent-side unconditional `rm -rf`
+  + empty-env subprocess is enough defense-in-depth for v0.7.0. Tracked as
+  a v0.8 target.
+- **No new npm deps.** `@vetlock/api` only depends on packages that were
+  already in the workspace (`@vetlock/core`, `@vetlock/detectors`, `zod`).
+  A supply-chain scanner adding express as a runtime dep would be self-
+  contradictory.
+
+### Roadmap
+
+- **v0.7.1** — wire `ScanQueue` → `runScanInSandbox` by default. Adds real per-scan isolation to the wire path.
+- **v0.7.2** — replace in-memory job store with SQLite (persist across restarts, still zero-op).
+- **P6 (v0.8+) — GitHub App**. Separate repo `OJ-Uday/vetlock-app`. Uses `repository_dispatch` → user's own GHA quota → `npx vetlock diff` → posts check-run + PR comment. `$0/mo at launch`. Note: the P6 workflow this session got killed mid-flight; no `~/personal/vetlock-app/` scaffolding landed yet.
+
+---
+
+## [0.6.0] — 2026-07-14
+
+**Second-ecosystem release (P4c). PyPI/Python adapter alongside npm.** Vetlock is
+no longer npm-only. Lockfiles from pip (`requirements.txt`), Poetry
+(`poetry.lock`), and uv (`uv.lock`) are now first-class inputs — parsed to the
+same `LockGraph` shape, fetched from the PyPI JSON API, extracted from wheels
+(`.whl` = ZIP) or sdists (`.tar.gz`), and scanned by the same ecosystem-agnostic
+detectors that already run on npm packages.
+
+### Architecture
+
+Per ADR 0009 (EcosystemAdapter). The core insight: detectors consume
+`FileCapabilities`, and `FileCapabilities` is ecosystem-agnostic. Once we can
+produce a `FileCapabilities` array from a Python source file (via text-based
+regex extraction — NEVER executing Python code, ADR 0005), every existing NET/
+EXEC/ENV/FS/CODE/OBF detector works unchanged.
+
+### New files
+
+- **`packages/core/src/lockfile-pypi.ts`** — 3 parsers dispatched by file
+  signature: `requirements.txt` (pip-freeze `pkg==X.Y.Z` with optional
+  `--hash=sha256:` continuations), `poetry.lock` (TOML with `[[package]]`
+  blocks + `files` hashes), `uv.lock` (TOML with `[[package]]` blocks and
+  `source = { registry | url }`). Emits `LockGraph` matching the npm side.
+- **`packages/core/src/artifact-pypi.ts`** — fetches
+  `https://pypi.org/pypi/{name}/{version}/json`, picks a wheel URL (or sdist
+  fallback), downloads to a temp dir, extracts. Wheels use `node:zlib` +
+  `node:stream` to unpack the ZIP central directory (zero new dependency).
+  Sdists use the existing `tar` dep. Respects `PIP_INDEX_URL` env for
+  corporate-proxy mirrors.
+- **`packages/core/src/capability-pypi.ts`** — text-based Python capability
+  extractor. Detects: network imports (urllib/requests/httpx/aiohttp/socket/
+  paramiko/smtplib/ftplib), env access (`os.environ[X]`, `os.environ.get(X)`,
+  `os.getenv(X)`, `os.environ` enumeration), dynamic-code (`exec`/`eval`/
+  `compile(..., "exec")`/`marshal.loads`), b64-plus-exec unpacker shape,
+  `chr()`-join char-arithmetic decoder, fs writes/reads (`open(...,'w')`,
+  `pathlib.Path.write_text`, `shutil.copy` dst), postinstall hooks
+  (`setup.py` custom `cmdclass`, `pyproject.toml` `[project.scripts]` /
+  `[tool.poetry.scripts]` / `entry_points`). Uses defensive string-masking
+  to avoid firing on identifiers embedded in string literals, then
+  re-scans raw lines for patterns that need the string contents (env-key
+  names, file paths) — gated by masked-line "outer identifier is present"
+  check to avoid docstring/comment false-positives.
+- **`packages/core/src/adapter-pypi.ts`** — EcosystemAdapter registration
+  wired into `engine.ts` dispatch by ecosystem-tag returned from
+  `lockfile-any.ts`.
+
+### Wiring changes
+
+- **`packages/core/src/engine.ts`** — captures the ecosystem tag from
+  `parseLockfileText` on both sides of the diff. Throws
+  `lockfile ecosystem mismatch` if old and new lockfiles disagree (e.g.
+  `package-lock.json` vs `poetry.lock`). `analyzeOne` gets the ecosystem
+  tag so it can route to the pacote fetch path (npm-family) or PyPI JSON
+  API fetch path.
+- **`packages/core/src/lockfile-any.ts`** — dispatch order now also tries
+  the 3 PyPI parsers after the 3 npm-family parsers. Discriminated
+  `.ecosystem` result: `'npm'` for the npm family; `'pypi'` for pypi-*
+  kinds.
+- **`packages/core/src/index.ts`** — 4 new module exports.
+
+### CAPABILITY-MAP
+
+- 48 → **56 entries** (8 new PyPI-specific entries across 5 new classes:
+  `python-net-egress`, `python-env-access`, `python-code-exec`,
+  `python-install-hook`, `python-supply-chain`). All 8 reuse existing
+  ecosystem-agnostic detector IDs (`capability.net.module`,
+  `capability.env.access`, `capability.dynamic-eval`,
+  `capability.postinstall.hook`, `deps.typosquat-candidate`). Marked
+  `soft_warn_no_corpus: true` — real PyPI corpus fixtures land in v0.6.1.
+- `docs/CAPABILITY-MAP.md` regenerated to 56 entries across 18 classes.
+
+### Tests
+
+433 → **510 green.** New:
+
+- `packages/core/test/lockfile-pypi.test.ts` — 35 tests covering all 3
+  formats.
+- `packages/core/test/capability-pypi.test.ts` — 42 tests covering imports,
+  env, dynamic-code, fs, subprocess, url extraction, docstring masking.
+
+Corpus attack-catch stays at 12/13 (npm). PyPI attack corpus lands in v0.6.1.
+
+### Design invariants
+
+- **NEVER-EXECUTE preserved (ADR 0005).** No `spawn`, no `child_process`,
+  no Python invocation, no shell. Every Python signal is derived from
+  text scanning on bytes read directly from the extracted artifact.
+- **PIP_INDEX_URL respected.** Corporate proxy users can set the env var
+  to redirect PyPI fetches to their internal mirror — same pattern as
+  `NPM_CONFIG_REGISTRY` for the npm side.
+
+### Not in this release
+
+- PyPI corpus fixtures (v0.6.1). The 8 new CAPABILITY-MAP entries are
+  `soft_warn_no_corpus: true`; a corpus of at least 5 known-bad PyPI
+  packages (ctx@0.2.2 hijack, jeIlyfish typosquat, colorama⁻like typos)
+  will land next.
+- Python-specific detector tuning like OBF for `.pyc` bytecode files.
+- Full FP study on top-100 PyPI packages (blocker: needs a
+  PIP_INDEX_URL-friendly test corpus).
+
+---
+
+## [0.5.0] — 2026-07-14
+
+**FP-tune release (3/3) — target hit.** Below the ≤15% BLOCK-rate goal on
+routine top-100 npm bumps: **14.3%** measured. Third and final FP-focused
+release in the v0.4.x → v0.5.x sequence; the remaining BLOCKs are legit
+compound-suspicion (bundler bumps with CODE + NET + OBF co-occurrence that
+a developer SHOULD glance at). Corpus attack-catch stays at 12/13 across
+all four versions.
+
+### URL AST context tracking
+
+The core change: `FileCapabilities` gained an optional
+`urlLiteralContexts: Record<string, 'network-arg' | 'config-value' | 'literal' | 'comment'>`
+map alongside `urlLiterals`. The JS/TS extraction pass in
+`packages/core/src/capabilities.ts` tags each URL literal by how the AST
+actually consumes it:
+
+- **`network-arg`** — passed straight into a call whose callee/property is a
+  network verb (`fetch`, `axios`, `request`, `get`, `post`, `put`, `delete`,
+  `http`, `https`, `superagent`, `connect`, `trace`, `head`, `options`).
+- **`config-value`** — value of an object property whose key is a URL-config
+  name (`url`, `href`, `endpoint`, `baseURL`, `uri`, `api`, `host`, `server`,
+  `target`, `dest`, `destination`).
+- **`literal`** — plain string, not consumed as a network target.
+- **`comment`** — appears only inside a source comment (walked via Babel's
+  `ast.comments`).
+
+When a URL shows up in more than one context across a file the highest-signal
+tag wins: `network-arg` > `config-value` > `literal` > `comment`.
+
+### Detector effect
+
+`net.new-endpoint` in `packages/detectors/src/net.ts` picks severity by
+context:
+
+- `network-arg` or `config-value` → **WARN** (unchanged behavior — that's
+  where a real exfil endpoint would actually be used, and compound-suspicion
+  escalation in `runAll` still promotes to BLOCK when co-occurring with
+  INSTALL/EXEC/ENV/FS).
+- `literal` or `comment` → **INFO** (audit-visible, doesn't drive escalation).
+- Undefined (`.json` files, parse failures, non-JS sources) → WARN, same as
+  before v0.5.0.
+
+Corpus fixtures that shifted WARN → INFO in v0.5.0 (all comment-only or
+non-network-arg URL matches, not the primary attack signal): `coa`'s dead-code
+`https.get(url)` under `if (false)`, `eslint-scope`'s `build.js` string,
+`ua-parser-js`'s dead-code miner URL, `typosquat-synthetic`'s crossenv
+string, `hardened-evader-2026`'s bare-tld string, `shai-hulud-2025`'s
+config-key URL. Every BLOCK-tier corpus attack still fires — their exfil
+URLs are `network-arg` tagged.
+
+### Cache format bumped to v2
+
+`SNAPSHOT_FORMAT_VERSION` in `packages/core/src/cache.ts`: 1 → 2. Pre-v0.5.0
+on-disk snapshots lack `urlLiteralContexts` and would silently mask the new
+field; treating them as cache misses forces a re-extract.
+
+### Measured
+
+|                       | v0.4.0    | v0.4.1    | v0.4.2    | v0.5.0    |
+|-----------------------|-----------|-----------|-----------|-----------|
+| BLOCK on routine bumps| 48.1%     | 33.3%     | 17.9%     | **14.3%** |
+| WARN                  | 3.7%      | 18.5%     | 32.1%     | 25.0%     |
+| INFO                  | 0%        | 3.7%      | 3.6%      | **21.4%** |
+| CLEAN                 | 48.1%     | 44.4%     | 46.4%     | 39.3%     |
+| Corpus attacks caught | 12/13     | 12/13     | 12/13     | 12/13     |
+| Total tests           | 424 green | 424 green | 424 green | **433 green** |
+
+Nine new tests (`packages/core/test/capabilities-url-context.test.ts`)
+cover the 4 context tags across literal/template/comment/nested-object
+positions.
+
+### Not in this release (P4c-scoped, next)
+
+The Python/PyPI ecosystem adapter has an in-flight implementation
+(`~/personal/vetlock-p4c-pypi` worktree, ~3000 LOC) that needs to be rebased
+onto v0.5.0 and shipped separately as v0.6.0. Two workflow retries at P4c
+this session had orchestrator-side interruptions before completion; a
+prior end-to-end attempt landed the code but was never merged.
+
+---
+
 ## [0.4.2] — 2026-07-14
 
 **FP-tune release (2/3).** Second measured pass at the FP problem. v0.4.1 got

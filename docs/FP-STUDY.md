@@ -1,22 +1,25 @@
 # FP-STUDY — vetlock false-positive rate on routine npm bumps
 
-**tl;dr — v0.4.2 · 2026-07-14**
+**tl;dr — v0.5.0 · 2026-07-14**
 
-Three runs against the same 30-bump `studies/top-100.txt` corpus, fetched from an Artifactory-mirrored npm registry:
+Four runs against the same 30-bump `studies/top-100.txt` corpus, fetched from an Artifactory-mirrored npm registry:
 
-|                       | v0.4.0    | v0.4.1    | v0.4.2 (current) |
-|-----------------------|-----------|-----------|------------------|
-| Analyzed successfully | 27        | 27        | 28               |
-| BLOCK verdict         | **48.1%** (13) | **33.3%** (9) | **17.9%** (5) |
-| WARN verdict          | 3.7% (1)  | 18.5% (5) | 32.1% (9)        |
-| INFO verdict          | 0%        | 3.7% (1)  | 3.6% (1)         |
-| CLEAN verdict         | 48.1% (13)| 44.4% (12)| 46.4% (13)       |
-| Findings / analyzed   | 14.8      | 5.0       | **4.6**          |
-| Corpus attacks caught | 12/13     | 12/13     | 12/13 (unchanged)|
+|                       | v0.4.0    | v0.4.1    | v0.4.2    | v0.5.0 (current) |
+|-----------------------|-----------|-----------|-----------|------------------|
+| Analyzed successfully | 27        | 27        | 28        | 28               |
+| BLOCK verdict         | **48.1%** (13) | **33.3%** (9) | **17.9%** (5) | **14.3%** (4) |
+| WARN verdict          | 3.7% (1)  | 18.5% (5) | 32.1% (9) | 25.0% (7)        |
+| INFO verdict          | 0%        | 3.7% (1)  | 3.6% (1)  | **21.4%** (6)    |
+| CLEAN verdict         | 48.1% (13)| 44.4% (12)| 46.4% (13)| 39.3% (11)       |
+| Corpus attacks caught | 12/13     | 12/13     | 12/13     | 12/13 (unchanged)|
 
-**Take.** v0.4.0 BLOCK-ed 48% of legit routine npm upgrades — a scanner that gets muted. v0.4.1 dropped that to 33% with escalation + severity tuning. v0.4.2 lands the lifecycle-tier split (§3d), exec downgrade, and OBF bundler-output de-weight (§3e), pushing BLOCK to **17.9% — essentially at the ≤15% target**. Corpus attack-catch stays at 12/13 across every tune. The remaining BLOCKs are legit compound-suspicion cases: 5 bundler bumps (vite, prettier, vitest, webpack, tsx) with CODE + NET + OBF co-occurrence that a developer SHOULD glance at.
+**Take.** v0.4.0 BLOCK-ed 48% of routine npm upgrades. v0.4.1 dropped that to 33%, v0.4.2 to 18%, and v0.5.0 to **14.3% — below the ≤15% target**. Corpus attack-catch stays at 12/13 across all four versions. Six routine bumps (express, esbuild, zod, sharp, dotenv, rollup) that were WARN in v0.4.2 dropped to INFO in v0.5.0 because their URLs sit in comments, doc strings, or const-literals — not passed to `fetch()`/`axios()`. Every BLOCK-tier corpus attack fixture still trips because its exfil URLs ARE network-arg tagged and compound-suspicion escalation still fires.
 
-**What v0.4.2 changed** (this commit):
+**v0.5.0 (this release) — URL AST context tracking (§3b follow-up).** `URL_REGEX` still matches `Cursor.app`-shaped identifiers and `example.com` links in comments equally with real exfil endpoints (§3b was a regex-level fix; this is an AST-level follow-up). `FileCapabilities` gained an optional `urlLiteralContexts` map tagging each URL literal by how the AST actually uses it: `network-arg` (passed straight into `fetch`/`axios`/`request`/... or a `.get`/`.post`/etc. member call), `config-value` (assigned to a `url`/`endpoint`/`baseURL`/... object key), `literal` (a plain string, not consumed as a network target), or `comment` (only appears in a source comment). `net.new-endpoint` keeps its WARN severity for `network-arg`/`config-value` (unchanged behavior — that's where a real endpoint would be used) and downgrades to INFO for `literal`/`comment`. Files that don't go through the JS/TS AST pass (`.json`, parse failures) have no `urlLiteralContexts`, and `net.new-endpoint` defaults to its pre-v0.5.0 WARN there. Corpus attack-catch remains 12/13 unchanged — every BLOCK-tier corpus fixture's exfil URL is a `network-arg` (compound-suspicion escalation still promotes those to BLOCK); the URLs that shifted WARN→INFO were comment-only or non-network-arg strings (`coa`'s dead-code `https.get(url)` under `if (false)`, `eslint-scope`'s `build.js` string, `ua-parser-js`'s dead-code miner URL, `typosquat-synthetic`'s crossenv string) that were already not the primary attack signal in those fixtures.
+
+Also bumped the snapshot cache format version to 2 — pre-v0.5.0 caches are treated as misses (they lack `urlLiteralContexts` and would silently mask the new field).
+
+**What v0.4.2 changed** (previous release):
 
 - `install.script-changed` / `install.script-added` severity per hook tier:
   INSTALL-triggered hooks (preinstall/install/postinstall etc.) → BLOCK (unchanged);

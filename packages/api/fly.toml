@@ -1,0 +1,63 @@
+# vetlock-api — Fly.io deploy manifest
+#
+# Free-tier target: scale-to-zero, shared-cpu-1x @ 256 MB RAM. Cost is
+# ~$0/mo at idle (Fly's free allowance covers a couple of always-off
+# shared VMs) and ~$0.002/hr while a machine is actively serving. See
+# ./docs/DEPLOY.md for the cost curve at 100 / 1000 / 10k daily scans.
+#
+# Deploy with:  flyctl deploy --config packages/api/fly.toml \
+#                             --dockerfile packages/api/Dockerfile
+
+app = "vetlock-api"
+primary_region = "iad"
+
+[build]
+  # Point Fly at our multi-stage Dockerfile. The build context is the
+  # repo root — the Dockerfile expects to `COPY pnpm-workspace.yaml` and
+  # every packages/*/package.json.
+  dockerfile = "packages/api/Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+
+# ─── HTTP service ─────────────────────────────────────────────────────
+[http_service]
+  internal_port = 8080
+  # HTTPS-only; Fly terminates TLS with a Let's Encrypt cert.
+  force_https = true
+  # Scale-to-zero: no machines running when there's no traffic. First
+  # request wakes a machine (~1s cold start on shared-cpu-1x). This is
+  # what makes the free-tier math work.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  # Concurrent connections per machine before Fly spins up another. Keep
+  # low — each scan can hold a subprocess for up to 60s.
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 20
+    soft_limit = 10
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    path = "/health"
+    protocol = "http"
+    timeout = "5s"
+
+# ─── Machine size ─────────────────────────────────────────────────────
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+  cpus = 1
+
+# ─── Runtime security (defense in depth on top of the sandbox) ────────
+# Fly maps /app/dist read-only by default via the image layer. We add:
+#   - `/tmp` as tmpfs so per-scan sandbox dirs (which live under
+#     os.tmpdir()) never persist across machine restarts.
+#   - No mounted volumes — the API is stateless.
+[[mounts]]
+  # Empty mounts list; leaving the block for future ClickHouse/etc.
+  # wiring. Uncomment + configure once persistence is a requirement.

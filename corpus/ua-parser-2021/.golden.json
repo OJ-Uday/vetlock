@@ -34,7 +34,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using process/execution module \"child_process\". [escalated: package 'ua-parser-js' has 3 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'ua-parser-js' has 2 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
       "evidence": [
         {
           "file": "preinstall.js",
@@ -74,7 +74,7 @@
       ]
     },
     {
-      "detector": "net.new-endpoint",
+      "detector": "net.new-module",
       "category": "NET",
       "package": "ua-parser-js",
       "from": "0.7.28",
@@ -82,12 +82,12 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "New network endpoint appeared: https://miner.example.invalid/download [escalated: package 'ua-parser-js' has 3 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "message": "Package started using network module \"https\". [escalated: package 'ua-parser-js' has 2 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
       "evidence": [
         {
           "file": "preinstall.js",
           "line": 1,
-          "snippet": "https://miner.example.invalid/download"
+          "snippet": "imports https"
         }
       ],
       "provenance": [
@@ -98,20 +98,20 @@
       ]
     },
     {
-      "detector": "net.new-module",
+      "detector": "net.new-endpoint",
       "category": "NET",
       "package": "ua-parser-js",
       "from": "0.7.28",
       "to": "0.7.29",
       "direction": "changed",
-      "severity": "BLOCK",
+      "severity": "INFO",
       "confidence": "high",
-      "message": "Package started using network module \"https\". [escalated: package 'ua-parser-js' has 3 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "message": "New network endpoint appeared: https://miner.example.invalid/download [GHSA: GHSA-fh58-9fw3-vf2v]",
       "evidence": [
         {
           "file": "preinstall.js",
           "line": 1,
-          "snippet": "imports https"
+          "snippet": "https://miner.example.invalid/download"
         }
       ],
       "provenance": [

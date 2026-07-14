@@ -312,12 +312,36 @@
           "chalk"
         ]
       ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "chalk",
+      "from": "5.3.0",
+      "to": "5.3.1",
+      "direction": "changed",
+      "severity": "INFO",
+      "confidence": "medium",
+      "message": "New network endpoint appeared: example.invalid",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "example.invalid"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "chalk"
+        ]
+      ]
     }
   ],
   "rollupByDirect": {
     "chalk": {
       "maxSeverity": "BLOCK",
-      "count": 13
+      "count": 14
     }
   },
   "changes": [

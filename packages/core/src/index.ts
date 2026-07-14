@@ -1,4 +1,4 @@
-export const VETLOCK_VERSION = '0.4.2';
+export const VETLOCK_VERSION = '0.7.0';
 
 export * from './finding.js';
 export * from './extract.js';
@@ -9,6 +9,10 @@ export * from './lockfile.js';
 export * from './lockfile-pnpm.js';
 export * from './lockfile-yarn.js';
 export * from './lockfile-any.js';
+export * from './lockfile-pypi.js';
+export * from './artifact-pypi.js';
+export * from './capability-pypi.js';
+export * from './adapter-pypi.js';
 export * from './changeset.js';
 export * from './engine.js';
 export * from './fetch.js';
