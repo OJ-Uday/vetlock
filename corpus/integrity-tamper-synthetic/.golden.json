@@ -1,0 +1,43 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "integrity.hash-mismatch",
+      "category": "INTEG",
+      "package": "foo-lib",
+      "from": "1.2.3",
+      "to": "1.2.3",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Same version, different integrity: sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== → sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw==. Registry-side or in-flight tamper.",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "integrity sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== → sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw=="
+        }
+      ],
+      "provenance": []
+    }
+  ],
+  "rollupByDirect": {
+    "foo-lib": {
+      "maxSeverity": "BLOCK",
+      "count": 1
+    }
+  },
+  "changes": [
+    {
+      "kind": "integrity-changed",
+      "name": "foo-lib",
+      "nodeKeyOld": "node_modules/foo-lib",
+      "nodeKeyNew": "node_modules/foo-lib",
+      "oldVersion": "1.2.3",
+      "newVersion": "1.2.3",
+      "oldIntegrity": "sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw==",
+      "newIntegrity": "sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw=="
+    }
+  ],
+  "errors": []
+}

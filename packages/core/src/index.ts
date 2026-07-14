@@ -1,4 +1,4 @@
-export const VETLOCK_VERSION = '0.3.0';
+export const VETLOCK_VERSION = '0.4.0';
 
 export * from './finding.js';
 export * from './extract.js';

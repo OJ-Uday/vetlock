@@ -1,0 +1,144 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "bin.new-native-artifact",
+      "category": "INSTALL",
+      "package": "ua-parser-js",
+      "from": "0.7.28",
+      "to": "0.7.29",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New native binary artifact shipped in tarball: bin/jsextension.node (node, 512 bytes) [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "evidence": [
+        {
+          "file": "bin/jsextension.node",
+          "line": 1,
+          "snippet": "node artifact, sha256=076a27c79e5ace2a…"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "ua-parser-js"
+        ]
+      ]
+    },
+    {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "ua-parser-js",
+      "from": "0.7.28",
+      "to": "0.7.29",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started using process/execution module \"child_process\". [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "evidence": [
+        {
+          "file": "preinstall.js",
+          "line": 1,
+          "snippet": "imports child_process"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "ua-parser-js"
+        ]
+      ]
+    },
+    {
+      "detector": "install.script-added",
+      "category": "INSTALL",
+      "package": "ua-parser-js",
+      "from": "0.7.28",
+      "to": "0.7.29",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Lifecycle script \"preinstall\" was added. [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "preinstall: node preinstall.js"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "ua-parser-js"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "ua-parser-js",
+      "from": "0.7.28",
+      "to": "0.7.29",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint appeared: https://miner.example.invalid/download [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "evidence": [
+        {
+          "file": "preinstall.js",
+          "line": 1,
+          "snippet": "https://miner.example.invalid/download"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "ua-parser-js"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "ua-parser-js",
+      "from": "0.7.28",
+      "to": "0.7.29",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "high",
+      "message": "Package started using network module \"https\". [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "evidence": [
+        {
+          "file": "preinstall.js",
+          "line": 1,
+          "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "ua-parser-js"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "ua-parser-js": {
+      "maxSeverity": "BLOCK",
+      "count": 5
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "ua-parser-js",
+      "nodeKeyOld": "node_modules/ua-parser-js",
+      "nodeKeyNew": "node_modules/ua-parser-js",
+      "oldVersion": "0.7.28",
+      "newVersion": "0.7.29",
+      "oldIntegrity": "sha512-EgkTxZUVDnYKcz6bh75oHT+mBlzIRRE/GdlH/tTriqOKj/fyQ7QIbqweIOtAyWKBJVnG+U4E75pVXzGF+zKFoA==",
+      "newIntegrity": "sha512-GHSIIUR6MY1AqGZYu5vrkBal/3+NlN9fykJVCCH8uPSKxnLVjRFdxgcDaeP1aCAxqrA/CSGRZBAzdcRyYygrhg=="
+    }
+  ],
+  "errors": []
+}

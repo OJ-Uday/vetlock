@@ -1,6 +1,6 @@
 {
   "name": "@vetlock/detectors",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -9,7 +9,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsc -p . && cp src/capability-map.json dist/capability-map.json",
     "typecheck": "tsc -p . --noEmit",
     "test": "vitest run"
   },

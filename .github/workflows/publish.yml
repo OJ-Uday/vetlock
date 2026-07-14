@@ -1,0 +1,72 @@
+name: publish
+
+# Publishes `vetlock` to npm with build provenance (npm's SLSA attestation).
+# A supply-chain scanner MUST ship with the supply-chain hygiene it advocates
+# for — that's the whole story, and provenance is the technical backing.
+#
+# Trigger: pushed tag matching v*.*.*.  The tag SHA is what GitHub OIDC signs,
+# so npm's provenance record ties the tarball back to a specific commit + workflow.
+#
+# Non-goals: this workflow does NOT create GitHub releases (the annotated tag
+# is the source of truth for what shipped; a GH release is a UI convenience
+# that can be added by hand after the fact if needed).
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write   # required for `npm publish --provenance` (OIDC → sigstore)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # so `git describe` in the build can find recent history
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install (frozen)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all workspaces
+        run: pnpm -r build
+
+      - name: Test (the release gate)
+        # A published tarball must correspond to a fully green commit. No exceptions.
+        run: pnpm -r test
+
+      - name: Verify version consistency
+        # Tag vX.Y.Z must match packages/cli/package.json version. Prevents
+        # a stale-tag or forgotten-bump publish.
+        run: |
+          set -e
+          TAG="${GITHUB_REF#refs/tags/v}"
+          PKG=$(node -p "require('./packages/cli/package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::tag v$TAG != packages/cli/package.json v$PKG" >&2
+            exit 1
+          fi
+          echo "publishing vetlock@$TAG"
+
+      - name: Publish to npm (with provenance)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        working-directory: packages/cli
+        run: npm publish --provenance --access public

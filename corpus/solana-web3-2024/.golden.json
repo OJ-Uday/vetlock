@@ -1,0 +1,120 @@
+{
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "meta.maintainer-change",
+      "category": "META",
+      "package": "@solana/web3.js",
+      "from": "1.95.4",
+      "to": "1.95.5",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package '@solana/web3.js' has 2 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "maintainers: [solana-labs@example] → [phish@example.invalid, solana-labs@example]"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "@solana/web3.js"
+        ]
+      ]
+    },
+    {
+      "detector": "net.encoded-endpoint",
+      "category": "NET",
+      "package": "@solana/web3.js",
+      "from": "1.95.4",
+      "to": "1.95.5",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint concealed via base64 encoding: https://exfil.example.invalid/wallet-drain [GHSA: GHSA-jj35-jhw9-vp4q]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 3,
+          "snippet": "base64(\"aHR0cHM6Ly9leGZpbC5leGFtcGxlLmludmFsaWQvd2FsbGV0LWRyYWlu\") → https://exfil.example.invalid/wallet-drain"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "@solana/web3.js"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "@solana/web3.js",
+      "from": "1.95.4",
+      "to": "1.95.5",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/wallet-drain [GHSA: GHSA-jj35-jhw9-vp4q]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "https://exfil.example.invalid/wallet-drain"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "@solana/web3.js"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "@solana/web3.js",
+      "from": "1.95.4",
+      "to": "1.95.5",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started using network module \"https\". [escalated: package '@solana/web3.js' has 2 WARN findings across 2 categories] [GHSA: GHSA-jj35-jhw9-vp4q]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 1,
+          "snippet": "imports https"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "@solana/web3.js"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "@solana/web3.js": {
+      "maxSeverity": "BLOCK",
+      "count": 4
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "@solana/web3.js",
+      "nodeKeyOld": "node_modules/@solana/web3.js",
+      "nodeKeyNew": "node_modules/@solana/web3.js",
+      "oldVersion": "1.95.4",
+      "newVersion": "1.95.5",
+      "oldIntegrity": "sha512-YFXNL90bz8f8ug87mCoW6HZm4JyDetIs45uDBVU0OaD9JstnZThG8cJ1ozgtKnNUuuDnSB3FcGcJsi1SdkN7jg==",
+      "newIntegrity": "sha512-aXB7abvZZZCbZ1b6yUdBmW2n1PlbkYBUG14ajWM0LpZPenZmWtSB8qo/emM6YiWpKU30mZGNFxWqoDzLIC2rmg=="
+    }
+  ],
+  "errors": []
+}
