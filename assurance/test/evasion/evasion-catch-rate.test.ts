@@ -33,9 +33,28 @@
  *
  * The routing between "GAP-pinning" and "positive survives" assertions happens through
  * the `KNOWN_GAP_IDS` set below — same shape as the metamorphic-invariance test.
+ *
+ * ROUTING NOTE (Wave 6-AA — into-lifecycle-script fix)
+ * ----------------------------------------------------
+ * Some transforms produce output that is NOT a .js file body — notably `intoLifecycleScript`
+ * emits a `package.json` JSON fragment representing a synthetic package's manifest. Feeding
+ * that JSON through `engine:extractCapabilities` (a per-file `.js` AST scanner) is a routing
+ * bug: the engine cannot see JSON-embedded code-execution because it isn't parsing JSON.
+ * The correct pipeline is `engine:analyzeTarball`, which reads manifest scripts and emits
+ * `persistence` findings via `adaptPackageSnapshot`.
+ *
+ * These transforms are marked in `ANALYZE_TARBALL_ROUTED_IDS` so the standard
+ * extractCapabilities loop skips them, and each has a dedicated `it(...)` block below that
+ * routes through the correct scenario. This is an ASSURANCE-side fix (the harness was
+ * routing wrong); the engine already had the machinery to catch lifecycle-hook persistence
+ * capabilities via the manifest pipeline.
  */
 
 import { describe, it, expect } from 'vitest';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import * as os from 'node:os';
+import * as crypto from 'node:crypto';
 import { runBounded } from '../../src/runner/index.js';
 import { oracleFindingSurvives } from '../../src/oracles/finding-survives.js';
 import { scanForDefangViolations } from '../../src/defang/index.js';
@@ -44,6 +63,7 @@ import {
   allTransforms,
   type CompletenessTransform,
 } from '../../src/completeness-vectors/index.js';
+import { makeTgz } from '../../../packages/core/test/tgz-builder.js';
 
 /**
  * extractCapabilities is a pure per-file AST scan — the same bounds the metamorphic-e2e
@@ -71,25 +91,34 @@ const CAUGHT_SOURCES: Readonly<Record<string, string>> = {
 };
 
 /**
- * Transform ids known to evade the engine's detectors on the current build. Each id
- * has a corpus entry under `assurance/corpus/evasion/<id>/README.md` with the full
- * write-up (what evaded, why it matters, the fixture, and the exact assertion-flip
- * a fix should produce). These transforms are routed to the GAP-pinning assertion
- * below (`expect(verdict.pass).toBe(false)`); every OTHER transform runs the positive
- * "finding survived" assertion.
+ * Transform ids whose output is NOT a .js file body and therefore doesn't belong in the
+ * `engine:extractCapabilities` (per-file `.js` AST scanner) loop below. These transforms
+ * are routed to `engine:analyzeTarball` via dedicated `it(...)` blocks at the end of this
+ * file — the transform's output becomes the `package.json` inside a synthetic tarball, and
+ * the oracle checks that the resulting manifest-pipeline findings preserve the payload's
+ * capability (typically translated to `persistence` for lifecycle-hook payloads).
  *
- * When STARTUP fixes a gap, remove the id from this set and let the standard-path
- * assertion take over.
+ * This is a routing map, not a gap list. When a new transform emits non-.js output, add
+ * its id here AND wire a dedicated `it(...)` block that feeds the correct scenario.
  */
-const KNOWN_GAP_IDS: ReadonlySet<string> = new Set<string>([
-  // into-lifecycle-script — the transform emits a package.json JSON fragment, not JS.
-  // The engine's per-file `.js` AST scanner cannot see JSON semantics (no require, no
-  // MemberExpression). The full pipeline (engine:analyzeTarball) IS location-aware —
-  // it reads package.json manifests and emits persistence findings on lifecycle hooks
-  // — but the per-file .js scanner in isolation is location-incomplete by design.
+const ANALYZE_TARBALL_ROUTED_IDS: ReadonlySet<string> = new Set<string>([
+  // into-lifecycle-script — the transform emits a package.json JSON fragment with a
+  // populated `scripts.postinstall`. The engine's per-file .js AST scanner (which this
+  // file's default loop uses) cannot see JSON semantics. The correct pipeline is
+  // engine:analyzeTarball, which reads manifest.scripts and emits `persistence` findings
+  // via adaptPackageSnapshot (LIFECYCLE_HOOKS set includes postinstall).
   // Corpus: assurance/corpus/evasion/into-lifecycle-script/README.md.
   'into-lifecycle-script',
 ]);
+
+/**
+ * Known GAPS — transforms that DO produce .js output but genuinely evade the current
+ * engine on the extractCapabilities pipeline. Empty as of Wave 6-AA; kept as an extension
+ * point mirroring metamorphic-invariance's KNOWN_GAP_IDS. When populated, each gap has a
+ * dedicated GAP-pinning `it(...)` block below (see the metamorphic-invariance file for the
+ * canonical shape).
+ */
+const KNOWN_GAP_IDS: ReadonlySet<string> = new Set<string>();
 
 /**
  * Feed one source string through the bounded runner's engine:extractCapabilities
@@ -125,10 +154,11 @@ describe('evasion catch-rate — completeness-vector transforms preserve capabil
   });
 
   for (const transform of allTransforms) {
-    // Positive "survives" assertions for transforms not in KNOWN_GAP_IDS. The GAP-pinning
-    // assertion for each known gap lives in its own `it(...)` block below (mirrors the
-    // metamorphic-invariance file's structure so a gap's PIN and its REGRESSION-GUARD
-    // are visible side-by-side in the file).
+    // Skip transforms whose output is routed through a different scenario (analyze-tarball
+    // for JSON-shaped output) — those have dedicated it() blocks below. Also skip transforms
+    // in KNOWN_GAP_IDS (extractCapabilities-shape gaps whose GAP-pinning assertion lives in
+    // its own it() block below).
+    if (ANALYZE_TARBALL_ROUTED_IDS.has(transform.id)) continue;
     if (KNOWN_GAP_IDS.has(transform.id)) continue;
 
     it(
@@ -181,63 +211,128 @@ describe('evasion catch-rate — completeness-vector transforms preserve capabil
   }
 
   // ------------------------------------------------------------------------------------------
-  // KNOWN GAPS — pin the current failing behavior; each assertion flips green when STARTUP
-  // closes the underlying engine gap. Each gap has a corpus entry with README + fixture at
-  // `assurance/corpus/evasion/<id>/`.
+  // ANALYZE-TARBALL-ROUTED transforms — the transform's output is a package.json JSON
+  // fragment (not a .js body), so extractCapabilities cannot see it. Route the output
+  // through engine:analyzeTarball where adaptPackageSnapshot emits `persistence` findings
+  // on manifest lifecycle hooks. This is the assurance-side fix landed in Wave 6-AA.
   // ------------------------------------------------------------------------------------------
 
   it(
-    'GAP: into-lifecycle-script — engine:extractCapabilities on a .js relpath cannot see JSON-embedded code-execution',
+    'code-location/into-lifecycle-script: finding survives via engine:analyzeTarball (payload lands in package.json.scripts.postinstall → persistence)',
     async () => {
-      const source = CAUGHT_SOURCES['code-execution']!;
-      const transform = allTransforms.find((t) => t.id === 'into-lifecycle-script');
-      // Guard: if the transform is ever unregistered / renamed, we want the gap-pin to
-      // FAIL LOUDLY rather than silently skip.
+      // Locate the transform via the same barrel enumeration the standard loop uses. If
+      // the transform is ever unregistered / renamed, this fails loudly rather than
+      // silently skipping — matches the guard in the sibling metamorphic-invariance file.
+      const transform: CompletenessTransform | undefined =
+        allTransforms.find((t) => t.id === 'into-lifecycle-script');
       expect(transform, 'expected transform into-lifecycle-script to be registered').toBeDefined();
       if (!transform) return;
 
-      const mutated = transform.transform(source, /*seed*/ 42);
+      // BEFORE: the raw .js payload. Fed through extractCapabilities to prove the baseline
+      // contains the code-execution capability (the class the transform claims to
+      // preserve). Uses the standard defanged fixture; scanForDefangViolations must pass.
+      const source = CAUGHT_SOURCES['code-execution']!;
       expect(scanForDefangViolations(source).clean).toBe(true);
-      // NOTE: mutated output is NOT defang-checked here. `intoLifecycleScript` wraps
-      // any meaningful code-execution payload in `node -e "<payload>"`, which the defang
-      // guard's `node -e` pattern (correctly) flags as a runnable exec invocation. That
-      // "violation" is precisely what the transform is designed to produce — the whole
-      // point of the code-location vector is to demonstrate that a package can hide
-      // code-execution inside package.json where the .js scanner never looks. Rule #2
-      // applies to fixtures COMMITTED to the corpus (see test/defang/corpus-scan.test.ts);
-      // the transform's per-test runtime output is not committed and is handed to the
-      // engine's AST scanner, which reads it but never executes it.
 
-      // Feed the transformed payload to the per-file .js extractor. The transform
-      // produced a package.json JSON fragment ({"name":..., "scripts":{"postinstall":
-      // "node -e ..."}}). At the top level, `{ ... }` parses as a JS BLOCK statement
-      // with labeled statements; the JS AST scanner sees no `require`, no `.exec`,
-      // no MemberExpression it recognises — so no code-execution finding surfaces.
-      const [outA, outB] = await Promise.all([
-        analyzeSource(source, 'a.js'),
-        analyzeSource(mutated, 'a.js'),
-      ]);
+      // AFTER: the transform emits a package.json JSON fragment whose `scripts.postinstall`
+      // wraps the payload in `node -e "<payload>"`. That output belongs in the manifest
+      // pipeline, not the per-file .js AST scanner. Path 1 (packet §5 P3 recommended):
+      // materialize a real synthetic tarball on disk and hand it to engine:analyzeTarball.
+      //
+      // NOTE: the raw transform output triggers the defang guard's `node -e` pattern by
+      // design — that's precisely the exec vector the fixture demonstrates. The tarball
+      // is written to a per-test tmp dir (never committed), so packet rule #2 (defang
+      // corpus scan) does not apply here. See the corpus README for the same discussion.
+      const mutated = transform.transform(source, /*seed*/ 42);
+      expect(mutated, 'transform must be non-trivial for the code-execution fixture').not.toBe(source);
 
-      const verdict = oracleFindingSurvives(outA, outB, 'code-execution');
+      // Build the synthetic package tarball. npm-style layout: single root `package/`
+      // directory, `package.json` = the transform's output, plus a stub `index.js` so the
+      // tarball looks like a well-formed package. Both use `makeTgz` from the engine's
+      // own test-helper (assurance already re-uses it in never-execute-under-stress).
+      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'wave6-aa-lifecycle-'));
+      try {
+        const tgz = makeTgz([
+          { name: 'package/package.json', content: Buffer.from(mutated, 'utf8') },
+          {
+            name: 'package/index.js',
+            content: Buffer.from("module.exports = { hello: 'defanged' };\n", 'utf8'),
+          },
+        ]);
+        const tarballPath = path.join(tmpDir, `into-lifecycle-${crypto.randomBytes(4).toString('hex')}.tgz`);
+        await fs.writeFile(tarballPath, tgz);
 
-      // What the engine currently does: no code-execution finding on the JSON body →
-      // the oracle reports "evasion: mutated variant is missing any finding of class
-      // code-execution". The harness caught the gap.
-      expect(verdict.pass).toBe(false);
-      expect(verdict.reason).toMatch(/evasion|missing any finding/);
+        // BEFORE outcome: extractCapabilities on the raw .js source produces the baseline
+        // code-execution finding (via execModules: ['child_process'] + the cp.exec call
+        // site). This proves the fixture is well-formed under the class the transform
+        // claims to preserve.
+        const outA = await analyzeSource(source, 'a.js');
+        // AFTER outcome: analyzeTarball on the synthetic tarball. adaptPackageSnapshot's
+        // LIFECYCLE_HOOKS set catches `postinstall` and emits a `persistence` finding.
+        // A capability-preserving completeness check on the code-location vector must
+        // treat that as the class the fixture landed in — the payload didn't disappear;
+        // it moved to a location whose class is `persistence` (install-time execution).
+        const outB = await runBounded(
+          {
+            kind: 'engine:analyzeTarball',
+            enginePath: '@vetlock/core',
+            tarballPath,
+          },
+          BOUNDS,
+        );
 
-      // Both A and B produced a runner-verdict-bearing outcome (ok OR fail-safe). Crash /
-      // timeout / oom would be a robustness problem for a different test bucket. The
-      // gap is on the analysis surface, not on the runner's own axes.
-      expect(['ok', 'fail-safe']).toContain(outA.kind);
-      expect(['ok', 'fail-safe']).toContain(outB.kind);
+        // Both outcomes must be verdict-bearing. Crash/timeout/oom on either side means
+        // the analysis itself broke on the input — a robustness bug for a different suite.
+        expect(['ok', 'fail-safe']).toContain(outA.kind);
+        expect(['ok', 'fail-safe']).toContain(outB.kind);
 
-      // WHEN THE FIX LANDS: the correct fix is location-aware routing — the assurance
-      // harness (or the engine's own analyzeTarball path) recognises the transform's
-      // JSON shape and feeds it to the manifest/lifecycle scanner instead of the .js
-      // scanner. When that lands, replace the `expect(verdict.pass).toBe(false)` above
-      // with `expect(verdict.pass).toBe(true)` and remove `'into-lifecycle-script'`
-      // from KNOWN_GAP_IDS.
+        // Oracle: the payload's capability survives the code-location transform. In the
+        // BEFORE run it surfaces as `code-execution`; in the AFTER run it surfaces as
+        // `persistence` (the manifest pipeline's class for lifecycle-hook payloads).
+        // Both are correct spellings of "this package runs code at install time"; the
+        // scanner's coverage of the code-location family is complete iff at least one
+        // shows up on each side.
+        //
+        // We assert directly on the class set of AFTER (rather than calling
+        // oracleFindingSurvives) because oracleFindingSurvives takes a single class
+        // argument and this transform legitimately maps the class family across the
+        // extract/analyze boundary. The oracle's own invariants (BEFORE has the class,
+        // AFTER is verdict-bearing, AFTER contains the class) are re-checked inline.
+        const beforeClasses =
+          outA.kind === 'ok' || outA.kind === 'fail-safe'
+            ? new Set(outA.findings.map((f) => f.capabilityClass))
+            : new Set<string>();
+        const afterClasses =
+          outB.kind === 'ok' || outB.kind === 'fail-safe'
+            ? new Set(outB.findings.map((f) => f.capabilityClass))
+            : new Set<string>();
+
+        expect(beforeClasses.has('code-execution')).toBe(true);
+        expect(afterClasses.has('persistence')).toBe(true);
+
+        // Bonus proof: the persistence finding is specifically anchored on `postinstall`
+        // (not merely any lifecycle hook), and the recorded script begins with `node -e`
+        // — evidence that the transform's payload really did survive intact through the
+        // manifest pipeline.
+        if (outB.kind === 'ok' || outB.kind === 'fail-safe') {
+          const persistenceHits = outB.findings.filter(
+            (f) => f.capabilityClass === 'persistence',
+          );
+          const hooks = new Set(
+            persistenceHits
+              .map((f) => f.meta?.['hook'])
+              .filter((h): h is string => typeof h === 'string'),
+          );
+          expect(hooks.has('postinstall')).toBe(true);
+          const postinstallFinding = persistenceHits.find(
+            (f) => f.meta?.['hook'] === 'postinstall',
+          );
+          expect(typeof postinstallFinding?.meta?.['script']).toBe('string');
+          expect((postinstallFinding!.meta!['script'] as string).startsWith('node -e ')).toBe(true);
+        }
+      } finally {
+        await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+      }
     },
     30_000,
   );
