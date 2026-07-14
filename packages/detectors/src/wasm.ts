@@ -16,7 +16,7 @@
  * BLOCK, high — matches the severity of the JS-side eval detector.
  */
 
-import type { Detector, Finding, PackageSnapshot, SnapshotPair } from '@vetlock/core';
+import type { Detector, Finding, NativeArtifact, PackageSnapshot, SnapshotPair } from '@vetlock/core';
 import { directionFor } from './direction.js';
 
 /**
@@ -99,7 +99,7 @@ export const wasmDetector: Detector = {
       if (a.kind !== 'wasm' || !a.wasmParseError) continue;
       // Was this path also unparseable before? Then skip.
       const wasBadBefore = pair.old?.nativeArtifacts.some(
-        (o) => o.path === a.path && o.wasmParseError,
+        (o: NativeArtifact) => o.path === a.path && o.wasmParseError,
       );
       if (wasBadBefore) continue;
       out.push({

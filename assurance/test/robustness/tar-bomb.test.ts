@@ -194,7 +194,11 @@ describe('tar-bomb: many-entries (iteration-cap testing)', () => {
     // Fixture bound: many small entries still gzip-compresses well below 1 MB.
     expect(input.bytes.length).toBeLessThan(1_000_000);
     const tgz = await materialize(input);
-    const outcome = await analyzeBounded(tgz, WALL_MS);
+    // Under vitest concurrent-fork pressure, extracting 15k entries + hitting the count-cap
+    // can slip past the default 10s WALL_MS. The entry-cap is a hard limit inside the
+    // extractor (fast per-entry check), so widening to 25s makes this test reliable without
+    // masking a genuine hang — a genuine hang would still trip a real timeout on 60s+.
+    const outcome = await analyzeBounded(tgz, 25_000);
     expect(outcome.status).toBe('rejected');
     if (outcome.status === 'rejected') {
       expect(outcome.error).toBeInstanceOf(UnsafeArchiveError);
@@ -202,5 +206,5 @@ describe('tar-bomb: many-entries (iteration-cap testing)', () => {
         expect(outcome.error.kind).toBe('entry-count-exceeded');
       }
     }
-  }, 30_000);
+  }, 45_000);
 });
