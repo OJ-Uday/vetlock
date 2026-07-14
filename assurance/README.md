@@ -48,3 +48,23 @@ Foundations only. No robustness/completeness generators yet — those are P1/P2.
 delivers: the oracle set, the bounded runner, an empty stamped report. The runner is
 engine-agnostic (accepts any `AnalyzeFn`) so it can be exercised by synthetic scenarios
 that deliberately hang / crash / OOM before P1 wires the real engine in.
+
+## Branch protection (P5 release gate)
+
+The `assurance-pr` workflow (`.github/workflows/assurance-pr.yml`) implements the
+blocking PR tier from [ADR 0004](docs/adr/0004-run-tiers.md). For the release gate to
+actually gate — "no vetlock release without green PR-tier assurance" — a repo
+administrator must enable branch protection on `main` and mark **`PR-tier assurance
+(blocking)`** (the job name) as a required status check.
+
+Until that box is ticked, the workflow still runs on every PR and every push to `main`,
+its badge on the root README turns red on regression, and reviewers can see the failure
+in the checks tab. But GitHub itself won't refuse the merge. Enabling required-check
+status is the last mile: it turns the automated adversary into a hard gate.
+
+Companion workflow: `.github/workflows/assurance-scheduled.yml` runs the non-blocking
+discovery tier nightly (fresh seed, larger budget, agent panel + differential adapters
+when present) and opens an issue on any confirmed gap. Scheduled-tier findings must be
+triaged and promoted into the PR-tier corpus before their issue closes — that's how the
+blocking gate gets stronger over time without the PR tier itself getting slower.
+

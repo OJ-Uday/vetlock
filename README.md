@@ -13,6 +13,8 @@
 [![Zero telemetry](https://img.shields.io/badge/telemetry-zero-blue)](#privacy)
 [![NEVER-EXECUTE canary](https://img.shields.io/badge/canary-NEVER--EXECUTE-red)](docs/adr/0005-never-execute.md)
 
+![Assurance](https://github.com/OJ-Uday/vetlock/actions/workflows/assurance-pr.yml/badge.svg)
+
 </div>
 
 ---
@@ -215,6 +217,14 @@ Each invariant is codified as a named test that fails the build if violated:
 - **Fail-soft parse** — unparseable source → WARN, never crash.
 - **Safe extract** — zip-slip, symlinks, tarbombs, mode-bit shenanigans rejected.
 - **Fail-closed on analyzer crash** ([S10](docs/REDTEAM-2026-07-12.md)) — analyzer timeout / uncaught throw → BLOCK, never a silent CLEAN.
+
+---
+
+## Assurance — the standing adversary
+
+vetlock ships with a permanent, automated adversary that continuously tries to (a) take
+the engine down and (b) sneak malice past it. It fails the build the instant either
+succeeds. See [ASSURANCE.md](assurance/report/ASSURANCE.md) for the current scorecard.
 
 ---
 
