@@ -14,8 +14,11 @@
  * OOM detection is heuristic — Node/V8 signals it in multiple ways depending on version:
  *   1. `error` event with `err.code === 'ERR_WORKER_OUT_OF_MEMORY'` (newer Node)
  *   2. `error` event with message matching /out of memory|heap out of memory/i (older Node)
- *   3. `exit` event with code 5 (V8 abort code for OOM)
- * All three normalize to `kind: 'oom'`. Anything else on the error path is `kind: 'crash'`.
+ *   3. `error` event with V8-internal signatures: 'v8::internal::Heap::' or 'Zone::New'
+ *      (Wave 1B-B reported these leak through as `crash` — they're OOM in disguise)
+ *   4. `error` event with 'Reached heap limit Allocation failed' (Node/V8 OOM banner)
+ *   5. `exit` event with code 5 (V8 abort code for OOM)
+ * All five normalize to `kind: 'oom'`. Anything else on the error path is `kind: 'crash'`.
  */
 
 import { Worker } from 'node:worker_threads';
@@ -52,11 +55,22 @@ const WORKER_PATH: string = (() => {
 
 /** Error codes Node emits when a worker's V8 heap blows past resourceLimits. */
 const OOM_ERROR_CODE = 'ERR_WORKER_OUT_OF_MEMORY';
+/**
+ * Message-shaped OOM signals. Ordered from most-common to most-obscure. The first three come
+ * from older-Node error-path OOMs; the last two are the V8-internal signatures Wave 1B-B
+ * observed leaking through as 'crash' (they showed up in error messages with a stack frame
+ * pointing at V8 internals rather than the standard OOM banner).
+ */
 const OOM_MESSAGE_PATTERNS = [
   /out of memory/i,
   /heap out of memory/i,
   /allocation failed/i,
   /reached heap limit/i,
+  // V8-internal signatures — these appear in the stack when the allocator itself aborts.
+  /v8::internal::Heap::/,
+  /Zone::New/,
+  // Node/V8 formal OOM banner (JS-level). Sometimes appears without 'out of memory' matching.
+  /Reached heap limit Allocation failed/i,
 ];
 /** V8's stereotypical abort exit code for allocation failures. */
 const OOM_EXIT_CODE = 5;
@@ -81,12 +95,26 @@ function serializeError(err: unknown): SerializedError {
   return { name: 'Error', message: String(err) };
 }
 
+/**
+ * Heuristic classifier for OOM vs generic crash.
+ *
+ * Wave 1B-B feedback: some V8 allocation paths surface as `crash` with a non-standard
+ * message rather than the canonical OOM banner. The V8-internal signatures ('v8::internal::
+ * Heap::' and 'Zone::New') appear in the .stack, not always in .message. So we scan both.
+ *
+ * The check order matters — code first (cheapest, most-authoritative), then message, then
+ * stack. Any positive short-circuits.
+ */
 function looksLikeOom(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
   const rec = err as Record<string, unknown>;
   if (rec.code === OOM_ERROR_CODE) return true;
   const message = typeof rec.message === 'string' ? rec.message : '';
-  return OOM_MESSAGE_PATTERNS.some((pattern) => pattern.test(message));
+  if (OOM_MESSAGE_PATTERNS.some((pattern) => pattern.test(message))) return true;
+  // Fall through to the stack — V8-internal aborts often have empty/non-standard messages
+  // but a stack frame pointing at the allocator.
+  const stack = typeof rec.stack === 'string' ? rec.stack : '';
+  return OOM_MESSAGE_PATTERNS.some((pattern) => pattern.test(stack));
 }
 
 /** Structured-clone-safe outcome messages the worker posts. Mirror of worker.ts. */
@@ -103,7 +131,6 @@ export function runBounded(scenario: Scenario, bounds: Bounds): Promise<RunOutco
     const start = performance.now();
     let settled = false;
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
-    let terminatedForTimeout = false;
 
     const finish = (outcome: RunOutcome): void => {
       if (settled) return;
@@ -173,13 +200,11 @@ export function runBounded(scenario: Scenario, bounds: Bounds): Promise<RunOutco
       // Most exits are caught by 'message' or 'error' before this fires. The remaining case
       // is a clean OOM that only surfaces via exit code 5 (older Node/V8 combinations).
       if (settled) return;
-      if (terminatedForTimeout) {
-        // A terminate() from the wallMs path — the timeout outcome has already been resolved
-        // (see the setTimeout below). Belt-and-suspenders: if we ever got here without the
-        // timer having resolved us, surface as timeout too.
-        finish({ kind: 'timeout', wallMs: bounds.wallMs, seed: bounds.seed });
-        return;
-      }
+      // Note: the timeout path can't reach here — the setTimeout below calls finish() first,
+      // which flips `settled = true` synchronously *before* awaiting worker.terminate(). By
+      // the time terminate's exit event bubbles, the `if (settled) return` above catches it.
+      // (Wave 1B-B feedback: an earlier `if (terminatedForTimeout) ...` fallback here was
+      // dead code and was pruned.)
       if (code === OOM_EXIT_CODE) {
         finish({
           kind: 'oom',
@@ -203,10 +228,9 @@ export function runBounded(scenario: Scenario, bounds: Bounds): Promise<RunOutco
 
     timeoutHandle = setTimeout(() => {
       if (settled) return;
-      terminatedForTimeout = true;
       // Resolve first, terminate second: the outcome is authoritative regardless of how the
-      // worker responds to terminate(). finish() will invoke terminate() again but the flag
-      // prevents double-resolve.
+      // worker responds to terminate(). finish() will invoke terminate() again but the
+      // `settled` flag prevents double-resolve.
       finish({
         kind: 'timeout',
         wallMs: bounds.wallMs,

@@ -137,8 +137,10 @@ import {
   adaptFindings,
   findingsSignalFailSafe,
   extractFailSafeReason,
+  adaptFileCapabilities,
+  adaptPackageSnapshot,
 } from './engine-adapter.js';
-import type { Finding as EngineFinding } from '@vetlock/core';
+import type { Finding as EngineFinding, FileCapabilities, PackageSnapshot } from '@vetlock/core';
 
 async function runEngine(scenario: Extract<Scenario, { kind: `engine:${string}` }>): Promise<WorkerOutcome> {
   const start = performance.now();
@@ -207,6 +209,62 @@ async function runEngine(scenario: Extract<Scenario, { kind: `engine:${string}` 
     };
   }
 
+  if (scenario.kind === 'engine:extractCapabilities') {
+    // Wave 3-O: pure text-in → per-file capability extract. Unblocks Wave 1B-J's
+    // metamorphic tests — they need a way to feed source text through the AST scanner
+    // and inspect the emitted capability set as assurance Findings.
+    const extractCapabilities = engine.extractCapabilities as
+      | ((filePath: string, text: string, sha256: string, bytes: number) => FileCapabilities)
+      | undefined;
+    if (typeof extractCapabilities !== 'function') {
+      throw new Error(
+        `[worker] enginePath ${scenario.enginePath} does not export extractCapabilities`,
+      );
+    }
+    const cap = extractCapabilities(
+      scenario.relPath,
+      scenario.text,
+      scenario.sha256 ?? '',
+      scenario.bytes ?? scenario.text.length,
+    );
+    // extractCapabilities never throws for parse errors — it returns FileCapabilities with
+    // parseError set. adaptFileCapabilities routes that to an analysis-failed Finding of
+    // BLOCK severity, which the parent's engine-adapter uses to signal fail-safe.
+    if (cap.parseError) {
+      return {
+        channel: 'fail-safe',
+        reason: cap.parseError,
+        findings: adaptFileCapabilities(cap),
+        wallMs: performance.now() - start,
+      };
+    }
+    return {
+      channel: 'ok',
+      findings: adaptFileCapabilities(cap),
+      wallMs: performance.now() - start,
+    };
+  }
+
+  if (scenario.kind === 'engine:analyzeTarball') {
+    // Wave 3-O: full-pipeline entrypoint — extract tarball, scan every file, read manifest.
+    // Unblocks Wave 3-M's archive test vectors which feed adversarial tarballs (path
+    // traversal, symlinks, size bombs) through the real extractor + analyzer.
+    const analyzeTarball = engine.analyzeTarball as
+      | ((tarballPath: string, opts?: unknown) => Promise<PackageSnapshot>)
+      | undefined;
+    if (typeof analyzeTarball !== 'function') {
+      throw new Error(
+        `[worker] enginePath ${scenario.enginePath} does not export analyzeTarball`,
+      );
+    }
+    const snap = await analyzeTarball(scenario.tarballPath);
+    return {
+      channel: 'ok',
+      findings: adaptPackageSnapshot(snap),
+      wallMs: performance.now() - start,
+    };
+  }
+
   // Exhaustiveness — any new engine:* kind added to the union must have a case here.
   const _exhaustive: never = scenario;
   throw new Error(`[worker] unknown engine scenario kind: ${JSON.stringify(_exhaustive)}`);
@@ -240,6 +298,8 @@ async function main(): Promise<void> {
       break;
     case 'engine:parseLockfileText':
     case 'engine:runDiff':
+    case 'engine:extractCapabilities':
+    case 'engine:analyzeTarball':
       outcome = await runEngine(scenario);
       break;
     default: {
