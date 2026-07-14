@@ -5,6 +5,110 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/).
 
+## [0.6.0] — 2026-07-14
+
+**Second-ecosystem release (P4c). PyPI/Python adapter alongside npm.** Vetlock is
+no longer npm-only. Lockfiles from pip (`requirements.txt`), Poetry
+(`poetry.lock`), and uv (`uv.lock`) are now first-class inputs — parsed to the
+same `LockGraph` shape, fetched from the PyPI JSON API, extracted from wheels
+(`.whl` = ZIP) or sdists (`.tar.gz`), and scanned by the same ecosystem-agnostic
+detectors that already run on npm packages.
+
+### Architecture
+
+Per ADR 0009 (EcosystemAdapter). The core insight: detectors consume
+`FileCapabilities`, and `FileCapabilities` is ecosystem-agnostic. Once we can
+produce a `FileCapabilities` array from a Python source file (via text-based
+regex extraction — NEVER executing Python code, ADR 0005), every existing NET/
+EXEC/ENV/FS/CODE/OBF detector works unchanged.
+
+### New files
+
+- **`packages/core/src/lockfile-pypi.ts`** — 3 parsers dispatched by file
+  signature: `requirements.txt` (pip-freeze `pkg==X.Y.Z` with optional
+  `--hash=sha256:` continuations), `poetry.lock` (TOML with `[[package]]`
+  blocks + `files` hashes), `uv.lock` (TOML with `[[package]]` blocks and
+  `source = { registry | url }`). Emits `LockGraph` matching the npm side.
+- **`packages/core/src/artifact-pypi.ts`** — fetches
+  `https://pypi.org/pypi/{name}/{version}/json`, picks a wheel URL (or sdist
+  fallback), downloads to a temp dir, extracts. Wheels use `node:zlib` +
+  `node:stream` to unpack the ZIP central directory (zero new dependency).
+  Sdists use the existing `tar` dep. Respects `PIP_INDEX_URL` env for
+  corporate-proxy mirrors.
+- **`packages/core/src/capability-pypi.ts`** — text-based Python capability
+  extractor. Detects: network imports (urllib/requests/httpx/aiohttp/socket/
+  paramiko/smtplib/ftplib), env access (`os.environ[X]`, `os.environ.get(X)`,
+  `os.getenv(X)`, `os.environ` enumeration), dynamic-code (`exec`/`eval`/
+  `compile(..., "exec")`/`marshal.loads`), b64-plus-exec unpacker shape,
+  `chr()`-join char-arithmetic decoder, fs writes/reads (`open(...,'w')`,
+  `pathlib.Path.write_text`, `shutil.copy` dst), postinstall hooks
+  (`setup.py` custom `cmdclass`, `pyproject.toml` `[project.scripts]` /
+  `[tool.poetry.scripts]` / `entry_points`). Uses defensive string-masking
+  to avoid firing on identifiers embedded in string literals, then
+  re-scans raw lines for patterns that need the string contents (env-key
+  names, file paths) — gated by masked-line "outer identifier is present"
+  check to avoid docstring/comment false-positives.
+- **`packages/core/src/adapter-pypi.ts`** — EcosystemAdapter registration
+  wired into `engine.ts` dispatch by ecosystem-tag returned from
+  `lockfile-any.ts`.
+
+### Wiring changes
+
+- **`packages/core/src/engine.ts`** — captures the ecosystem tag from
+  `parseLockfileText` on both sides of the diff. Throws
+  `lockfile ecosystem mismatch` if old and new lockfiles disagree (e.g.
+  `package-lock.json` vs `poetry.lock`). `analyzeOne` gets the ecosystem
+  tag so it can route to the pacote fetch path (npm-family) or PyPI JSON
+  API fetch path.
+- **`packages/core/src/lockfile-any.ts`** — dispatch order now also tries
+  the 3 PyPI parsers after the 3 npm-family parsers. Discriminated
+  `.ecosystem` result: `'npm'` for the npm family; `'pypi'` for pypi-*
+  kinds.
+- **`packages/core/src/index.ts`** — 4 new module exports.
+
+### CAPABILITY-MAP
+
+- 48 → **56 entries** (8 new PyPI-specific entries across 5 new classes:
+  `python-net-egress`, `python-env-access`, `python-code-exec`,
+  `python-install-hook`, `python-supply-chain`). All 8 reuse existing
+  ecosystem-agnostic detector IDs (`capability.net.module`,
+  `capability.env.access`, `capability.dynamic-eval`,
+  `capability.postinstall.hook`, `deps.typosquat-candidate`). Marked
+  `soft_warn_no_corpus: true` — real PyPI corpus fixtures land in v0.6.1.
+- `docs/CAPABILITY-MAP.md` regenerated to 56 entries across 18 classes.
+
+### Tests
+
+433 → **510 green.** New:
+
+- `packages/core/test/lockfile-pypi.test.ts` — 35 tests covering all 3
+  formats.
+- `packages/core/test/capability-pypi.test.ts` — 42 tests covering imports,
+  env, dynamic-code, fs, subprocess, url extraction, docstring masking.
+
+Corpus attack-catch stays at 12/13 (npm). PyPI attack corpus lands in v0.6.1.
+
+### Design invariants
+
+- **NEVER-EXECUTE preserved (ADR 0005).** No `spawn`, no `child_process`,
+  no Python invocation, no shell. Every Python signal is derived from
+  text scanning on bytes read directly from the extracted artifact.
+- **PIP_INDEX_URL respected.** Corporate proxy users can set the env var
+  to redirect PyPI fetches to their internal mirror — same pattern as
+  `NPM_CONFIG_REGISTRY` for the npm side.
+
+### Not in this release
+
+- PyPI corpus fixtures (v0.6.1). The 8 new CAPABILITY-MAP entries are
+  `soft_warn_no_corpus: true`; a corpus of at least 5 known-bad PyPI
+  packages (ctx@0.2.2 hijack, jeIlyfish typosquat, colorama⁻like typos)
+  will land next.
+- Python-specific detector tuning like OBF for `.pyc` bytecode files.
+- Full FP study on top-100 PyPI packages (blocker: needs a
+  PIP_INDEX_URL-friendly test corpus).
+
+---
+
 ## [0.5.0] — 2026-07-14
 
 **FP-tune release (3/3) — target hit.** Below the ≤15% BLOCK-rate goal on

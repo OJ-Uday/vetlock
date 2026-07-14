@@ -1,5 +1,5 @@
 {
-  "$comment": "The machine-readable source of truth for vetlock's capability coverage. See docs/adr/0011-completeness-doctrine.md. docs/CAPABILITY-MAP.md is generated from this file \u2014 DO NOT edit the .md directly.",
+  "$comment": "The machine-readable source of truth for vetlock's capability coverage. See docs/adr/0011-completeness-doctrine.md. docs/CAPABILITY-MAP.md is generated from this file — DO NOT edit the .md directly.",
   "version": "0.1",
   "generatedFrom": "packages/detectors/src/capability-map.json",
   "entries": [
@@ -90,7 +90,7 @@
       "corpus_refs": [],
       "chokepoint": "capabilities.execModules",
       "soft_warn_no_corpus": true,
-      "notes": "N2 FIX \u2014 V8 debug protocol is an RCE primitive"
+      "notes": "N2 FIX — V8 debug protocol is an RCE primitive"
     },
     {
       "class": "code-execution",
@@ -108,7 +108,7 @@
       "corpus_refs": [],
       "chokepoint": "capabilities.execModules",
       "soft_warn_no_corpus": true,
-      "notes": "N2 FIX \u2014 monkey-patches every Promise/timer callback"
+      "notes": "N2 FIX — monkey-patches every Promise/timer callback"
     },
     {
       "class": "code-execution",
@@ -171,7 +171,7 @@
       "corpus_refs": [],
       "chokepoint": "capabilities.dynamicCode",
       "soft_warn_no_corpus": true,
-      "notes": "L3 + L10 FIX \u2014 extended CallExpression visitor to catch alias forms"
+      "notes": "L3 + L10 FIX — extended CallExpression visitor to catch alias forms"
     },
     {
       "class": "code-execution",
@@ -310,7 +310,7 @@
       "corpus_refs": [],
       "chokepoint": "capabilities.networkModules",
       "soft_warn_no_corpus": true,
-      "notes": "N3 FIX \u2014 covert exfil channel via DNS subdomain encoding"
+      "notes": "N3 FIX — covert exfil channel via DNS subdomain encoding"
     },
     {
       "class": "net-egress",
@@ -358,8 +358,8 @@
       "kind": "sink",
       "id": "url-literal",
       "aliases": [
-        "https://\u2026",
-        "http://\u2026"
+        "https://…",
+        "http://…"
       ],
       "detectors": [
         "net.new-endpoint"
@@ -487,7 +487,7 @@
         "shai-hulud-2025"
       ],
       "chokepoint": "capabilities.envAccesses.keys === null",
-      "notes": "L2 FIX \u2014 whole-object enumeration via ANY iteration primitive"
+      "notes": "L2 FIX — whole-object enumeration via ANY iteration primitive"
     },
     {
       "class": "secret-read",
@@ -505,7 +505,7 @@
       "corpus_refs": [],
       "chokepoint": "capabilities.envAccesses",
       "soft_warn_no_corpus": true,
-      "notes": "L1 FIX \u2014 ObjectPattern destructure of process.env"
+      "notes": "L1 FIX — ObjectPattern destructure of process.env"
     },
     {
       "class": "secret-read",
@@ -524,7 +524,7 @@
       "corpus_refs": [],
       "chokepoint": "capabilities.envAccesses",
       "soft_warn_no_corpus": true,
-      "notes": "L5 FIX \u2014 Reflect.get alias binding"
+      "notes": "L5 FIX — Reflect.get alias binding"
     },
     {
       "class": "secret-read",
@@ -636,7 +636,7 @@
         "packages/core/test/redteam-N1-bundled-deps.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "N1 FIX \u2014 analyzer recurses into every node_modules/ in a tarball",
+      "notes": "N1 FIX — analyzer recurses into every node_modules/ in a tarball",
       "soft_warn_no_corpus": true
     },
     {
@@ -662,7 +662,7 @@
       "kind": "entry-point",
       "id": "transitive-dependency",
       "aliases": [
-        "package.json dependencies (depth \u2265 1)"
+        "package.json dependencies (depth ≥ 1)"
       ],
       "detectors": [
         "deps.new-direct-dep"
@@ -689,7 +689,7 @@
         "packages/core/test/redteam-tail-N6.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "N6 FIX \u2014 peerDependencies merged into graph in pnpm + yarn parsers",
+      "notes": "N6 FIX — peerDependencies merged into graph in pnpm + yarn parsers",
       "soft_warn_no_corpus": true
     },
     {
@@ -724,7 +724,7 @@
         "packages/detectors/test/detectors.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "N1 FIX \u2014 analyzer recurses into bundled trees",
+      "notes": "N1 FIX — analyzer recurses into bundled trees",
       "soft_warn_no_corpus": true
     },
     {
@@ -732,10 +732,10 @@
       "kind": "entry-point",
       "id": "git-source",
       "aliases": [
-        "resolved: git+https://\u2026",
+        "resolved: git+https://…",
         "resolved: github:owner/repo",
-        "resolved: bitbucket:\u2026",
-        "resolved: gitlab:\u2026"
+        "resolved: bitbucket:…",
+        "resolved: gitlab:…"
       ],
       "detectors": [
         "deps.non-registry-source"
@@ -744,7 +744,7 @@
         "packages/detectors/test/redteam-lockfile-identity.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "N5 FIX \u2014 git-source WARN because integrity/publisher-trust don't apply",
+      "notes": "N5 FIX — git-source WARN because integrity/publisher-trust don't apply",
       "soft_warn_no_corpus": true
     },
     {
@@ -761,7 +761,7 @@
         "packages/detectors/test/redteam-lockfile-identity.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "S9 FIX \u2014 absolute file: URLs flagged INFO (attacker-controlled local path)",
+      "notes": "S9 FIX — absolute file: URLs flagged INFO (attacker-controlled local path)",
       "soft_warn_no_corpus": true
     },
     {
@@ -778,7 +778,7 @@
         "packages/detectors/test/redteam-lockfile-identity.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "F2 FIX \u2014 link: true entry shadowing a high-value package name",
+      "notes": "F2 FIX — link: true entry shadowing a high-value package name",
       "soft_warn_no_corpus": true
     },
     {
@@ -796,7 +796,7 @@
         "packages/detectors/test/redteam-lockfile-identity.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "F6 FIX \u2014 declared vs installed name divergence",
+      "notes": "F6 FIX — declared vs installed name divergence",
       "soft_warn_no_corpus": true
     },
     {
@@ -815,14 +815,14 @@
       "corpus_refs": [
         "integrity-tamper-synthetic"
       ],
-      "notes": "S10 + F3 FIX \u2014 fires on any transition (populated\u2192different, blank\u2192populated, populated\u2192blank)"
+      "notes": "S10 + F3 FIX — fires on any transition (populated→different, blank→populated, populated→blank)"
     },
     {
       "class": "typosquat",
       "kind": "entry-point",
       "id": "top-name-edit-distance",
       "aliases": [
-        "Damerau-Levenshtein \u2264 2 from top-330 npm names"
+        "Damerau-Levenshtein ≤ 2 from top-330 npm names"
       ],
       "detectors": [
         "deps.typosquat-candidate"
@@ -834,7 +834,7 @@
       "corpus_refs": [
         "typosquat-synthetic"
       ],
-      "notes": "D6 FIX \u2014 expanded top corpus 230 \u2192 330; N4 FIX \u2014 scope-stripping for @evil-org/react-style attacks"
+      "notes": "D6 FIX — expanded top corpus 230 → 330; N4 FIX — scope-stripping for @evil-org/react-style attacks"
     },
     {
       "class": "publisher-trust",
@@ -859,14 +859,14 @@
         "ua-parser-2021",
         "rand-user-agent-2025"
       ],
-      "notes": "S3 FIX \u2014 trust-store with parse-based email matching (exact domain-or-subdomain); S6 FIX \u2014 populated \u2192 empty is BLOCK when old was trusted"
+      "notes": "S3 FIX — trust-store with parse-based email matching (exact domain-or-subdomain); S6 FIX — populated → empty is BLOCK when old was trusted"
     },
     {
       "class": "obfuscation-decode",
       "kind": "sink",
       "id": "entropy-jump",
       "aliases": [
-        "file entropy increased \u2265 threshold",
+        "file entropy increased ≥ threshold",
         "minification appeared",
         "new high-entropy string literal"
       ],
@@ -900,7 +900,7 @@
         "packages/core/test/redteam-remaining-8.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "L11 FIX \u2014 rot13/char-arithmetic decoder detection",
+      "notes": "L11 FIX — rot13/char-arithmetic decoder detection",
       "soft_warn_no_corpus": true
     },
     {
@@ -931,7 +931,7 @@
       "kind": "sink",
       "id": "ghsa-adjacent-version",
       "aliases": [
-        "\u00b13 patch or \u00b11 minor of a known-vulnerable range"
+        "±3 patch or ±1 minor of a known-vulnerable range"
       ],
       "detectors": [
         "deps.new-direct-dep"
@@ -940,7 +940,7 @@
         "packages/core/test/redteam-remaining-8.test.ts"
       ],
       "corpus_refs": [],
-      "notes": "C3 FIX \u2014 adjacentAdvisories helper flags versions just outside a vulnerable range",
+      "notes": "C3 FIX — adjacentAdvisories helper flags versions just outside a vulnerable range",
       "soft_warn_no_corpus": true
     },
     {
@@ -960,6 +960,170 @@
         "typosquat-synthetic",
         "hardened-evader-2026"
       ]
+    },
+    {
+      "class": "python-net-egress",
+      "kind": "sink",
+      "id": "urllib-first-use",
+      "aliases": [
+        "import urllib",
+        "import urllib.request",
+        "import requests",
+        "import httpx",
+        "import aiohttp",
+        "import urllib3"
+      ],
+      "detectors": [
+        "net.new-module"
+      ],
+      "tests": [
+        "packages/detectors/test/capability-map-coverage.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.networkModules (shared with npm — PY_NETWORK_MODULES feeds the same FileCapabilities.networkModules field)",
+      "soft_warn_no_corpus": true,
+      "notes": "P4c — a PyPI package's FIRST use of urllib/requests/httpx/aiohttp/urllib3 (stdlib or third-party HTTP client) that wasn't present in the prior version. Reuses net.new-module verbatim — the Python-source extractor (capability-pypi.ts) populates the same ecosystem-agnostic FileCapabilities.networkModules field npm detectors already consume."
+    },
+    {
+      "class": "python-net-egress",
+      "kind": "sink",
+      "id": "socket-first-use",
+      "aliases": [
+        "import socket",
+        "socket.socket(...)",
+        "socket.gethostbyname",
+        "socket.getaddrinfo"
+      ],
+      "detectors": [
+        "net.new-module"
+      ],
+      "tests": [
+        "packages/detectors/test/capability-map-coverage.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.networkModules",
+      "soft_warn_no_corpus": true,
+      "notes": "P4c — raw socket import/use is the lowest-level Python network primitive and the DNS-style covert-exfil channel (socket.gethostbyname/getaddrinfo mirrors the npm dns.lookup/resolve sink)."
+    },
+    {
+      "class": "python-env-access",
+      "kind": "sink",
+      "id": "os-environ-read",
+      "aliases": [
+        "os.environ['X']",
+        "os.environ.get('X')",
+        "os.getenv('X')",
+        "dict(os.environ)",
+        "for k in os.environ",
+        "{**os.environ}"
+      ],
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "tests": [
+        "packages/detectors/test/capability-map-coverage.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.envAccesses (Python PY_SENSITIVE_ENV_KEYS — PYPI_TOKEN/TWINE_PASSWORD/DJANGO_SECRET_KEY/etc — feeds the same shared EnvAccess shape)",
+      "soft_warn_no_corpus": true,
+      "notes": "P4c — covers keyed reads (os.environ[...] / .get / os.getenv) AND whole-object enumeration (dict(os.environ), for-in, {**os.environ}), mirroring the npm process-env-token and process-env-enumerate entries but for the Python-specific sensitive-key set."
+    },
+    {
+      "class": "python-code-exec",
+      "kind": "sink",
+      "id": "b64-plus-exec",
+      "aliases": [
+        "exec(base64.b64decode(...))",
+        "eval(base64.b64decode(...).decode())"
+      ],
+      "detectors": [
+        "code.dynamic-loading-added"
+      ],
+      "tests": [
+        "packages/detectors/test/capability-map-coverage.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.dynamicCode (kind: char-arithmetic-decoder)",
+      "soft_warn_no_corpus": true,
+      "notes": "P4c — co-occurrence of base64.b64decode(...) and exec()/eval() in the same file is the Python analog of the JS char-arithmetic-decoder shape (REDTEAM L11): an encoded payload unpacked and executed at import time."
+    },
+    {
+      "class": "python-code-exec",
+      "kind": "sink",
+      "id": "marshal-loads",
+      "aliases": [
+        "marshal.loads(...)",
+        "marshal.load(...)"
+      ],
+      "detectors": [
+        "code.dynamic-loading-added"
+      ],
+      "tests": [
+        "packages/detectors/test/capability-map-coverage.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.dynamicCode (kind: new-function)",
+      "soft_warn_no_corpus": true,
+      "notes": "P4c — marshal.loads deserializes raw Python bytecode (.pyc payload) directly, the Python equivalent of `new Function(codeBytes)` — a common way to hide a malicious payload as compiled bytecode instead of readable source."
+    },
+    {
+      "class": "python-install-hook",
+      "kind": "sink",
+      "id": "setup-py-cmdclass",
+      "aliases": [
+        "cmdclass={'install': CustomInstaller}",
+        "cmdclass=..."
+      ],
+      "detectors": [
+        "install.script-added"
+      ],
+      "tests": [
+        "packages/detectors/test/capability-map-coverage.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "setup.py analyzeSetupPy() ports a cmdclass= override into manifest.scripts.install so the SAME install.script-added detector fires without a new detector",
+      "soft_warn_no_corpus": true,
+      "notes": "P4c — setup.py declaring a custom cmdclass overriding install's run(self) is pip's install-lifecycle-hijack primitive, the direct analog of npm's scripts.postinstall/scripts.install entry points."
+    },
+    {
+      "class": "python-install-hook",
+      "kind": "sink",
+      "id": "pyproject-entry-points",
+      "aliases": [
+        "[project.scripts]",
+        "[tool.poetry.scripts]",
+        "[project.entry-points.\"console_scripts\"]"
+      ],
+      "detectors": [
+        "install.script-added"
+      ],
+      "tests": [
+        "packages/detectors/test/capability-map-coverage.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "pyproject.toml analyzePyproject() extracts entryPoints[] — the pip/Poetry equivalent of npm's manifest.bin",
+      "soft_warn_no_corpus": true,
+      "notes": "P4c — [project.scripts] / [tool.poetry.scripts] / entry-points console_scripts install a console command onto the user's PATH at install time — the Python analog of npm's package.json `bin` field entry point."
+    },
+    {
+      "class": "python-supply-chain",
+      "kind": "sink",
+      "id": "typosquat-underscore-hyphen",
+      "aliases": [
+        "python_requests vs requests",
+        "django-rest vs djangorestframework",
+        "underscore/hyphen confusable of a popular PyPI package name"
+      ],
+      "detectors": [
+        "deps.typosquat-candidate"
+      ],
+      "tests": [
+        "packages/detectors/test/capability-map-coverage.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "deps.typosquat-candidate — PEP 503 normalization treats '-', '_', and '.' as equivalent, so a PyPI-specific edit-distance/normalization pass is needed alongside the existing Damerau-Levenshtein check to catch confusables that normalize identically on PyPI but are visually/typographically distinct package names",
+      "soft_warn_no_corpus": true,
+      "notes": "P4c — PyPI name normalization (PEP 503) folds '-', '_', and '.' together, so `python-requests` and `python_requests` resolve to DIFFERENT install targets despite looking like the same package — a confusion npm's typosquat detector (which assumes npm's stricter unique-name registry) doesn't need to handle."
     }
   ]
 }
