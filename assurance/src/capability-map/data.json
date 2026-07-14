@@ -1,0 +1,89 @@
+{
+  "version": "1.0.0",
+  "notes": "Enumerated set of sinks + entry-points from PACKET-VETLOCK-ASSURANCE §3.5 (which cites PACKET-VETLOCK-STARTUP §3.5). FLOOR not CEILING (packet rule): enumeration is the minimum coverage the gate enforces; chokepoints (dataflow, ADR-0011) may catch novel spellings for free. Only `code-execution` is fully enumerated in the packet; other classes are placeholders pending panel enumeration.",
+  "classes": {
+    "code-execution": {
+      "sinks": [
+        { "id": "eval", "description": "The `eval` intrinsic — executes a source string in the caller's scope." },
+        { "id": "new Function", "description": "The `Function` constructor — compiles a source string into a callable, effectively `eval` with fresh scope." },
+        { "id": "vm.*", "description": "Node's `vm` module family (runInThisContext, runInNewContext, runInContext, compileFunction, Script). Executes code in a V8 context that shares the process." },
+        { "id": "child_process.exec", "description": "Spawns a shell and runs a command line — the highest-impact sink because it interprets metacharacters." },
+        { "id": "child_process.execFile", "description": "Directly execve()s a binary with argv — the packet lists it as a sibling of `exec`; missing this while catching `exec` is the classic incomplete-fix." },
+        { "id": "child_process.spawn", "description": "Spawns a child process; the async lower-level primitive `exec`/`execFile` are layered on." },
+        { "id": "child_process.fork", "description": "Spawns a new Node process running a script file with an IPC channel." },
+        { "id": "child_process.execSync", "description": "Synchronous variant of `exec`; same shell-interpretation surface." },
+        { "id": "worker_threads", "description": "Node's `worker_threads` — spawns a Worker running a JS script (file or eval) in a separate V8 isolate but the same process." },
+        { "id": "process.binding", "description": "Internal Node primitive that grants access to native bindings from user code. Deprecated but still callable." },
+        { "id": "native-node-load", "description": "Loading a native `.node` addon (via `require('...')` or `process.dlopen`) — arbitrary machine code runs in-process at load." },
+        { "id": "WebAssembly.instantiate", "description": "Compiles and instantiates a WASM module. Arbitrary WASM executes in-process (sandboxed but still Turing-complete)." },
+        { "id": "WebAssembly.compile", "description": "Compiles a WASM module without instantiating; paired with `new WebAssembly.Instance` for the execution step." },
+        { "id": "require(computed)", "description": "Dynamic `require(<computed>)` — module id is a runtime value, so the resolved target can hide behind string ops. The dataflow chokepoint (ADR-0011) is any value flowing to a require call." },
+        { "id": "import(computed)", "description": "Dynamic ESM `import(<computed>)` — the ESM sibling of `require(<computed>)`. Same chokepoint applies." },
+        { "id": "module.constructor", "description": "The Node `Module` constructor — reachable via `module.constructor` at runtime, allows constructing and compiling arbitrary source into a module in the current process." }
+      ]
+    },
+    "net-egress": {
+      "sinks": [],
+      "note": "TBD — panel enumeration. Anticipated: fetch, http/https/http2, net.Socket, dgram, dns.*, WebSocket, EventSource, plus per-library helpers (axios, got, node-fetch)."
+    },
+    "fs-write": {
+      "sinks": [],
+      "note": "TBD — panel enumeration. Anticipated: fs.write*, fs.appendFile*, fs.createWriteStream, fs.rename, fs.symlink, fs.mkdir, fs.rmdir/rm, fs.chmod, fs.utimes plus their promises/sync variants."
+    },
+    "env/secret-read": {
+      "sinks": [],
+      "note": "TBD — panel enumeration. Anticipated: process.env access (whole-object and per-key), dotenv/config libraries, fs reads of ~/.aws/credentials, ~/.ssh/id_*, ~/.npmrc, ~/.docker/config.json, ~/.gitconfig, ~/.env variants."
+    },
+    "persistence": {
+      "sinks": [],
+      "note": "TBD — panel enumeration. Anticipated: fs writes to shell rc files (~/.bashrc, ~/.zshrc, ~/.profile), crontab/at, launchd/systemd unit files, npm/pip pre/postinstall registration, PATH-shadowing, git-hooks writes."
+    },
+    "obfuscation/decode": {
+      "sinks": [],
+      "note": "TBD — panel enumeration. Anticipated: atob/Buffer.from(*, 'base64'|'hex'), zlib.inflate/gunzip, rot13/xor helpers, decodeURIComponent chains, unicode-escape decoders, plus the encoded-decode-and-run patterns already defanged in defang/guard.ts."
+    },
+    "crypto-mine": {
+      "sinks": [],
+      "note": "TBD — panel enumeration. Anticipated: WebAssembly modules with mining-shaped opcodes, references to known miner pools (defanged), stratum protocol strings, references to CoinHive-family libraries."
+    },
+    "clipboard": {
+      "sinks": [],
+      "note": "TBD — panel enumeration. Anticipated: shell-outs to `pbcopy`/`pbpaste`/`xclip`/`xsel`/`clip.exe`, references to `navigator.clipboard.*`, node-clipboard style helpers."
+    },
+    "process-enumeration": {
+      "sinks": [],
+      "note": "TBD — panel enumeration. Anticipated: `ps`/`tasklist` shell-outs, `/proc` reads on Linux, `os.userInfo`, `os.networkInterfaces`, `os.hostname`, references to running-process lists via native modules."
+    }
+  },
+  "entryPoints": {
+    "execution": [
+      { "id": "lifecycle-preinstall", "description": "The `preinstall` npm lifecycle script — runs before install. Attacker's highest-yield surface because it fires on `npm install`." },
+      { "id": "lifecycle-install", "description": "The `install` npm lifecycle script — runs during install, before `postinstall`." },
+      { "id": "lifecycle-postinstall", "description": "The `postinstall` npm lifecycle script — runs after install. Also runs on transitive dependencies by default in npm ≥7." },
+      { "id": "lifecycle-prepare", "description": "The `prepare` npm lifecycle script — runs on `npm install` (no args) for local packages and on `npm pack`/`npm publish`." },
+      { "id": "lifecycle-prepublish", "description": "The `prepublish` / `prepublishOnly` scripts — attacker-published packages can carry payloads here that fire in maintainer environments." },
+      { "id": "pkg-main", "description": "The `main` field in package.json — resolved when a consumer `require`s the package (top-level module code executes at require time)." },
+      { "id": "pkg-module", "description": "The `module` field — ESM equivalent of `main`; resolved for ESM importers, top-level module code runs on import." },
+      { "id": "pkg-exports", "description": "The `exports` map in package.json — per-condition subpath map. Every reachable subpath is an entry point for its top-level code." },
+      { "id": "pkg-bin", "description": "The `bin` field — installed as an executable in node_modules/.bin. Runs when the user invokes the command from a script or CLI." },
+      { "id": "top-level-side-effects", "description": "Any top-level statement in a package's entry module — runs the first time the module is loaded. Not a distinct npm field, but the mechanism by which every entry point actually gains control." },
+      { "id": "import-side-effects", "description": "Side-effects triggered by an `import` statement in the package's ESM entry — the ESM sibling of `top-level-side-effects`." },
+      { "id": "test-hooks", "description": "Test framework hooks (jest.setupFilesAfterEach, mocha `--require`, vitest globalSetup) — executed by CI pipelines that install the package." },
+      { "id": "native-gyp-build", "description": "`node-gyp` build steps triggered by lifecycle scripts (`install` typically) — compile arbitrary C++ source shipped in the package. Native code runs in the developer's environment." },
+      { "id": "bundled-node-modules", "description": "A dependency's `node_modules` bundled inside its own tarball — every entry point above applies recursively to the inner tree. Missed if the engine only walks the outer tree (packet exploit N1)." }
+    ],
+    "graph": [
+      { "id": "direct", "description": "A direct dependency listed in the consumer's `dependencies` — the obvious surface." },
+      { "id": "transitive", "description": "A dependency-of-a-dependency (any depth). event-stream (depth 2) shows why this is not optional." },
+      { "id": "optional", "description": "A dependency listed under `optionalDependencies` — installed on best-effort, but STILL installed by default; every entry point applies." },
+      { "id": "peer", "description": "A dependency listed under `peerDependencies` — installed by npm ≥7 automatically; must be traversed." },
+      { "id": "bundled", "description": "A dependency listed under `bundledDependencies`/`bundleDependencies` — the tarball ships its own node_modules copy (see also `bundled-node-modules` above)." },
+      { "id": "git-dep", "description": "A dependency spec pointing at a git URL (`git+https://…`, `git+ssh://…`, `github:owner/repo`). Arbitrary commits — not registry-vetted." },
+      { "id": "url-dep", "description": "A dependency spec pointing at an HTTP URL — tarball fetched from an arbitrary host." },
+      { "id": "tarball-dep", "description": "A local or remote tarball spec (`.tgz`) — no registry provenance." },
+      { "id": "alias", "description": "An `npm:` alias in the version spec (`\"foo\": \"npm:actual-name@1.0.0\"`) — attackers use this to make the manifest and the resolved package disagree." },
+      { "id": "link-protocol", "description": "A `link:` protocol spec — creates a symlink to an on-disk directory. The linked source has full entry-point surface." },
+      { "id": "file-protocol", "description": "A `file:` protocol spec — installs from an on-disk path. Any package can be substituted at install time." }
+    ]
+  }
+}
