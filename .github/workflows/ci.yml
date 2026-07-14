@@ -7,6 +7,12 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Timeout raised above the historical baseline. The @vetlock/assurance suite is intentionally
+    # NOT run here — it has its own dedicated blocking workflow (`assurance-pr.yml`) that runs
+    # the full ~4 min robustness/completeness/metamorphic/differential/panel harness on every
+    # PR + push to main against the same paths. Running it here as well double-costs CI time and
+    # historically caused SIGTERM cancellation of the top-level job. Keep the exclusion.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,4 +23,5 @@ jobs:
           version: 9
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: pnpm test
+      - name: Test (excluding @vetlock/assurance — see assurance-pr.yml)
+        run: pnpm -r --workspace-concurrency=1 --filter '!@vetlock/assurance' test
