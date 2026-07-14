@@ -1,0 +1,965 @@
+{
+  "$comment": "The machine-readable source of truth for vetlock's capability coverage. See docs/adr/0011-completeness-doctrine.md. docs/CAPABILITY-MAP.md is generated from this file \u2014 DO NOT edit the .md directly.",
+  "version": "0.1",
+  "generatedFrom": "packages/detectors/src/capability-map.json",
+  "entries": [
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "child_process",
+      "aliases": [
+        "require('child_process').exec",
+        "require('child_process').spawn",
+        "require('child_process').fork",
+        "require('child_process').execFile",
+        "child_process.execSync",
+        "child_process.spawnSync",
+        "node:child_process"
+      ],
+      "detectors": [
+        "exec.new-module"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts",
+        "packages/core/test/redteam-L1-L10-dataflow.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025",
+        "ua-parser-2021",
+        "coa-rc-2021",
+        "hardened-evader-2026"
+      ],
+      "chokepoint": "capabilities.execModules"
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "worker_threads",
+      "aliases": [
+        "require('worker_threads')",
+        "node:worker_threads"
+      ],
+      "detectors": [
+        "exec.new-module"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.execModules",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "vm",
+      "aliases": [
+        "vm.runInThisContext",
+        "vm.runInNewContext",
+        "vm.Script",
+        "vm.SourceTextModule",
+        "node:vm"
+      ],
+      "detectors": [
+        "exec.new-module",
+        "code.dynamic-loading-added"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [
+        "lottie-player-2024",
+        "rand-user-agent-2025"
+      ],
+      "chokepoint": "capabilities.execModules + capabilities.dynamicCode"
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "inspector",
+      "aliases": [
+        "inspector.open",
+        "node:inspector"
+      ],
+      "detectors": [
+        "exec.new-module"
+      ],
+      "tests": [
+        "packages/core/test/redteam-remaining-8.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.execModules",
+      "soft_warn_no_corpus": true,
+      "notes": "N2 FIX \u2014 V8 debug protocol is an RCE primitive"
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "async_hooks",
+      "aliases": [
+        "node:async_hooks"
+      ],
+      "detectors": [
+        "exec.new-module"
+      ],
+      "tests": [
+        "packages/core/test/redteam-remaining-8.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.execModules",
+      "soft_warn_no_corpus": true,
+      "notes": "N2 FIX \u2014 monkey-patches every Promise/timer callback"
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "eval",
+      "aliases": [
+        "window.eval",
+        "globalThis.eval",
+        "indirect eval (0, eval)(x)"
+      ],
+      "detectors": [
+        "code.dynamic-loading-added"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [
+        "hardened-evader-2026"
+      ],
+      "chokepoint": "capabilities.dynamicCode"
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "new Function",
+      "aliases": [
+        "Function.prototype.constructor",
+        "new Function(...)"
+      ],
+      "detectors": [
+        "code.dynamic-loading-added"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts",
+        "packages/core/test/redteam-L1-L10-dataflow.test.ts"
+      ],
+      "corpus_refs": [
+        "hardened-evader-2026"
+      ],
+      "chokepoint": "capabilities.dynamicCode"
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "dynamic-require",
+      "aliases": [
+        "require(<computed>)",
+        "require.call",
+        "require.apply",
+        "process.mainModule.require",
+        "Module._load"
+      ],
+      "detectors": [
+        "code.dynamic-loading-added"
+      ],
+      "tests": [
+        "packages/core/test/redteam-L1-L10-dataflow.test.ts",
+        "packages/core/test/redteam-remaining-8.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.dynamicCode",
+      "soft_warn_no_corpus": true,
+      "notes": "L3 + L10 FIX \u2014 extended CallExpression visitor to catch alias forms"
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "dynamic-import",
+      "aliases": [
+        "import(<computed>)"
+      ],
+      "detectors": [
+        "code.dynamic-loading-added"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.dynamicCode",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "native-node-artifact",
+      "aliases": [
+        ".node file loaded via require",
+        ".so / .dylib / .dll shipped in tarball"
+      ],
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "tests": [
+        "packages/detectors/test/detectors.test.ts"
+      ],
+      "corpus_refs": [
+        "ua-parser-2021"
+      ]
+    },
+    {
+      "class": "code-execution",
+      "kind": "sink",
+      "id": "wasm-instantiate",
+      "aliases": [
+        "WebAssembly.instantiate",
+        "WebAssembly.compile",
+        ".wasm file"
+      ],
+      "detectors": [
+        "wasm.suspicious-import",
+        "wasm.unparseable"
+      ],
+      "tests": [
+        "packages/detectors/test/wasm.test.ts"
+      ],
+      "corpus_refs": [],
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "http",
+      "aliases": [
+        "http.request",
+        "http.get",
+        "require('http')",
+        "node:http"
+      ],
+      "detectors": [
+        "net.new-module"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025",
+        "eslint-scope-2018",
+        "event-stream-2018"
+      ],
+      "chokepoint": "capabilities.networkModules"
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "https",
+      "aliases": [
+        "https.request",
+        "https.get",
+        "node:https"
+      ],
+      "detectors": [
+        "net.new-module"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025",
+        "coa-rc-2021",
+        "ua-parser-2021"
+      ],
+      "chokepoint": "capabilities.networkModules"
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "net",
+      "aliases": [
+        "net.Socket",
+        "net.createConnection",
+        "node:net"
+      ],
+      "detectors": [
+        "net.new-module"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.networkModules",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "dns",
+      "aliases": [
+        "dns.lookup",
+        "dns.resolve",
+        "dns/promises",
+        "node:dns"
+      ],
+      "detectors": [
+        "net.new-module"
+      ],
+      "tests": [
+        "packages/core/test/redteam-remaining-8.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.networkModules",
+      "soft_warn_no_corpus": true,
+      "notes": "N3 FIX \u2014 covert exfil channel via DNS subdomain encoding"
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "fetch",
+      "aliases": [
+        "global.fetch",
+        "undici.fetch",
+        "node-fetch",
+        "axios",
+        "got",
+        "request",
+        "superagent"
+      ],
+      "detectors": [
+        "net.new-module"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.networkModules",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "websocket",
+      "aliases": [
+        "ws (npm)",
+        "new WebSocket(...)"
+      ],
+      "detectors": [
+        "net.new-module"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.networkModules",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "url-literal",
+      "aliases": [
+        "https://\u2026",
+        "http://\u2026"
+      ],
+      "detectors": [
+        "net.new-endpoint"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts",
+        "packages/core/test/redteam-remaining-8.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025",
+        "event-stream-2018",
+        "coa-rc-2021",
+        "ua-parser-2021",
+        "eslint-scope-2018"
+      ],
+      "chokepoint": "capabilities.urlLiterals + URL_REGEX (~50 TLDs)"
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "encoded-url",
+      "aliases": [
+        "base64-encoded URL literal",
+        "hex-encoded URL literal",
+        "String.fromCharCode chain resolving to a URL"
+      ],
+      "detectors": [
+        "net.encoded-endpoint"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [
+        "event-stream-2018",
+        "solana-web3-2024",
+        "lottie-player-2024"
+      ],
+      "chokepoint": "capabilities.encodedUrls (constant-folding aware)"
+    },
+    {
+      "class": "fs-write",
+      "kind": "sink",
+      "id": "fs-write-hotpath",
+      "aliases": [
+        "fs.writeFile",
+        "fs.writeFileSync",
+        "fs.appendFile",
+        "fs.createWriteStream",
+        "node:fs",
+        "graceful-fs",
+        "fs/promises"
+      ],
+      "detectors": [
+        "fs.new-hotpath-write"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025",
+        "node-ipc-2022"
+      ],
+      "chokepoint": "capabilities.fsWriteTargets (path-literal aware)"
+    },
+    {
+      "class": "fs-read",
+      "kind": "sink",
+      "id": "fs-read-hotpath",
+      "aliases": [
+        "fs.readFile",
+        "fs.readFileSync",
+        "fs.createReadStream"
+      ],
+      "detectors": [
+        "fs.new-hotpath-read"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [
+        "eslint-scope-2018"
+      ],
+      "chokepoint": "capabilities.fsReadTargets (secret-path aware)"
+    },
+    {
+      "class": "secret-read",
+      "kind": "sink",
+      "id": "process-env-token",
+      "aliases": [
+        "process.env.NPM_TOKEN",
+        "process.env.GITHUB_TOKEN",
+        "process.env.AWS_ACCESS_KEY_ID",
+        "..."
+      ],
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts",
+        "packages/core/test/redteam-L1-L10-dataflow.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025"
+      ],
+      "chokepoint": "capabilities.envAccesses (SENSITIVE_ENV_KEYS + dataflow-aware alias resolution)"
+    },
+    {
+      "class": "secret-read",
+      "kind": "sink",
+      "id": "process-env-enumerate",
+      "aliases": [
+        "Object.keys(process.env)",
+        "for (const k in process.env)",
+        "{...process.env}",
+        "Reflect.ownKeys(process.env)",
+        "const { X, ...rest } = process.env"
+      ],
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "tests": [
+        "packages/core/test/redteam-L1-L10-dataflow.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025"
+      ],
+      "chokepoint": "capabilities.envAccesses.keys === null",
+      "notes": "L2 FIX \u2014 whole-object enumeration via ANY iteration primitive"
+    },
+    {
+      "class": "secret-read",
+      "kind": "sink",
+      "id": "process-env-destructure",
+      "aliases": [
+        "const { NPM_TOKEN } = process.env"
+      ],
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "tests": [
+        "packages/core/test/redteam-L1-L10-dataflow.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.envAccesses",
+      "soft_warn_no_corpus": true,
+      "notes": "L1 FIX \u2014 ObjectPattern destructure of process.env"
+    },
+    {
+      "class": "secret-read",
+      "kind": "sink",
+      "id": "process-env-reflect",
+      "aliases": [
+        "Reflect.get(process.env, 'X')",
+        "Reflect.get(process, 'env')"
+      ],
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "tests": [
+        "packages/core/test/redteam-L1-L10-dataflow.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.envAccesses",
+      "soft_warn_no_corpus": true,
+      "notes": "L5 FIX \u2014 Reflect.get alias binding"
+    },
+    {
+      "class": "secret-read",
+      "kind": "sink",
+      "id": "secret-file-read",
+      "aliases": [
+        ".npmrc",
+        ".ssh/id_rsa",
+        ".ssh/id_ed25519",
+        ".aws/credentials",
+        "wallet.json"
+      ],
+      "detectors": [
+        "fs.new-hotpath-read"
+      ],
+      "tests": [
+        "packages/core/test/capabilities.test.ts"
+      ],
+      "corpus_refs": [
+        "eslint-scope-2018"
+      ],
+      "chokepoint": "capabilities.fsReadTargets"
+    },
+    {
+      "class": "install-hook",
+      "kind": "entry-point",
+      "id": "lifecycle-preinstall",
+      "aliases": [
+        "scripts.preinstall"
+      ],
+      "detectors": [
+        "install.script-added"
+      ],
+      "tests": [
+        "packages/detectors/test/detectors.test.ts"
+      ],
+      "corpus_refs": [
+        "coa-rc-2021",
+        "shai-hulud-2025"
+      ]
+    },
+    {
+      "class": "install-hook",
+      "kind": "entry-point",
+      "id": "lifecycle-install",
+      "aliases": [
+        "scripts.install"
+      ],
+      "detectors": [
+        "install.script-added"
+      ],
+      "tests": [
+        "packages/detectors/test/detectors.test.ts"
+      ],
+      "corpus_refs": [
+        "ua-parser-2021"
+      ]
+    },
+    {
+      "class": "install-hook",
+      "kind": "entry-point",
+      "id": "lifecycle-postinstall",
+      "aliases": [
+        "scripts.postinstall"
+      ],
+      "detectors": [
+        "install.script-added"
+      ],
+      "tests": [
+        "packages/detectors/test/detectors.test.ts",
+        "packages/core/test/redteam-N1-bundled-deps.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025",
+        "coa-rc-2021",
+        "ua-parser-2021"
+      ]
+    },
+    {
+      "class": "install-hook",
+      "kind": "entry-point",
+      "id": "lifecycle-prepare",
+      "aliases": [
+        "scripts.prepare",
+        "scripts.prepublish",
+        "scripts.prepublishOnly",
+        "scripts.prepack"
+      ],
+      "detectors": [
+        "install.script-added"
+      ],
+      "tests": [
+        "packages/detectors/test/detectors.test.ts"
+      ],
+      "corpus_refs": [],
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "install-hook",
+      "kind": "entry-point",
+      "id": "bundled-lifecycle",
+      "aliases": [
+        "postinstall in bundled node_modules/<inner>"
+      ],
+      "detectors": [
+        "install.bundled-lifecycle"
+      ],
+      "tests": [
+        "packages/core/test/redteam-N1-bundled-deps.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "N1 FIX \u2014 analyzer recurses into every node_modules/ in a tarball",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "direct-dependency",
+      "aliases": [
+        "package.json dependencies"
+      ],
+      "detectors": [
+        "deps.new-direct-dep"
+      ],
+      "tests": [
+        "packages/detectors/test/detectors.test.ts"
+      ],
+      "corpus_refs": [
+        "event-stream-2018",
+        "typosquat-synthetic"
+      ]
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "transitive-dependency",
+      "aliases": [
+        "package.json dependencies (depth \u2265 1)"
+      ],
+      "detectors": [
+        "deps.new-direct-dep"
+      ],
+      "tests": [
+        "packages/core/test/engine.test.ts"
+      ],
+      "corpus_refs": [
+        "event-stream-2018"
+      ],
+      "notes": "The recursive-engine invariant (engine.test.ts) is what makes transitive-injection catchable at all"
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "peer-dependency",
+      "aliases": [
+        "package.json peerDependencies"
+      ],
+      "detectors": [
+        "deps.new-direct-dep"
+      ],
+      "tests": [
+        "packages/core/test/redteam-tail-N6.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "N6 FIX \u2014 peerDependencies merged into graph in pnpm + yarn parsers",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "optional-dependency",
+      "aliases": [
+        "package.json optionalDependencies"
+      ],
+      "detectors": [
+        "deps.new-direct-dep"
+      ],
+      "tests": [
+        "packages/core/test/lockfile.test.ts"
+      ],
+      "corpus_refs": [],
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "bundled-dependency",
+      "aliases": [
+        "package.json bundledDependencies",
+        "bundled node_modules/ inside tarball"
+      ],
+      "detectors": [
+        "deps.bundled-dependency-added"
+      ],
+      "tests": [
+        "packages/core/test/redteam-N1-bundled-deps.test.ts",
+        "packages/detectors/test/detectors.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "N1 FIX \u2014 analyzer recurses into bundled trees",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "git-source",
+      "aliases": [
+        "resolved: git+https://\u2026",
+        "resolved: github:owner/repo",
+        "resolved: bitbucket:\u2026",
+        "resolved: gitlab:\u2026"
+      ],
+      "detectors": [
+        "deps.non-registry-source"
+      ],
+      "tests": [
+        "packages/detectors/test/redteam-lockfile-identity.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "N5 FIX \u2014 git-source WARN because integrity/publisher-trust don't apply",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "file-source",
+      "aliases": [
+        "resolved: file:///absolute/path/to.tgz"
+      ],
+      "detectors": [
+        "deps.local-source"
+      ],
+      "tests": [
+        "packages/detectors/test/redteam-lockfile-identity.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "S9 FIX \u2014 absolute file: URLs flagged INFO (attacker-controlled local path)",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "workspace-link",
+      "aliases": [
+        "\"link\": true entry"
+      ],
+      "detectors": [
+        "deps.workspace-shadowing"
+      ],
+      "tests": [
+        "packages/detectors/test/redteam-lockfile-identity.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "F2 FIX \u2014 link: true entry shadowing a high-value package name",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "npm-alias",
+      "aliases": [
+        "chalk@npm:evil-payload@1.0.0 (yarn)",
+        "chalk: npm:evil-payload (pnpm)"
+      ],
+      "detectors": [
+        "deps.aliased-name"
+      ],
+      "tests": [
+        "packages/detectors/test/redteam-lockfile-identity.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "F6 FIX \u2014 declared vs installed name divergence",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "integrity",
+      "kind": "sink",
+      "id": "same-version-tamper",
+      "aliases": [
+        "oldIntegrity != newIntegrity && oldVersion == newVersion"
+      ],
+      "detectors": [
+        "integrity.hash-mismatch"
+      ],
+      "tests": [
+        "packages/core/test/redteam-S1-S10.test.ts"
+      ],
+      "corpus_refs": [
+        "integrity-tamper-synthetic"
+      ],
+      "notes": "S10 + F3 FIX \u2014 fires on any transition (populated\u2192different, blank\u2192populated, populated\u2192blank)"
+    },
+    {
+      "class": "typosquat",
+      "kind": "entry-point",
+      "id": "top-name-edit-distance",
+      "aliases": [
+        "Damerau-Levenshtein \u2264 2 from top-330 npm names"
+      ],
+      "detectors": [
+        "deps.typosquat-candidate"
+      ],
+      "tests": [
+        "packages/detectors/test/typo.test.ts",
+        "packages/detectors/test/redteam-tail-N4.test.ts"
+      ],
+      "corpus_refs": [
+        "typosquat-synthetic"
+      ],
+      "notes": "D6 FIX \u2014 expanded top corpus 230 \u2192 330; N4 FIX \u2014 scope-stripping for @evil-org/react-style attacks"
+    },
+    {
+      "class": "publisher-trust",
+      "kind": "entry-point",
+      "id": "maintainer-change",
+      "aliases": [
+        "package.json maintainers changed",
+        "_npmUser email changed"
+      ],
+      "detectors": [
+        "meta.maintainer-change"
+      ],
+      "tests": [
+        "packages/detectors/test/detectors.test.ts",
+        "packages/detectors/test/publishers-ghsa.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025",
+        "solana-web3-2024",
+        "eslint-scope-2018",
+        "coa-rc-2021",
+        "ua-parser-2021",
+        "rand-user-agent-2025"
+      ],
+      "notes": "S3 FIX \u2014 trust-store with parse-based email matching (exact domain-or-subdomain); S6 FIX \u2014 populated \u2192 empty is BLOCK when old was trusted"
+    },
+    {
+      "class": "obfuscation-decode",
+      "kind": "sink",
+      "id": "entropy-jump",
+      "aliases": [
+        "file entropy increased \u2265 threshold",
+        "minification appeared",
+        "new high-entropy string literal"
+      ],
+      "detectors": [
+        "obf.entropy-jump",
+        "obf.new-obfuscated-file"
+      ],
+      "tests": [
+        "packages/detectors/test/wave1-hardening.test.ts",
+        "packages/detectors/test/redteam-escalations.test.ts"
+      ],
+      "corpus_refs": [
+        "event-stream-2018",
+        "eslint-scope-2018",
+        "lottie-player-2024",
+        "rand-user-agent-2025"
+      ],
+      "chokepoint": "capabilities.entropy + capabilities.suspiciousLiterals"
+    },
+    {
+      "class": "obfuscation-decode",
+      "kind": "sink",
+      "id": "char-arithmetic-decoder",
+      "aliases": [
+        "String.fromCharCode + charCodeAt co-occurrence"
+      ],
+      "detectors": [
+        "code.dynamic-loading-added"
+      ],
+      "tests": [
+        "packages/core/test/redteam-remaining-8.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "L11 FIX \u2014 rot13/char-arithmetic decoder detection",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "advisory-known-vuln",
+      "kind": "sink",
+      "id": "ghsa-affected-version",
+      "aliases": [
+        "semver.satisfies against curated GHSA range"
+      ],
+      "detectors": [
+        "deps.new-direct-dep"
+      ],
+      "tests": [
+        "packages/detectors/test/publishers-ghsa.test.ts"
+      ],
+      "corpus_refs": [
+        "ua-parser-2021",
+        "coa-rc-2021",
+        "solana-web3-2024",
+        "lottie-player-2024",
+        "event-stream-2018",
+        "eslint-scope-2018",
+        "node-ipc-2022"
+      ]
+    },
+    {
+      "class": "advisory-known-vuln",
+      "kind": "sink",
+      "id": "ghsa-adjacent-version",
+      "aliases": [
+        "\u00b13 patch or \u00b11 minor of a known-vulnerable range"
+      ],
+      "detectors": [
+        "deps.new-direct-dep"
+      ],
+      "tests": [
+        "packages/core/test/redteam-remaining-8.test.ts"
+      ],
+      "corpus_refs": [],
+      "notes": "C3 FIX \u2014 adjacentAdvisories helper flags versions just outside a vulnerable range",
+      "soft_warn_no_corpus": true
+    },
+    {
+      "class": "dep-graph-anomaly",
+      "kind": "sink",
+      "id": "first-version-cluster",
+      "aliases": [
+        "multiple capability categories on a package's first version"
+      ],
+      "detectors": [
+        "deps.first-version-cluster"
+      ],
+      "tests": [
+        "packages/detectors/test/detectors.test.ts"
+      ],
+      "corpus_refs": [
+        "typosquat-synthetic",
+        "hardened-evader-2026"
+      ]
+    }
+  ]
+}

@@ -9,7 +9,7 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p .",
+    "build": "tsc -p . && cp src/capability-map.json dist/capability-map.json",
     "typecheck": "tsc -p . --noEmit",
     "test": "vitest run"
   },
