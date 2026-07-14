@@ -15,6 +15,7 @@
   "scripts": {
     "build": "tsc -p .",
     "typecheck": "tsc -p . --noEmit",
+    "pretest": "tsc -p .",
     "test": "vitest run",
     "test:watch": "vitest",
     "assurance:report": "node dist/report/cli.js"
