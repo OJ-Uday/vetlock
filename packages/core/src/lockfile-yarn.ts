@@ -49,6 +49,13 @@ interface YarnEntry {
   checksum?: string;
   dependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
+  /**
+   * REDTEAM N6 FIX: peer edges. Both yarn classic v1 and yarn berry v2+ can
+   * record peerDependencies; they're installed by yarn just like regular
+   * deps. Previously omitted from the merge, so a malicious dep reachable
+   * ONLY via a peer edge had no parent in the graph and no provenance.
+   */
+  peerDependencies?: Record<string, string>;
 }
 
 /**
@@ -162,6 +169,7 @@ function objectToGraph(
     const deps: Record<string, string> = {
       ...(entry.dependencies ?? {}),
       ...(entry.optionalDependencies ?? {}),
+      ...(entry.peerDependencies ?? {}),
     };
     for (const depName of Object.keys(deps)) {
       const dks = byName.get(depName) ?? [];

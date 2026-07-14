@@ -135,9 +135,14 @@ export function parsePnpmLockText(yamlText: string): LockGraph {
 
     const inline = pkgs[rawKey];
     const snap = snapshots[rawKey];
+    // REDTEAM N6 FIX: include peerDependencies in the graph merge. A malicious
+    // dep reachable ONLY via a peer edge previously had no parent in the graph
+    // (no provenance path from root, no rollupByDirect entry). Peers are
+    // installed by npm/pnpm just like regular deps; we must record them here.
     const deps: Record<string, string> = {
       ...(inline?.dependencies ?? {}),
       ...(inline?.optionalDependencies ?? {}),
+      ...(inline?.peerDependencies ?? {}),
       ...(snap?.dependencies ?? {}),
       ...(snap?.optionalDependencies ?? {}),
     };

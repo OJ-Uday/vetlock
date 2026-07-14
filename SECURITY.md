@@ -80,18 +80,13 @@ red-team assessment; none of these are fixed as of this writing.
   writes, not against a same-uid process choosing to cache something misleading before the
   target PR is reviewed. Tracking: re-verify integrity against the original tarball location
   on cache hit rather than trusting the stored snapshot unconditionally.
-- **F3 — integrity tripwire has an unfixed mirror case.** REDTEAM S10 FIX closed
-  "old integrity blank, new populated." The mirror direction — old integrity populated, new
-  integrity blank (attacker deletes the integrity key on the *new* side of a same-version
-  tarball swap) — still returns zero changes; confirmed via direct repro against
-  `packages/core/src/changeset.ts`. **A candidate fix was attempted during this pass
-  (`if (!n.integrity) continue` → `if (!n.integrity && !o.integrity) continue`) and reverted**
-  because it broke the existing pinned test
-  `redteam-S1-S10.test.ts > "does NOT fire when new integrity is blank"`, which currently
-  asserts the vulnerable behavior as intentional. That test's intent needs a maintainer
-  decision before this can be closed: either the test encodes a deliberate design tradeoff
-  (undocumented, if so) or it's itself a bug pinning the wrong behavior. Flagging for
-  explicit follow-up rather than resolving unilaterally.
+- **F3 — CLOSED (this pass).** REDTEAM S10 closed "old integrity blank, new populated." The
+  mirror direction — old integrity populated, new integrity blank — was left open and, worse,
+  pinned as intentional by an existing test (`redteam-S1-S10.test.ts > "does NOT fire when new
+  integrity is blank"`). That test was itself the bug. The corrected rule fires whenever the
+  (old, new) integrity pair is not-equal AND at least one side is populated; only both-blank
+  produces no signal. See `packages/core/src/changeset.ts` (F3 FIX block) and the replacement
+  regression tests in `redteam-S1-S10.test.ts`.
 - **F5 — believed closed, not independently regression-tested under this ID.** F5 describes
   the same "same-PR config self-exemption" shape as S2/C1/C2/D1. Verified via direct repro
   that `decideConfigApplication` + `applyConfig` together preserve BLOCK severity for the
