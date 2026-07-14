@@ -74,17 +74,21 @@ describe('deep-nested-yaml — robustness (parseLockfileText)', () => {
   }, 15_000);
 
   // ------------------------------------------------------------------------------------------
-  // GAP: js-yaml throws YAMLException with `nesting exceeded maxDepth (100)` for depth ≥ ~100.
-  // The engine's parseLockfileText does not wrap this — the exception escapes to the caller.
-  // The runner surfaces this as `kind: 'crash'`. It's a real robustness gap: a hostile
-  // pnpm-lock.yaml with modest nesting crashes the parser instead of triggering the
-  // fail-safe path (analysis.failed finding).
+  // GAP CLOSED (wave 4-T): js-yaml threw YAMLException with `nesting exceeded maxDepth (100)`
+  // for depth ≥ ~100. The engine's parseLockfileText did not wrap this — the exception escaped
+  // to the caller, which the runner surfaced as `kind: 'crash'`. It was a real robustness gap:
+  // a hostile pnpm-lock.yaml with modest nesting crashed the parser instead of triggering the
+  // fail-safe path.
   //
-  // Assurance's role is to document the gap, pin it as a corpus regression, and prove the
-  // harness observes it correctly. STARTUP owns fixing the engine — when the engine catches
-  // the YAMLException and emits a fail-safe finding, these assertions flip.
+  // STARTUP wrapped `js-yaml.load` in `packages/core/src/lockfile-pnpm.ts` (wave 4-T commit),
+  // rewrapping any parse throw as `UnsupportedLockfileError` — the engine's documented
+  // "can't parse this, block conservatively" signal. The assurance runner
+  // (worker.ts + child-entry.ts) recognizes UnsupportedLockfileError on the
+  // engine:parseLockfileText path and translates it to the `fail-safe` channel, mirroring
+  // how it already treats `extractCapabilities` parseError and `runDiff` analysis.failed.
+  // Both assertions below now expect `fail-safe`.
 
-  it('GAP: depth=100 crashes the engine (js-yaml maxDepth); runner reports crash', async () => {
+  it('depth=100 triggers the engine fail-safe (previously crashed via js-yaml maxDepth)', async () => {
     const input = deepNestedYaml.generate(1, { depth: 100 });
     const outcome = await runBounded(
       {
@@ -95,24 +99,17 @@ describe('deep-nested-yaml — robustness (parseLockfileText)', () => {
       },
       BOUNDS,
     );
-    // What the engine currently does:
-    expect(outcome.kind).toBe('crash');
-    if (outcome.kind === 'crash') {
-      expect(outcome.error.name).toBe('YAMLException');
-      expect(outcome.error.message).toMatch(/nesting exceeded maxDepth/);
-    }
-    // What the HARNESS is doing correctly: catching the escape without itself crashing.
-    // No-hang and no-OOM are on other axes and unaffected.
+    // What the engine NOW does (wave 4-T fix): catch the YAMLException in
+    // parsePnpmLockText, rethrow as UnsupportedLockfileError, which the harness
+    // routes to the fail-safe channel with an analysis-failed BLOCK finding.
+    expect(outcome.kind).toBe('fail-safe');
+    expect(oracleFailSafe(outcome).pass).toBe(true);
+    expect(oracleNoCrash(outcome).pass).toBe(true);
     expect(oracleNoHang(outcome).pass).toBe(true);
     expect(oracleNoOom(outcome).pass).toBe(true);
-    // NB: oracleNoCrash and oracleFailSafe both correctly fail here — the gap is real.
-    // When STARTUP wraps js-yaml.load in packages/core/src/lockfile-pnpm.ts and emits
-    // an `analysis.failed` finding, replace this test'\''s expectation with:
-    //     expect(outcome.kind).toBe('fail-safe');
-    //     expect(oracleFailSafe(outcome).pass).toBe(true);
   }, 15_000);
 
-  it('GAP: depth=1000 also crashes (same maxDepth mechanism as depth=100)', async () => {
+  it('depth=1000 also triggers fail-safe (same maxDepth mechanism as depth=100)', async () => {
     const input = deepNestedYaml.generate(1, { depth: 1000 });
     const outcome = await runBounded(
       {
@@ -123,7 +120,8 @@ describe('deep-nested-yaml — robustness (parseLockfileText)', () => {
       },
       BOUNDS,
     );
-    expect(outcome.kind).toBe('crash');
+    expect(outcome.kind).toBe('fail-safe');
+    expect(oracleFailSafe(outcome).pass).toBe(true);
   }, 15_000);
 
   // NB: A depth=10000 case was drafted but removed for P1 — at that depth Node's YAML
