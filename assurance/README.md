@@ -68,3 +68,14 @@ when present) and opens an issue on any confirmed gap. Scheduled-tier findings m
 triaged and promoted into the PR-tier corpus before their issue closes — that's how the
 blocking gate gets stronger over time without the PR tier itself getting slower.
 
+## Relationship to the top-level `ci.yml`
+
+Do **not** re-run `@vetlock/assurance` from `.github/workflows/ci.yml`. The top-level CI
+excludes it via `pnpm -r --filter '!@vetlock/assurance' test` so the assurance suite is
+executed exactly once per PR — by `assurance-pr.yml`, which is what carries the required-
+status-check semantics. Running it in both workflows double-costs CI time and, when the
+top-level job's timeout is tighter than assurance's ~4-minute wall time, causes the more
+lenient run to be SIGTERM'd, which historically read as a spurious top-level failure while
+`assurance-pr.yml` was still green.
+
+
