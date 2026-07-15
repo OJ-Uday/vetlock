@@ -78,7 +78,7 @@ export const codeDetector: Detector = {
           confidence,
           message: `Dynamic code sink introduced (${d.kind}).`,
           evidence: [{ file: f.path, line: d.line, snippet: d.snippet.slice(0, 240) }],
-          provenance: [],
+          provenance: [['dynamic-code-kind', d.kind]],
         });
       }
     }

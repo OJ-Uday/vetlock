@@ -9,10 +9,16 @@
  * BLOCK, high. Only fires on pair.old === null.
  */
 
-import type { Detector, DetectorCategory, Finding, SnapshotPair } from '@vetlock/core';
+import type { Detector, DetectorCategory, EnvAccess, Finding, SnapshotPair } from '@vetlock/core';
+import { SENSITIVE_ENV_KEYS } from '@vetlock/core';
 import { directionFor } from './direction.js';
 
 const CLUSTER_CATEGORIES: readonly DetectorCategory[] = ['NET', 'EXEC', 'FS', 'ENV', 'CODE', 'OBF'];
+const SENSITIVE_SET = new Set(SENSITIVE_ENV_KEYS);
+
+function isSensitiveEnvAccess(access: EnvAccess): boolean {
+  return access.keys === null || access.keys.some((key) => SENSITIVE_SET.has(key));
+}
 
 export const firstVersionClusterDetector: Detector = {
   id: 'deps-first-version-cluster',
@@ -35,7 +41,7 @@ export const firstVersionClusterDetector: Detector = {
       if (f.networkModules.length > 0) netModuleHit = true;
       if (f.execModules.length > 0) execModuleHit = true;
       if (f.fsModules.length > 0) fsModuleHit = true;
-      if (f.envAccesses.length > 0) envSensitiveHit = true; // any env access, not just sensitive keys
+      if (f.envAccesses.some(isSensitiveEnvAccess)) envSensitiveHit = true;
       if (f.dynamicCode.length > 0) codeSinkHit = true;
       if (f.minified || f.suspiciousLiterals.length > 0) obfHit = true;
     }

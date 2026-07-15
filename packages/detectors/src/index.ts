@@ -41,7 +41,7 @@ import { typosquatDetector } from './typo.js';
 import { firstVersionClusterDetector } from './first-version-cluster.js';
 import { wasmDetector } from './wasm.js';
 import { bundledDepsDetector } from './bundled.js';
-import { advisoriesForVersion } from './advisories.js';
+import { adjacentAdvisories, advisoriesForVersion } from './advisories.js';
 
 export const ALL_DETECTORS: readonly Detector[] = [
   installDetector,
@@ -99,7 +99,7 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   // NET, INSTALL, EXEC, ENV, or FS findings. Previously only NET and INSTALL triggered
   // this promotion; attackers who used child_process (EXEC), env-harvest (ENV), or
   // hotpath writes (FS) without any URL literals or lifecycle hooks evaded it.
-  const riskyCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS']);
+  const riskyCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS', 'CODE']);
   const risky = new Set(
     all
       .filter((f) => riskyCategories.has(f.category))
@@ -108,7 +108,7 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   for (const f of all) {
     if (f.category === 'OBF' && f.severity === 'WARN' && risky.has(f.package)) {
       f.severity = 'BLOCK';
-      f.message += ' [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS findings in this package]';
+      f.message += ' [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS/CODE findings in this package]';
     }
   }
 
@@ -178,7 +178,13 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   // Retained as dangerous: eval, new-function (both direct-code-execution),
   // and the unpacker/marshal/deserialize kinds (attacker-favored obfuscation
   // unpacking).
-  const DANGEROUS_CODE_KINDS = /\((?:eval|new-function|unpacker|marshal|deserialize)\)/;
+  const DANGEROUS_CODE_KINDS = new Set([
+    'eval',
+    'new-function',
+    'unpacker',
+    'marshal',
+    'deserialize',
+  ]);
   const warnFindingsByPkg = new Map<string, Finding[]>();
   for (const f of all) {
     if (f.severity !== 'WARN') continue;
@@ -190,7 +196,10 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
     const obfSaturation = warns.length >= 3 && cats.size === 1 && cats.has('OBF');
     // CODE saturation only counts DANGEROUS sink kinds — see comment block above.
     const dangerousCodeCount = warns.filter(
-      (w) => w.category === 'CODE' && DANGEROUS_CODE_KINDS.test(w.message),
+      (w) => {
+        const codeKind = w.provenance.find((entry) => entry[0] === 'dynamic-code-kind')?.[1];
+        return w.category === 'CODE' && !!codeKind && DANGEROUS_CODE_KINDS.has(codeKind);
+      },
     ).length;
     const codeSaturation = dangerousCodeCount >= 3 && cats.size === 1 && cats.has('CODE');
     const shouldEscalate =
@@ -201,7 +210,8 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
     if (!shouldEscalate) continue;
     for (const w of warns) {
       w.severity = 'BLOCK';
-      w.message += ` [escalated: package '${pkg}' has ${warns.length} WARN findings across ${cats.size} categories]`;
+      const sourceDetectors = [...new Set(warns.map((f) => f.detector))].sort().join(', ');
+      w.message += ` [escalated: package '${pkg}' has ${warns.length} WARN findings across ${cats.size} categories; source detectors: ${sourceDetectors}]`;
     }
   }
 
@@ -212,12 +222,22 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
     const version = f.to ?? f.from;
     if (!version) continue;
     const matches = advisoriesForVersion(f.package, version);
-    if (matches.length === 0) continue;
+    const adjacent = matches.length === 0 ? adjacentAdvisories(f.package, version) : [];
+    if (matches.length === 0 && adjacent.length === 0) continue;
     const cite = matches
       .map((a) => `${a.ghsa}${a.cve ? ` (${a.cve})` : ''}`)
       .join(', ');
-    f.message += ` [GHSA: ${cite}]`;
-    f.confidence = 'high';
+    if (cite) {
+      f.message += ` [GHSA: ${cite}]`;
+      f.confidence = 'high';
+    }
+    if (adjacent.length > 0) {
+      const adjacentCite = adjacent
+        .map((a) => `${a.ghsa}${a.cve ? ` (${a.cve})` : ''}`)
+        .join(', ');
+      f.message += ` [adjacent GHSA: ${adjacentCite}]`;
+      if (f.confidence === 'low') f.confidence = 'medium';
+    }
   }
 
   for (const f of all) {

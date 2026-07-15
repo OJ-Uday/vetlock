@@ -7,6 +7,11 @@
  * capability extractor already tries to decode long literals and, when the
  * result contains a URL, records it under `file.encodedUrls`. This detector
  * emits one finding per new encoded URL not present in the old snapshot.
+ *
+ * NOTE: unicode-escape-only concealment currently resolves upstream as a plain
+ * URL literal rather than an `encodedUrls` entry, and raw string-literal bytes
+ * are not exposed on PackageSnapshot yet. TODO(core): expose raw literals if we
+ * want `net.encoded-endpoint` to preserve the original concealment form.
  */
 
 import type { Detector, Finding, PackageSnapshot, SnapshotPair } from '@vetlock/core';

@@ -25,7 +25,8 @@ import { directionFor } from './direction.js';
  * Keep this list defensively broad — false positives here are legitimate WASM
  * libraries that we want a human to check.
  */
-const SUSPICIOUS_IMPORT_NAMES = /^(eval|Function|fetch|XMLHttpRequest|open|write|read|spawn|exec)$/;
+const SUSPICIOUS_IMPORT_NAMES =
+  /^(?:[\w$-]+\.)?(?:eval|Function|fetch|XMLHttpRequest|open|write|read|spawn|exec|system|popen|shell|curl|wget|connect|send|recv|download|upload|readFile|writeFile)$/i;
 const SUSPICIOUS_IMPORT_MODULES = /^(env|imports|host)$/i;
 /** WASI capability namespaces that provide fs, clock, sock, proc access. */
 const WASI_SENSITIVE_MODULES = /^wasi_snapshot_preview[12]$/i;
@@ -50,10 +51,17 @@ function collectImports(snap: PackageSnapshot | null): Map<string, ImportKey> {
 }
 
 function isSuspiciousImport(module: string, name: string): boolean {
+  const normalizedName = name.replace(/\s+as\s+[\w$.-]+$/i, '').trim();
+  const qualifiedName = `${module}.${normalizedName}`;
   // WASI file/net/exec capabilities — always suspect.
-  if (WASI_SENSITIVE_MODULES.test(module) && WASI_SENSITIVE_NAMES.test(name)) return true;
+  if (WASI_SENSITIVE_MODULES.test(module) && WASI_SENSITIVE_NAMES.test(normalizedName)) return true;
   // env-module imports of dynamic-code names.
-  if (SUSPICIOUS_IMPORT_MODULES.test(module) && SUSPICIOUS_IMPORT_NAMES.test(name)) return true;
+  if (
+    SUSPICIOUS_IMPORT_MODULES.test(module) &&
+    (SUSPICIOUS_IMPORT_NAMES.test(normalizedName) || SUSPICIOUS_IMPORT_NAMES.test(qualifiedName))
+  ) {
+    return true;
+  }
   return false;
 }
 

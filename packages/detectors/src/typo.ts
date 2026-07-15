@@ -32,26 +32,31 @@ import { TOP_NPM_NAMES } from './top-npm-names.js';
 const TOP_SET = new Set<string>(TOP_NPM_NAMES);
 
 /**
- * REDTEAM N4 FIX: scope-prefix typosquat.
+ * Scoped-name handling:
+ *   - unscoped candidates only compare against unscoped popular packages
+ *   - scoped candidates only compare against packages in the SAME scope
+ *   - when both sides are scoped, distance is computed on the base name only
+ *   - org-like unknown scopes (`@foo-org/react`) still compare their base name
+ *     against unscoped popular packages to preserve the existing impersonation
+ *     signal without flagging every short private namespace
  *
- * `closestTop` compares the FULL package name (including any `@scope/`
- * prefix) against the top-name list. An attacker who publishes
- * `@evil-org/react` under a scope nobody has ever registered gets a huge
- * whole-string edit distance against every top name — `@evil-org/react` is
- * nowhere near `react` — so the detector never fires, even though the base
- * name is an exact, shameless impersonation of the real unscoped `react`.
- *
- * Fix: for a scoped name, also compare the BASE name (the part after the
- * `/`) against every UNSCOPED top name, exact-match or within `maxDist`
- * edits. Skip when the scope itself is a known-legitimate scope so
- * `@babel/core` doesn't self-flag against unrelated top names.
+ * This preserves `@babel/cord` → `@babel/core` while avoiding cross-family
+ * comparisons like `@evil/lodash` → `lodash`.
  */
-const UNSCOPED_TOP_NAMES = TOP_NPM_NAMES.filter((n) => !n.startsWith('@'));
-const KNOWN_TRUSTED_SCOPES = new Set([
-  '@babel', '@types', '@aws-sdk', '@microsoft', '@angular', '@vercel',
-  '@nestjs', '@testing-library', '@rollup', '@emotion', '@reduxjs',
-  '@tanstack', '@mui', '@chakra-ui', '@solana', '@prisma',
-]);
+interface ParsedPackageName {
+  scope: string | null;
+  base: string;
+}
+
+function parsePackageName(name: string): ParsedPackageName {
+  if (!name.startsWith('@')) return { scope: null, base: name };
+  const slash = name.indexOf('/');
+  if (slash === -1) return { scope: null, base: name };
+  return {
+    scope: name.slice(0, slash),
+    base: name.slice(slash + 1),
+  };
+}
 
 /**
  * Return the closest top-name if within `maxDist` Damerau-Levenshtein edits.
@@ -63,29 +68,35 @@ const KNOWN_TRUSTED_SCOPES = new Set([
  */
 export function closestTop(name: string, maxDist = 2): { target: string; distance: number } | null {
   if (TOP_SET.has(name)) return null; // it IS a top package, not a squat of one
+  const candidate = parsePackageName(name);
   let best: { target: string; distance: number } | null = null;
   for (const top of TOP_NPM_NAMES) {
-    // Cheap prune: length difference alone can rule out.
-    if (Math.abs(top.length - name.length) > maxDist) continue;
-    const { steps } = dl(name, top);
-    if (steps > 0 && steps <= maxDist && (!best || steps < best.distance)) {
-      best = { target: top, distance: steps };
-    }
-  }
-  if (best) return best;
-
-  const slash = name.startsWith('@') ? name.indexOf('/') : -1;
-  if (slash === -1) return null;
-  const scope = name.slice(0, slash);
-  const base = name.slice(slash + 1);
-  if (KNOWN_TRUSTED_SCOPES.has(scope) || base.length === 0) return null;
-  if (UNSCOPED_TOP_NAMES.includes(base)) return { target: base, distance: 0 };
-  for (const top of UNSCOPED_TOP_NAMES) {
-    if (Math.abs(top.length - base.length) > maxDist) continue;
-    const { steps } = dl(base, top);
-    if (steps > 0 && steps <= maxDist && (!best || steps < best.distance)) {
-      best = { target: top, distance: steps };
-    }
+   const legit = parsePackageName(top);
+   let left: string;
+   let right: string;
+   if (candidate.scope === null && legit.scope === null) {
+     left = name;
+     right = top;
+   } else if (candidate.scope !== null && legit.scope !== null && candidate.scope === legit.scope) {
+     left = candidate.base;
+     right = legit.base;
+   } else if (
+     candidate.scope !== null &&
+     legit.scope === null &&
+     /[-._]/.test(candidate.scope) &&
+     candidate.base.length > 0
+   ) {
+     left = candidate.base;
+     right = top;
+   } else {
+     continue;
+   }
+   // Cheap prune: length difference alone can rule out.
+   if (Math.abs(right.length - left.length) > maxDist) continue;
+   const { steps } = dl(left, right);
+   if (steps <= maxDist && (!best || steps < best.distance)) {
+     best = { target: top, distance: steps };
+   }
   }
   return best;
 }

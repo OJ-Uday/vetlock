@@ -128,7 +128,7 @@ export const BUILTIN_TRUST_STORE: Readonly<Record<string, readonly string[]>> = 
  * team looked trusted — that was also wrong).
  */
 
-const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+const EMAIL_RE = /[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}/g;
 
 /**
  * Test whether an evidence snippet from a maintainer-change finding indicates
@@ -148,7 +148,7 @@ export function isTrustedPublisher(
   const arrowIdx = evidenceText.lastIndexOf('→');
   const target = arrowIdx >= 0 ? evidenceText.slice(arrowIdx + 1) : evidenceText;
 
-  const emails = target.match(EMAIL_RE) ?? [];
+  const emails = (target.match(EMAIL_RE) ?? []).filter((email) => email.length <= 320);
   if (emails.length === 0) return false;
 
   for (const email of emails) {

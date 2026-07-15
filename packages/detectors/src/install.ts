@@ -46,12 +46,18 @@ const PUBLISH_TIER: readonly string[] = [
   'prepublish', 'prepublishOnly', 'publish', 'postpublish',
   'prepack', 'pack', 'postpack',
   'preversion', 'version', 'postversion',
+  'preshrinkwrap', 'shrinkwrap', 'postshrinkwrap',
 ];
 
 // CI_TIER: `npm test` and adjacent. Not npm-executed automatically; some CI
 // pipelines run them explicitly. Change is worth INFO — visible but low-signal.
+// We intentionally track only execution-capable hooks here, not arbitrary user-
+// defined script names.
 const CI_TIER: readonly string[] = [
   'test',
+  'prestart', 'start', 'poststart',
+  'prestop', 'stop', 'poststop',
+  'prerestart', 'restart', 'postrestart',
 ];
 
 function tierOf(script: string): { severity: Severity; confidence: 'low' | 'medium' | 'high' } | null {
