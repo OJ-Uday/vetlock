@@ -11,12 +11,12 @@
       "direction": "added",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Newly-installed package ships 3 capability categories on its first version: ENV, FS, NET. This shape is rare in legitimate packages.",
+      "message": "Newly-installed package combines outbound network capability with bulk sensitive-env harvest on its first version.",
       "evidence": [
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "first-version-with-cluster: ENV, FS, NET across 3 file(s)"
+          "snippet": "first-version-with-cluster: NET + 4 sensitive env reads"
         }
       ],
       "provenance": [

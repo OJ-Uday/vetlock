@@ -40,7 +40,7 @@
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "maintainers: [orig@example] \u2192 [orig@example, rat@example.invalid]"
+          "snippet": "maintainers: [orig@example] → [orig@example, rat@example.invalid]"
         }
       ],
       "provenance": [

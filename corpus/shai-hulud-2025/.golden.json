@@ -83,30 +83,6 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started reading sensitive env: HOME",
-      "evidence": [
-        {
-          "file": "index.js",
-          "line": 17,
-          "snippet": "const home = process.env.HOME;"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "chalk"
-        ]
-      ]
-    },
-    {
-      "detector": "env.token-harvest",
-      "category": "ENV",
-      "package": "chalk",
-      "from": "5.3.0",
-      "to": "5.3.1",
-      "direction": "changed",
-      "severity": "BLOCK",
-      "confidence": "high",
       "message": "Package started reading sensitive env: whole-object process.env enumeration",
       "evidence": [
         {
@@ -232,7 +208,7 @@
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "maintainers: [team@chalk.example] \u2192 [attacker@example.invalid]"
+          "snippet": "maintainers: [team@chalk.example] → [attacker@example.invalid]"
         }
       ],
       "provenance": [
@@ -342,7 +318,7 @@
   "rollupByDirect": {
     "chalk": {
       "maxSeverity": "BLOCK",
-      "count": 14
+      "count": 13
     }
   },
   "changes": [

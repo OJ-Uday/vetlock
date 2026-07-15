@@ -16,7 +16,7 @@
         {
           "file": "build.js",
           "line": 1,
-          "snippet": "fs.readFile(\".npmrc\", \u2026)"
+          "snippet": "fs.readFile(\".npmrc\", …)"
         }
       ],
       "provenance": [
@@ -40,55 +40,7 @@
         {
           "file": "build.js",
           "line": 1,
-          "snippet": "fs.readFile(\"~/.npmrc\", \u2026)"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "eslint-scope"
-        ]
-      ]
-    },
-    {
-      "detector": "meta.maintainer-change",
-      "category": "META",
-      "package": "eslint-scope",
-      "from": "3.7.1",
-      "to": "3.7.2",
-      "direction": "changed",
-      "severity": "BLOCK",
-      "confidence": "high",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories; source detectors: meta.maintainer-change, net.new-module] [GHSA: GHSA-5qgm-9j92-h5g5]",
-      "evidence": [
-        {
-          "file": "package.json",
-          "line": 1,
-          "snippet": "maintainers: [nzakas@eslint.example] \u2192 [attacker@example.invalid, nzakas@eslint.example]"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "eslint-scope"
-        ]
-      ]
-    },
-    {
-      "detector": "net.new-module",
-      "category": "NET",
-      "package": "eslint-scope",
-      "from": "3.7.1",
-      "to": "3.7.2",
-      "direction": "changed",
-      "severity": "BLOCK",
-      "confidence": "high",
-      "message": "Package started using network module \"http\". [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories; source detectors: meta.maintainer-change, net.new-module] [GHSA: GHSA-5qgm-9j92-h5g5]",
-      "evidence": [
-        {
-          "file": "build.js",
-          "line": 1,
-          "snippet": "imports http"
+          "snippet": "fs.readFile(\"~/.npmrc\", …)"
         }
       ],
       "provenance": [
@@ -107,12 +59,60 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Obfuscation indicators appeared in lib/index.js: source was not minified before, is now [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS/CODE findings in this package] [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "message": "Obfuscation indicators appeared in lib/index.js: source was not minified before, is now [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS or dangerous CODE findings in this package] [GHSA: GHSA-5qgm-9j92-h5g5]",
       "evidence": [
         {
           "file": "lib/index.js",
           "line": 1,
           "snippet": "source was not minified before, is now"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "eslint-scope"
+        ]
+      ]
+    },
+    {
+      "detector": "meta.maintainer-change",
+      "category": "META",
+      "package": "eslint-scope",
+      "from": "3.7.1",
+      "to": "3.7.2",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "high",
+      "message": "Publisher/maintainer set changed between versions. [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "maintainers: [nzakas@eslint.example] → [attacker@example.invalid, nzakas@eslint.example]"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "eslint-scope"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "eslint-scope",
+      "from": "3.7.1",
+      "to": "3.7.2",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "high",
+      "message": "Package started using network module \"http\". [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "evidence": [
+        {
+          "file": "build.js",
+          "line": 1,
+          "snippet": "imports http"
         }
       ],
       "provenance": [

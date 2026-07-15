@@ -64,7 +64,7 @@
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "maintainers: [orig@example] \u2192 [orig@example, takeover@example.invalid]"
+          "snippet": "maintainers: [orig@example] → [orig@example, takeover@example.invalid]"
         }
       ],
       "provenance": [

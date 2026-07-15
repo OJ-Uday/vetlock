@@ -16,7 +16,7 @@
         {
           "file": "index.js",
           "line": 6,
-          "snippet": "base64(\"aG9zdG5hbWU9ZXhmaWwuZXhhbXBsZS5pbnZhbGlkO3BhdGg9L2NvbGxlY3Q7\") \u2192 exfil.example.invalid"
+          "snippet": "base64(\"aG9zdG5hbWU9ZXhmaWwuZXhhbXBsZS5pbnZhbGlkO3BhdGg9L2NvbGxlY3Q7\") → exfil.example.invalid"
         }
       ],
       "provenance": [
@@ -36,7 +36,7 @@
       "direction": "added",
       "severity": "BLOCK",
       "confidence": "low",
-      "message": "Newly-installed package ships obfuscated file index.js: 1 suspicious high-entropy literal(s) [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS/CODE findings in this package]",
+      "message": "Newly-installed package ships obfuscated file index.js: 1 suspicious high-entropy literal(s) [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS or dangerous CODE findings in this package]",
       "evidence": [
         {
           "file": "index.js",
@@ -66,7 +66,7 @@
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "maintainers: [dominic@upstream.example] \u2192 [right9ctrl@example.invalid]"
+          "snippet": "maintainers: [dominic@upstream.example] → [right9ctrl@example.invalid]"
         }
       ],
       "provenance": [

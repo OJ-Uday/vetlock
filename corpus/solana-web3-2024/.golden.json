@@ -16,7 +16,7 @@
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "maintainers: [solana-labs@example] \u2192 [phish@example.invalid, solana-labs@example]"
+          "snippet": "maintainers: [solana-labs@example] → [phish@example.invalid, solana-labs@example]"
         }
       ],
       "provenance": [
@@ -40,7 +40,7 @@
         {
           "file": "index.js",
           "line": 3,
-          "snippet": "base64(\"aHR0cHM6Ly9leGZpbC5leGFtcGxlLmludmFsaWQvd2FsbGV0LWRyYWlu\") \u2192 https://exfil.example.invalid/wallet-drain"
+          "snippet": "base64(\"aHR0cHM6Ly9leGZpbC5leGFtcGxlLmludmFsaWQvd2FsbGV0LWRyYWlu\") → https://exfil.example.invalid/wallet-drain"
         }
       ],
       "provenance": [
