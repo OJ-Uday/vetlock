@@ -10,17 +10,27 @@ const CORPUS_DIR = path.resolve(
   '..', '..', '..', 'corpus', 'fp-smoke',
 );
 
-const localFetch = async (ref: { resolved?: string | null; name: string; version: string }) => {
-  if (ref.resolved?.startsWith('file://')) return new URL(ref.resolved).pathname;
-  throw new Error(`test should not need to fetch ${ref.name}@${ref.version}`);
-};
+function makeLocalFetch(caseDir: string) {
+  return async (ref: { resolved?: string | null; name: string; version: string }) => {
+    const r = ref.resolved;
+    if (!r) throw new Error(`test should not need to fetch ${ref.name}@${ref.version}`);
+    // Absolute file:// or file:/// URL (original corpus format)
+    if (r.startsWith('file://')) return new URL(r).pathname;
+    // Relative file: ref — resolve against the case directory (portable corpus format)
+    if (r.startsWith('file:')) {
+      const raw = r.slice(5).replace(/^\.\//, '');
+      return path.resolve(caseDir, raw);
+    }
+    throw new Error(`test should not need to fetch ${ref.name}@${ref.version}`);
+  };
+}
 
 async function run(caseDir: string) {
   const before = await fs.readFile(path.join(caseDir, 'lockfile.before.json'), 'utf8');
   const after = await fs.readFile(path.join(caseDir, 'lockfile.after.json'), 'utf8');
   return runDiff(before, after, {
     runDetectors: (pair) => runAll(pair),
-    fetchOverride: localFetch,
+    fetchOverride: makeLocalFetch(caseDir),
   });
 }
 
