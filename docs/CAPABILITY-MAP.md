@@ -6,9 +6,9 @@
 
 ## Summary
 
-- **Total enumerated primitives:** 56
-- **With corpus fixture(s):** 25 (45%)
-- **Soft-warn (no corpus yet):** 31
+- **Total enumerated primitives:** 61
+- **With corpus fixture(s):** 25 (41%)
+- **Soft-warn (no corpus yet):** 36
 
 | Class | Sink count | Entry-point count | Total |
 |---|---:|---:|---:|
@@ -20,16 +20,16 @@
 | `graph-entry-point` | 0 | 9 | 9 |
 | `install-hook` | 0 | 5 | 5 |
 | `integrity` | 1 | 0 | 1 |
-| `net-egress` | 8 | 0 | 8 |
-| `obfuscation-decode` | 2 | 0 | 2 |
-| `publisher-trust` | 0 | 1 | 1 |
+| `net-egress` | 9 | 0 | 9 |
+| `obfuscation-decode` | 4 | 0 | 4 |
+| `publisher-trust` | 0 | 2 | 2 |
 | `python-code-exec` | 2 | 0 | 2 |
 | `python-env-access` | 1 | 0 | 1 |
 | `python-install-hook` | 2 | 0 | 2 |
 | `python-net-egress` | 2 | 0 | 2 |
 | `python-supply-chain` | 1 | 0 | 1 |
 | `secret-read` | 5 | 0 | 5 |
-| `typosquat` | 0 | 1 | 1 |
+| `typosquat` | 0 | 2 | 2 |
 
 ## `advisory-known-vuln`
 
@@ -130,6 +130,7 @@
 | ID | Kind | Detector(s) | Corpus | Chokepoint |
 |---|---|---|---|---|
 | `dns` | sink | `net.new-module` | _(soft-warn)_ | `capabilities.networkModules` |
+| `dns-templated-hostname` | sink | `net.dns-templated-hostname` | _(soft-warn)_ | `capabilities.networkModules ∋ dns/* AND (char-arithmetic-decoder dynamicCode OR encodedUrls OR env-access snippet containing a DNS callee)` |
 | `encoded-url` | sink | `net.encoded-endpoint` | `event-stream-2018`, `solana-web3-2024`, `lottie-player-2024` | `capabilities.encodedUrls (constant-folding aware)` |
 | `fetch` | sink | `net.new-module` | _(soft-warn)_ | `capabilities.networkModules` |
 | `http` | sink | `net.new-module` | `shai-hulud-2025`, `eslint-scope-2018`, `event-stream-2018` | `capabilities.networkModules` |
@@ -140,6 +141,7 @@
 
 **Notes:**
 - `dns`: N3 FIX — covert exfil channel via DNS subdomain encoding
+- `dns-templated-hostname`: Wave 8-KK — port from guarddog:threat-network-dns-exfil. Diff-safe: only fires when the DNS module is NEWLY imported in the changed version.
 
 ## `obfuscation-decode`
 
@@ -147,17 +149,23 @@
 |---|---|---|---|---|
 | `char-arithmetic-decoder` | sink | `code.dynamic-loading-added` | _(soft-warn)_ | — |
 | `entropy-jump` | sink | `obf.entropy-jump`, `obf.new-obfuscated-file` | `event-stream-2018`, `eslint-scope-2018`, `lottie-player-2024`, `rand-user-agent-2025` | `capabilities.entropy + capabilities.suspiciousLiterals` |
+| `js-mangler-signature` | sink | `obf.js-mangler-signature` | _(soft-warn)_ | `count of distinct `_0x[a-f0-9]{4,6}` matches across FileCapabilities.dynamicCode/envAccesses snippets + suspiciousLiterals previews` |
+| `unicode-homoglyph-boundary` | sink | `obf.unicode-homoglyph-boundary` | _(soft-warn)_ | `ASCII↔confusable-alphabet-block adjacency in urlLiterals + suspiciousLiterals previews + dynamicCode/envAccesses snippets` |
 
 **Notes:**
 - `char-arithmetic-decoder`: L11 FIX — rot13/char-arithmetic decoder detection
+- `js-mangler-signature`: Wave 8-KK — port from guarddog:threat-runtime-obfuscation-js-mangling. Fires when ≥3 distinct mangled identifiers appear in a NEW/CHANGED JS-like file in pair.new.
+- `unicode-homoglyph-boundary`: Wave 8-KK — port from guarddog:threat-runtime-obfuscation-unicode. Diff-safe: fires when the boundary is NEW to a file that had none before, or in an added-package first-version file.
 
 ## `publisher-trust`
 
 | ID | Kind | Detector(s) | Corpus | Chokepoint |
 |---|---|---|---|---|
+| `disposable-author-domain` | entry-point | `meta.disposable-author-domain` | _(soft-warn)_ | `PackageManifest.author.email / maintainers[*].email / _npmUser.email domain suffix match against bundled DISPOSABLE_DOMAINS list (~50 services)` |
 | `maintainer-change` | entry-point | `meta.maintainer-change` | `shai-hulud-2025`, `solana-web3-2024`, `eslint-scope-2018`, `coa-rc-2021`, `ua-parser-2021`, `rand-user-agent-2025` | — |
 
 **Notes:**
+- `disposable-author-domain`: Wave 8-KK — port from guarddog:metadata/deceptive_author.py. Diff-safe: only counts disposable-domain emails that are NEW to pair.new (not already in pair.old).
 - `maintainer-change`: S3 FIX — trust-store with parse-based email matching (exact domain-or-subdomain); S6 FIX — populated → empty is BLOCK when old was trusted
 
 ## `python-code-exec`
@@ -230,9 +238,11 @@
 
 | ID | Kind | Detector(s) | Corpus | Chokepoint |
 |---|---|---|---|---|
+| `hyphen-permutation` | entry-point | `deps.typosquat-hyphen-permutation` | _(soft-warn)_ | `split(pair.new.name, '-').sort() token-set equality against precomputed Top-1000 permutation index` |
 | `top-name-edit-distance` | entry-point | `deps.typosquat-candidate` | `typosquat-synthetic` | — |
 
 **Notes:**
+- `hyphen-permutation`: Wave 8-KK — port from guarddog:metadata/typosquatting.py hyphen-permutation branch. Complements typo.ts (which uses Damerau-Levenshtein) — hyphen-permutations sit at edit-distance N and slip the existing detector.
 - `top-name-edit-distance`: D6 FIX — expanded top corpus 230 → 330; N4 FIX — scope-stripping for @evil-org/react-style attacks
 
 ---

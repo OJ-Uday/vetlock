@@ -42,6 +42,12 @@ import { firstVersionClusterDetector } from './first-version-cluster.js';
 import { wasmDetector } from './wasm.js';
 import { bundledDepsDetector } from './bundled.js';
 import { advisoriesForVersion } from './advisories.js';
+// Wave 8-KK parity ports — see assurance/docs/audits/guarddog-comparative-audit.md §1
+import { obfJsManglerSignatureDetector } from './obf-js-mangler.js';
+import { obfUnicodeHomoglyphDetector } from './obf-unicode-homoglyph.js';
+import { netDnsTemplatedHostnameDetector } from './net-dns-templated-hostname.js';
+import { metaDisposableDomainDetector } from './meta-disposable-domain.js';
+import { typoHyphenPermutationDetector } from './typo-hyphen-permutation.js';
 
 export const ALL_DETECTORS: readonly Detector[] = [
   installDetector,
@@ -60,6 +66,12 @@ export const ALL_DETECTORS: readonly Detector[] = [
   firstVersionClusterDetector,
   wasmDetector,
   bundledDepsDetector,
+  // Wave 8-KK parity ports (audit §1)
+  obfJsManglerSignatureDetector,
+  obfUnicodeHomoglyphDetector,
+  netDnsTemplatedHostnameDetector,
+  metaDisposableDomainDetector,
+  typoHyphenPermutationDetector,
 ];
 
 export {
@@ -79,6 +91,12 @@ export {
   firstVersionClusterDetector,
   wasmDetector,
   bundledDepsDetector,
+  // Wave 8-KK parity ports
+  obfJsManglerSignatureDetector,
+  obfUnicodeHomoglyphDetector,
+  netDnsTemplatedHostnameDetector,
+  metaDisposableDomainDetector,
+  typoHyphenPermutationDetector,
 };
 
 /**
