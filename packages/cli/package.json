@@ -4,13 +4,15 @@
   "private": false,
   "description": "Behavioral diff for npm dependency updates. What does this update DO now that it didn't before?",
   "keywords": ["security", "supply-chain", "npm", "dependencies", "audit", "sast", "lockfile", "sbom"],
-  "author": "Uday Ojha <OJ-Uday@users.noreply.github.com>",
+  "author": "Uday Ojha <udayojha129@gmail.com>",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OJ-Uday/vetlock.git"
+    "url": "git+https://github.com/OJ-Uday/vetlock.git",
+    "directory": "packages/cli"
   },
-  "homepage": "https://github.com/OJ-Uday/vetlock",
+  "homepage": "https://github.com/OJ-Uday/vetlock#readme",
+  "bugs": "https://github.com/OJ-Uday/vetlock/issues",
   "type": "module",
   "bin": {
     "vetlock": "./dist/cli.js"
@@ -18,9 +20,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p . && node scripts/copy-demo-fixture.js",
+    "build": "tsc -p . && node scripts/copy-demo-fixture.mjs",
+    "bundle": "tsup && node scripts/copy-demo-fixture.mjs && node scripts/copy-capability-map.mjs",
     "typecheck": "tsc -p . --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run bundle"
   },
   "engines": {
     "node": ">=20"
@@ -36,15 +40,26 @@
     "provenance": true
   },
   "dependencies": {
-    "@vetlock/core": "workspace:*",
-    "@vetlock/detectors": "workspace:*",
+    "@babel/parser": "^7.24.0",
+    "@babel/traverse": "^7.24.0",
+    "@babel/types": "^7.24.0",
+    "@webassemblyjs/wasm-parser": "^1.14.1",
+    "@yarnpkg/lockfile": "^1.1.0",
+    "@yarnpkg/parsers": "^3.0.0",
     "commander": "^12.0.0",
+    "damerau-levenshtein": "^1.0.8",
+    "js-yaml": "^4.1.0",
     "ora": "^8.1.0",
+    "pacote": "^18.0.0",
     "picocolors": "^1.0.0",
+    "semver": "^7.6.0",
+    "ssri": "^12.0.0",
     "tar": "^7.0.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "pacote": "^18.0.0"
+    "@vetlock/core": "workspace:*",
+    "@vetlock/detectors": "workspace:*",
+    "tsup": "^8.5.1"
   }
 }
