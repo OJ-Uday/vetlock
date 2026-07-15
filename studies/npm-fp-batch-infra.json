@@ -1,0 +1,736 @@
+{
+  "study": "npm-fp-batch-infra",
+  "batch": "CONFIG/INFRA",
+  "theme": "cloud-sdk-database-logging-config",
+  "ecosystem": "npm",
+  "version": "1",
+  "vetlockVersion": "0.7.0",
+  "ranAt": "2026-07-15T06:38:53.857Z",
+  "methodology": {
+    "source": "synthetic local npm tarballs via package-lock v3 diff",
+    "networkAccess": "disabled; artifacts generated in workspace scratch and analyzed via fetchOverride",
+    "packageCount": 18,
+    "versionTemplate": "1.0.0 -> 1.0.1",
+    "focus": [
+      "stable AWS/Azure env reads on bumps",
+      "stable firebase URL literals in config-value/literal contexts",
+      "stable database connection string patterns",
+      "stable nodemailer SMTP env config",
+      "logging/config packages remaining clean on routine bumps"
+    ]
+  },
+  "totalBumps": 18,
+  "bumpsSucceeded": 18,
+  "bumpsFailed": 0,
+  "totalFindings": 0,
+  "findingsPerBump": 0,
+  "perDetectorFpRate": {},
+  "perSeverity": {
+    "BLOCK": 0,
+    "WARN": 0,
+    "INFO": 0,
+    "CLEAN": 18,
+    "ERROR": 0
+  },
+  "categorySummary": {
+    "cloud-sdk": {
+      "total": 4,
+      "clean": 4,
+      "findings": 0
+    },
+    "database-client": {
+      "total": 4,
+      "clean": 4,
+      "findings": 0
+    },
+    "mailer": {
+      "total": 1,
+      "clean": 1,
+      "findings": 0
+    },
+    "process-infra": {
+      "total": 2,
+      "clean": 2,
+      "findings": 0
+    },
+    "logging": {
+      "total": 4,
+      "clean": 4,
+      "findings": 0
+    },
+    "config-framework": {
+      "total": 3,
+      "clean": 3,
+      "findings": 0
+    }
+  },
+  "falsePositiveRate": 0,
+  "falsePositiveCategories": {
+    "delta-miss": {
+      "description": "Capability existed in both before and after artifacts but detector still fired on the bump.",
+      "count": 0,
+      "items": []
+    },
+    "sensitive-key-too-broad": {
+      "description": "An env key that should be benign still triggered env.token-harvest in calibration.",
+      "count": 0,
+      "items": []
+    }
+  },
+  "focusSummary": {
+    "env.token-harvest": {
+      "hits": 0,
+      "packagesWithHits": []
+    },
+    "net.new-endpoint": {
+      "hits": 0,
+      "packagesWithHits": []
+    }
+  },
+  "concernSummary": {
+    "stableAwsEnvPackages": [
+      "aws-sdk",
+      "@aws-sdk/client-s3"
+    ],
+    "stableCloudCredentialPackages": [
+      "@azure/identity"
+    ],
+    "stableConnectionStringPackages": [
+      "mongoose",
+      "redis",
+      "mysql2",
+      "pg"
+    ],
+    "stableMailerEnvPackages": [
+      "nodemailer"
+    ],
+    "stableLoggingPackages": [
+      "winston",
+      "pino",
+      "bunyan",
+      "morgan"
+    ],
+    "stableConfigPackages": [
+      "config",
+      "convict",
+      "cosmiconfig"
+    ],
+    "packagesWithAnyFindings": []
+  },
+  "envKeyCalibration": [
+    {
+      "envKey": "AWS_ACCESS_KEY_ID",
+      "category": "aws-env",
+      "expectedTrigger": true,
+      "listedInSensitiveEnvKeys": true,
+      "actualTrigger": true,
+      "actualVerdict": "BLOCK",
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "findingMessages": [
+        "Package started reading sensitive env: AWS_ACCESS_KEY_ID"
+      ]
+    },
+    {
+      "envKey": "AWS_SECRET_ACCESS_KEY",
+      "category": "aws-env",
+      "expectedTrigger": true,
+      "listedInSensitiveEnvKeys": true,
+      "actualTrigger": true,
+      "actualVerdict": "BLOCK",
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "findingMessages": [
+        "Package started reading sensitive env: AWS_SECRET_ACCESS_KEY"
+      ]
+    },
+    {
+      "envKey": "AWS_SESSION_TOKEN",
+      "category": "aws-env",
+      "expectedTrigger": true,
+      "listedInSensitiveEnvKeys": true,
+      "actualTrigger": true,
+      "actualVerdict": "BLOCK",
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "findingMessages": [
+        "Package started reading sensitive env: AWS_SESSION_TOKEN"
+      ]
+    },
+    {
+      "envKey": "AWS_DEFAULT_REGION",
+      "category": "aws-env",
+      "expectedTrigger": true,
+      "listedInSensitiveEnvKeys": true,
+      "actualTrigger": true,
+      "actualVerdict": "BLOCK",
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "findingMessages": [
+        "Package started reading sensitive env: AWS_DEFAULT_REGION"
+      ]
+    },
+    {
+      "envKey": "MONGODB_URI",
+      "category": "connection-string-env",
+      "expectedTrigger": false,
+      "listedInSensitiveEnvKeys": false,
+      "actualTrigger": false,
+      "actualVerdict": "CLEAN",
+      "detectors": [],
+      "findingMessages": []
+    },
+    {
+      "envKey": "SMTP_HOST",
+      "category": "smtp-env",
+      "expectedTrigger": false,
+      "listedInSensitiveEnvKeys": false,
+      "actualTrigger": false,
+      "actualVerdict": "CLEAN",
+      "detectors": [],
+      "findingMessages": []
+    },
+    {
+      "envKey": "SMTP_PORT",
+      "category": "smtp-env",
+      "expectedTrigger": false,
+      "listedInSensitiveEnvKeys": false,
+      "actualTrigger": false,
+      "actualVerdict": "CLEAN",
+      "detectors": [],
+      "findingMessages": []
+    },
+    {
+      "envKey": "SMTP_USER",
+      "category": "smtp-env",
+      "expectedTrigger": false,
+      "listedInSensitiveEnvKeys": false,
+      "actualTrigger": false,
+      "actualVerdict": "CLEAN",
+      "detectors": [],
+      "findingMessages": []
+    },
+    {
+      "envKey": "SMTP_PASS",
+      "category": "smtp-env",
+      "expectedTrigger": false,
+      "listedInSensitiveEnvKeys": false,
+      "actualTrigger": false,
+      "actualVerdict": "CLEAN",
+      "detectors": [],
+      "findingMessages": []
+    }
+  ],
+  "keyFindings": {
+    "allExpectedCleanBumpsStayedClean": true,
+    "awsStableEnvBumpsStayedClean": true,
+    "firebaseUrlBumpStayedClean": true,
+    "mongodbUriTriggersEnvTokenHarvest": false,
+    "smtpPassTriggersEnvTokenHarvest": false,
+    "awsDefaultRegionTriggersEnvTokenHarvest": true,
+    "loggingBumpsStayedClean": true,
+    "packagesWithAnyFindings": []
+  },
+  "worstOffenders": [
+    {
+      "packageName": "@aws-sdk/client-s3",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "@azure/identity",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "aws-sdk",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "bunyan",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "config",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "convict",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "cosmiconfig",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "firebase",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "mongoose",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "morgan",
+      "findings": 0,
+      "detectors": []
+    }
+  ],
+  "rows": [
+    {
+      "packageName": "aws-sdk",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "cloud-sdk",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_DEFAULT_REGION"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "@aws-sdk/client-s3",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "cloud-sdk",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "AWS_ACCESS_KEY_ID",
+          "AWS_SECRET_ACCESS_KEY",
+          "AWS_SESSION_TOKEN",
+          "AWS_DEFAULT_REGION"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "@azure/identity",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "cloud-sdk",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "AZURE_CLIENT_ID",
+          "AZURE_CLIENT_SECRET",
+          "AZURE_TENANT_ID"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "firebase",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "cloud-sdk",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [],
+        "stableUrlLiterals": [
+          "https://firebaseio.com",
+          "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
+        ],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "mongoose",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "database-client",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "MONGODB_URI"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [
+          "mongodb://localhost:27017/app"
+        ],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "redis",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "database-client",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "REDIS_URL"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [
+          "redis://localhost:6379"
+        ],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "mysql2",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "database-client",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "DATABASE_URL"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [
+          "mysql://root:root@localhost:3306/app"
+        ],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pg",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "database-client",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "POSTGRES_URL"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [
+          "postgres://localhost:5432/app"
+        ],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "nodemailer",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "mailer",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "SMTP_HOST",
+          "SMTP_PORT",
+          "SMTP_USER",
+          "SMTP_PASS"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "node-cron",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "process-infra",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false,
+        "stableScheduleConfig": true
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pm2",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "process-infra",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": false,
+        "stableProcessManagerConfig": true
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "winston",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "logging",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": true,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pino",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "logging",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": true,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "bunyan",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "logging",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": true,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "morgan",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "logging",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": true,
+        "stableConfigSchema": false
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "config",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "config-framework",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "NODE_ENV",
+          "PORT"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": true
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "convict",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "config-framework",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "NODE_ENV",
+          "PORT"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": true
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "cosmiconfig",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "config-framework",
+      "artifactKind": "tarball",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0
+      },
+      "concernProfile": {
+        "stableEnvReads": [
+          "NODE_ENV"
+        ],
+        "stableUrlLiterals": [],
+        "stableConnectionStrings": [],
+        "stableLoggingConfig": false,
+        "stableConfigSchema": true
+      },
+      "findingsDetail": []
+    }
+  ]
+}
