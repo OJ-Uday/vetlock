@@ -26,9 +26,11 @@ jobs:
       - name: Self-diff against base
         run: |
           set -e
-          git show HEAD~1:package-lock.json > /tmp/before.json 2>/dev/null || echo "{}" > /tmp/before.json
-          node packages/cli/dist/cli.js diff /tmp/before.json package-lock.json --md > /tmp/vetlock.md
+          # This repo uses pnpm-lock.yaml (not package-lock.json).
+          # Fetch the base version of the lockfile and diff it.
+          git show HEAD~1:pnpm-lock.yaml > /tmp/before.yaml 2>/dev/null || cp pnpm-lock.yaml /tmp/before.yaml
+          node packages/cli/dist/cli.js diff /tmp/before.yaml pnpm-lock.yaml --md > /tmp/vetlock.md
           cat /tmp/vetlock.md
           # Fail on the classic worm signatures.
-          node packages/cli/dist/cli.js diff /tmp/before.json package-lock.json \
+          node packages/cli/dist/cli.js diff /tmp/before.yaml pnpm-lock.yaml \
             --fail-on install.script-added,env.token-harvest,net.new-endpoint
