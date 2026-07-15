@@ -4,7 +4,7 @@ import { runAll, firstVersionClusterDetector } from '../src/index.js';
 import { mkSnap, mkFile } from './helpers.js';
 
 describe('first-version-cluster detector', () => {
-  it('fires on an ADDED package with 3+ capability categories', () => {
+  it('fires on an ADDED package with 4+ capability categories', () => {
     const pair = {
       old: null,
       new: mkSnap({
@@ -16,6 +16,7 @@ describe('first-version-cluster detector', () => {
             networkModules: ['https'],
             execModules: ['child_process'],
             envAccesses: [{ line: 1, keys: ['NPM_TOKEN'], snippet: 'process.env.NPM_TOKEN' }],
+            fsModules: ['fs'],
           }),
         ],
       }),
@@ -49,12 +50,19 @@ describe('first-version-cluster detector', () => {
     expect(firstVersionClusterDetector.run(pair, { direction: 'changed' })).toHaveLength(0);
   });
 
-  it('does not fire when the package has only 1-2 categories', () => {
+  it('does not fire when the package has only 1-3 categories', () => {
     const pair = {
       old: null,
       new: mkSnap({
         name: 'legit-lib', version: '1.0.0',
-        files: [mkFile({ path: 'index.js', networkModules: ['https'] })],
+        files: [
+          mkFile({
+            path: 'index.js',
+            networkModules: ['https'],
+            execModules: ['child_process'],
+            envAccesses: [{ line: 1, keys: ['NPM_TOKEN'], snippet: 'x' }],
+          }),
+        ],
       }),
     };
     expect(firstVersionClusterDetector.run(pair, { direction: 'added' })).toHaveLength(0);

@@ -11,6 +11,7 @@
 [![Corpus: 12/13 caught](https://img.shields.io/badge/corpus-12%2F13%20caught-brightgreen)](docs/DETECTIONS.md)
 [![Benchmark: 92.3%](https://img.shields.io/badge/benchmark-92.3%25-brightgreen)](https://github.com/OJ-Uday/vetlock-benchmark)
 [![FP: 14.3% BLOCK on routine bumps](https://img.shields.io/badge/FP-14.3%25%20on%20routine%20bumps-brightgreen)](docs/FP-STUDY.md)
+[![PyPI FP: synthetic study complete](https://img.shields.io/badge/PyPI%20FP-synthetic%20study-yellow)](docs/PYPI-FP-STUDY.md)
 [![Red-team: 37/48 exploits closed](https://img.shields.io/badge/red--team-37%2F48%20closed-brightgreen)](docs/REDTEAM-2026-07-12.md)
 [![Zero telemetry](https://img.shields.io/badge/telemetry-zero-blue)](#privacy)
 [![NEVER-EXECUTE canary](https://img.shields.io/badge/canary-NEVER--EXECUTE-red)](docs/adr/0005-never-execute.md)
