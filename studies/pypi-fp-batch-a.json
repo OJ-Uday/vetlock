@@ -1,0 +1,247 @@
+{
+  "batch": "A",
+  "description": "Analytics/Data Science packages",
+  "summary": {
+    "batch": "A",
+    "description": "Analytics/Data Science packages",
+    "totalBumps": 18,
+    "cleanOrInfoPasses": 18,
+    "BLOCK": 0,
+    "WARN": 0,
+    "INFO": 0,
+    "CLEAN": 18,
+    "ERROR": 0,
+    "falsePositiveRate": 0,
+    "detectorHits": {},
+    "assertionPassed": true
+  },
+  "results": [
+    {
+      "package": "numpy",
+      "oldVersion": "1.26.4",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [
+        "import ctypes",
+        "import platform"
+      ],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "pandas",
+      "oldVersion": "2.1.4",
+      "newVersion": "2.2.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [
+        "os.environ.get('PANDAS_TESTING_MODE')"
+      ],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "scipy",
+      "oldVersion": "1.11.4",
+      "newVersion": "1.12.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "matplotlib",
+      "oldVersion": "3.8.2",
+      "newVersion": "3.9.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [
+        "os.environ.get('MPLBACKEND')"
+      ],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "scikit-learn",
+      "oldVersion": "1.4.0",
+      "newVersion": "1.5.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [
+        "os.environ.get('OMP_NUM_THREADS')"
+      ],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "tqdm",
+      "oldVersion": "4.66.4",
+      "newVersion": "4.66.5",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "pillow",
+      "oldVersion": "10.3.0",
+      "newVersion": "10.4.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "filelock",
+      "oldVersion": "3.13.0",
+      "newVersion": "3.14.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "platformdirs",
+      "oldVersion": "4.1.0",
+      "newVersion": "4.2.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [
+        "import platform"
+      ],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "more-itertools",
+      "oldVersion": "10.2.0",
+      "newVersion": "10.3.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "pydantic",
+      "oldVersion": "2.6.4",
+      "newVersion": "2.7.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "pydantic-core",
+      "oldVersion": "2.16.3",
+      "newVersion": "2.18.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "annotated-types",
+      "oldVersion": "0.6.0",
+      "newVersion": "0.7.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "attrs",
+      "oldVersion": "23.2.0",
+      "newVersion": "24.2.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "typing-extensions",
+      "oldVersion": "4.10.0",
+      "newVersion": "4.12.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "importlib-metadata",
+      "oldVersion": "7.0.1",
+      "newVersion": "8.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "six",
+      "oldVersion": "1.16.0",
+      "newVersion": "1.17.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    },
+    {
+      "package": "exceptiongroup",
+      "oldVersion": "1.2.0",
+      "newVersion": "1.2.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "expectedBenignPatterns": [],
+      "falsePositiveDetails": [],
+      "findings": []
+    }
+  ]
+}
