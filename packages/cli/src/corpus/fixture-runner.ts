@@ -69,12 +69,98 @@ export function resolveFileRef(resolved: string, fixtureDir: string): string {
   return path.resolve(fixtureDir, raw.replace(/^\.\//, ''));
 }
 
+function sanitize(s: string): string {
+  return s.replace(/[^A-Za-z0-9._-]/g, '_');
+}
+
+function findLocalArtifact(
+  dir: string,
+  name: string,
+  version: string,
+): string | null {
+  if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) return null;
+  const exact = [
+    `${sanitize(name)}-${version}.tar.gz`,
+    `${sanitize(name)}-${version}.tgz`,
+    `${sanitize(name)}-${version}.whl`,
+  ];
+  for (const base of exact) {
+    const p = path.join(dir, base);
+    if (fs.existsSync(p) && fs.statSync(p).isFile()) return p;
+  }
+  for (const entry of fs.readdirSync(dir)) {
+    const p = path.join(dir, entry);
+    if (!fs.statSync(p).isFile()) continue;
+    if (/(\.tar\.gz|\.tgz|\.whl)$/i.test(entry) && entry.includes(version)) return p;
+  }
+  return null;
+}
+
 /** Build a fetchOverride bound to one fixture's directory. */
 export const makeLocalFetch = (fixtureDir: string) =>
   async (ref: { resolved?: string | null; name: string; version: string }): Promise<string> => {
     if (ref.resolved?.startsWith('file:')) return resolveFileRef(ref.resolved, fixtureDir);
+    const exactDir = path.join(fixtureDir, `${ref.name}-${ref.version}`);
+    const fromExact = findLocalArtifact(exactDir, ref.name, ref.version);
+    if (fromExact) return fromExact;
+    const fallback = findLocalArtifact(path.join(fixtureDir, sanitize(ref.name)), ref.name, ref.version)
+      ?? findLocalArtifact(fixtureDir, ref.name, ref.version);
+    if (fallback) return fallback;
     throw new Error(`corpus fixture should not need to fetch ${ref.name}@${ref.version}`);
   };
+
+export interface FixtureLockfiles {
+  beforePath: string;
+  afterPath: string;
+  oldLockfilePath: string;
+  newLockfilePath: string;
+}
+
+export function resolveFixtureLockfiles(fixtureDir: string): FixtureLockfiles {
+  const candidates: Array<{
+    before: string;
+    after: string;
+    hint: string;
+  }> = [
+    {
+      before: 'lockfile.before.json',
+      after: 'lockfile.after.json',
+      hint: 'package-lock.json',
+    },
+    {
+      before: 'requirements.before.txt',
+      after: 'requirements.after.txt',
+      hint: 'requirements.txt',
+    },
+    {
+      before: 'poetry.lock.before',
+      after: 'poetry.lock.after',
+      hint: 'poetry.lock',
+    },
+    {
+      before: 'uv.lock.before',
+      after: 'uv.lock.after',
+      hint: 'uv.lock',
+    },
+  ];
+  for (const candidate of candidates) {
+    const beforePath = path.join(fixtureDir, candidate.before);
+    const afterPath = path.join(fixtureDir, candidate.after);
+    if (fs.existsSync(beforePath) && fs.existsSync(afterPath)) {
+      return {
+        beforePath,
+        afterPath,
+        oldLockfilePath: candidate.hint,
+        newLockfilePath: candidate.hint,
+      };
+    }
+  }
+  throw new Error(
+    `fixture at ${fixtureDir} has no supported lockfile pair (expected one of: ` +
+      candidates.map((c) => `${c.before} + ${c.after}`).join(', ') +
+      ')',
+  );
+}
 
 export interface FixtureRun {
   id: string;
@@ -92,11 +178,14 @@ export function loadManifest(id: string): Manifest {
 export async function runFixture(id: string): Promise<FixtureRun> {
   const fixtureDir = path.join(CORPUS_ROOT, id);
   const manifest = loadManifest(id);
-  const before = fs.readFileSync(path.join(fixtureDir, 'lockfile.before.json'), 'utf8');
-  const after = fs.readFileSync(path.join(fixtureDir, 'lockfile.after.json'), 'utf8');
+  const lockfiles = resolveFixtureLockfiles(fixtureDir);
+  const before = fs.readFileSync(lockfiles.beforePath, 'utf8');
+  const after = fs.readFileSync(lockfiles.afterPath, 'utf8');
   const result = await runDiff(before, after, {
     runDetectors: (pair) => runAll(pair),
     fetchOverride: makeLocalFetch(fixtureDir),
+    oldLockfilePath: lockfiles.oldLockfilePath,
+    newLockfilePath: lockfiles.newLockfilePath,
   });
   return { id, manifest, result };
 }
