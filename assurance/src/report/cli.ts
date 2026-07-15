@@ -98,6 +98,28 @@ async function main(): Promise<void> {
           '`assurance/corpus/robustness/redos-safety-note/` — engine regex surface probed CLEAN ' +
           '(regenerate this test when the engine\'s regex surface changes).',
       },
+      {
+        title: 'guarddog comparative audit — coverage measured, gaps being closed',
+        body:
+          'Wave 7-GG landed `assurance/docs/audits/guarddog-comparative-audit.md`: a rule-by-rule ' +
+          'inventory of Datadog\'s guarddog scanner against vetlock, classifying each guarddog ' +
+          'detector as REAL GAP / PARTIAL / COVERED / INTENTIONAL-NON-GOAL, plus §2 ' +
+          '"architectural insights vetlock can absorb" (MITRE ATT&CK tagging, 0-10 risk score, ' +
+          'SARIF-first, extraction sandbox posture, declarative rule loader for string-fingerprint ' +
+          'detectors). The audit also landed a first-class differential adapter ' +
+          '(`assurance/src/differential/guarddog.ts`) so any silent guarddog hit vetlock does not ' +
+          'produce shows up in the differential ledger. Follow-up waves are landing the ports and ' +
+          'architectural adoptions the audit surfaced: Wave 8-KK ports the four P2 low-effort ' +
+          'detectors (`obf.js-mangler-signature`, `obf.unicode-homoglyph-boundary`, ' +
+          '`meta.disposable-author-domain`, `typo.hyphen-permutation`); Wave 8-LL ports the P3 ' +
+          'medium-effort detectors (`obf.base64-then-exec`, `net.dns-templated-hostname`, ' +
+          '`obf.image-decode-exec`); Wave 8-MM adopts the architectural insights (MITRE ATT&CK ' +
+          'field on Finding, package-level 0-10 score with documented weighting, SARIF as a ' +
+          'first-class default reporter). Wave 8-NN publishes the honest comparison surface ' +
+          '(`docs/COMPARISONS.md` + README Comparisons section) so users can pick and compose ' +
+          'the right tools rather than guess. The audit doc itself carries CLOSED (Wave 8-XX) ' +
+          'markers on each section that a follow-up wave lands.',
+      },
     ],
   };
 
