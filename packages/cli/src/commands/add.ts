@@ -52,6 +52,7 @@ import pc from 'picocolors';
 import {
   analyzeTarball,
   fetchTarball,
+  computeRiskScore,
   type PackageSnapshot,
   type SnapshotPair,
   type Finding,
@@ -361,6 +362,7 @@ export async function runAddCommand(
     changes: [change],
     errors: [],
     durationMs: gateDurationMs,
+    riskScore: computeRiskScore(findings),
   };
   if (opts.json) {
     printOut(opts, renderJSON(syntheticResult));
