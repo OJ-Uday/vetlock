@@ -6,9 +6,9 @@
 
 ## Summary
 
-- **Total enumerated primitives:** 61
-- **With corpus fixture(s):** 26 (43%)
-- **Soft-warn (no corpus yet):** 35
+- **Total enumerated primitives:** 64
+- **With corpus fixture(s):** 26 (41%)
+- **Soft-warn (no corpus yet):** 38
 
 | Class | Sink count | Entry-point count | Total |
 |---|---:|---:|---:|
@@ -20,8 +20,8 @@
 | `graph-entry-point` | 0 | 10 | 10 |
 | `install-hook` | 1 | 5 | 6 |
 | `integrity` | 1 | 0 | 1 |
-| `net-egress` | 8 | 0 | 8 |
-| `obfuscation-decode` | 3 | 0 | 3 |
+| `net-egress` | 9 | 0 | 9 |
+| `obfuscation-decode` | 5 | 0 | 5 |
 | `publisher-trust` | 0 | 2 | 2 |
 | `python-code-exec` | 2 | 0 | 2 |
 | `python-env-access` | 1 | 0 | 1 |
@@ -134,6 +134,7 @@
 | ID | Kind | Detector(s) | Corpus | Chokepoint |
 |---|---|---|---|---|
 | `dns` | sink | `net.new-module` | _(soft-warn)_ | `capabilities.networkModules` |
+| `dns-templated-hostname` | sink | `net.dns-templated-hostname` | _(soft-warn)_ | `capabilities.networkModules ∋ dns/* AND (char-arithmetic-decoder dynamicCode OR encodedUrls OR env-access snippet containing a DNS callee)` |
 | `encoded-url` | sink | `net.encoded-endpoint` | `event-stream-2018`, `solana-web3-2024`, `lottie-player-2024` | `capabilities.encodedUrls (constant-folding aware)` |
 | `fetch` | sink | `net.new-module` | _(soft-warn)_ | `capabilities.networkModules` |
 | `http` | sink | `net.new-module` | `shai-hulud-2025`, `eslint-scope-2018`, `event-stream-2018` | `capabilities.networkModules` |
@@ -144,6 +145,7 @@
 
 **Notes:**
 - `dns`: N3 FIX — covert exfil channel via DNS subdomain encoding
+- `dns-templated-hostname`: Wave 8-KK — port from guarddog:threat-network-dns-exfil. Diff-safe: only fires when the DNS module is NEWLY imported in the changed version.
 
 ## `obfuscation-decode`
 
@@ -152,10 +154,14 @@
 | `char-arithmetic-decoder` | sink | `code.dynamic-loading-added` | _(soft-warn)_ | — |
 | `entropy-jump` | sink | `obf.entropy-jump`, `obf.new-obfuscated-file` | `event-stream-2018`, `eslint-scope-2018`, `lottie-player-2024`, `rand-user-agent-2025` | `capabilities.entropy + capabilities.suspiciousLiterals` |
 | `image-decode-exec` | sink | `obf.image-decode-exec` | _(soft-warn)_ | `PackageSnapshot.files cross-reference: fsReadTargets pointing at image extensions (.png/.jpg/.gif/.bmp/.webp) + dynamicCode sink (eval/new-function/vm) in the same package` |
+| `js-mangler-signature` | sink | `obf.js-mangler-signature` | _(soft-warn)_ | `count of distinct `_0x[a-f0-9]{4,6}` matches across FileCapabilities.dynamicCode/envAccesses snippets + suspiciousLiterals previews` |
+| `unicode-homoglyph-boundary` | sink | `obf.unicode-homoglyph-boundary` | _(soft-warn)_ | `ASCII↔confusable-alphabet-block adjacency in urlLiterals + suspiciousLiterals previews + dynamicCode/envAccesses snippets` |
 
 **Notes:**
 - `char-arithmetic-decoder`: L11 FIX — rot13/char-arithmetic decoder detection
 - `image-decode-exec`: Wave 8-LL — port from guarddog:threat-runtime-obfuscation-steganography. Byte-level scanners see a valid image; AST scanners see a fs.readFileSync and a new Function separately. This detector connects the two — image + read + dynamic-code in the SAME snapshot version.
+- `js-mangler-signature`: Wave 8-KK — port from guarddog:threat-runtime-obfuscation-js-mangling. Fires when ≥3 distinct mangled identifiers appear in a NEW/CHANGED JS-like file in pair.new.
+- `unicode-homoglyph-boundary`: Wave 8-KK — port from guarddog:threat-runtime-obfuscation-unicode. Diff-safe: fires when the boundary is NEW to a file that had none before, or in an added-package first-version file.
 
 ## `publisher-trust`
 
