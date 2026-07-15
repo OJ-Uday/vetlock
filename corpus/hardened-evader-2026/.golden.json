@@ -23,6 +23,10 @@
           "my-app",
           "evader-lib"
         ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1074"
       ]
     },
     {
@@ -47,6 +51,10 @@
           "my-app",
           "evader-lib"
         ]
+      ],
+      "mitre": [
+        "T1059.007",
+        "T1059"
       ]
     },
     {
@@ -71,6 +79,11 @@
           "my-app",
           "evader-lib"
         ]
+      ],
+      "mitre": [
+        "T1027",
+        "T1140",
+        "T1573"
       ]
     },
     {
@@ -95,6 +108,10 @@
           "my-app",
           "evader-lib"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
       ]
     },
     {
@@ -119,6 +136,11 @@
           "my-app",
           "evader-lib"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
       ]
     }
   ],
@@ -140,5 +162,6 @@
       "newIntegrity": "sha512-W/dG4164uTivbzHN8CbIHROBKoivA/RxtoKpsAnNcjZm5CIjseGxtAB88oAoaooUSt86oD7CLs8n8YjQ4/YYgw=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 10
 }

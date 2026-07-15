@@ -23,6 +23,10 @@
           "my-app",
           "ua-parser-js"
         ]
+      ],
+      "mitre": [
+        "T1554",
+        "T1027"
       ]
     },
     {
@@ -47,6 +51,10 @@
           "my-app",
           "ua-parser-js"
         ]
+      ],
+      "mitre": [
+        "T1059.007",
+        "T1059"
       ]
     },
     {
@@ -71,6 +79,10 @@
           "my-app",
           "ua-parser-js"
         ]
+      ],
+      "mitre": [
+        "T1195.002",
+        "T1059.007"
       ]
     },
     {
@@ -95,6 +107,10 @@
           "my-app",
           "ua-parser-js"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
       ]
     },
     {
@@ -119,6 +135,11 @@
           "my-app",
           "ua-parser-js"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
       ]
     }
   ],
@@ -140,5 +161,6 @@
       "newIntegrity": "sha512-GHSIIUR6MY1AqGZYu5vrkBal/3+NlN9fykJVCCH8uPSKxnLVjRFdxgcDaeP1aCAxqrA/CSGRZBAzdcRyYygrhg=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 10
 }

@@ -129,6 +129,10 @@ export function decideConfigApplication(
       },
     ],
     provenance: [],
+    // T1195.002 Compromise Software Supply Chain — the config-in-diff
+    // shape is an attacker filtering out their own findings from the
+    // scanner. Same supply-chain umbrella as the malicious package.
+    mitre: ['T1195.002'],
   };
 
   if (strict) {

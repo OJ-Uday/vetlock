@@ -54,6 +54,21 @@ export interface Finding {
   evidence: Evidence[];
   /** Up to 3 shortest paths root → node; overflow rendered as "+N more". */
   provenance: string[][];
+  /**
+   * Optional MITRE ATT&CK Enterprise technique IDs the detector maps to
+   * (e.g. `['T1195.002', 'T1059.007']`). Attached by the detectors package
+   * using a central `mitre-tags.ts` table so mappings live in one place.
+   *
+   * Format: `/^T\d{4}(\.\d{3})?$/` — either a parent tactic (T1195) or a
+   * sub-technique (T1195.002). Findings emitted by older code paths that
+   * don't set `mitre` remain valid (validateFinding permits absence).
+   *
+   * Consumers: SARIF renderer includes techniques as rule properties (SIEM /
+   * GitHub code-scanning ingestion); JSON report echoes the field verbatim.
+   *
+   * Reference: https://attack.mitre.org/matrices/enterprise/
+   */
+  mitre?: readonly string[];
 }
 
 /**
@@ -240,5 +255,26 @@ export function validateFinding(f: Finding): string | null {
       return "direction 'removed' cannot exceed INFO severity (diff-framing invariant)";
     }
   }
+  // Optional MITRE ATT&CK technique tags. When present, every entry must
+  // match the Enterprise-matrix identifier shape (parent tactic Txxxx or
+  // sub-technique Txxxx.yyy). Absence is fine — this preserves backwards
+  // compat with findings emitted before the tagging pass.
+  if (f.mitre !== undefined) {
+    if (!Array.isArray(f.mitre)) {
+      return `mitre must be a string array when set (got ${typeof f.mitre})`;
+    }
+    for (const t of f.mitre) {
+      if (typeof t !== 'string' || !MITRE_TECHNIQUE_ID.test(t)) {
+        return `invalid MITRE technique id: ${JSON.stringify(t)} (expected /^T\\d{4}(\\.\\d{3})?$/)`;
+      }
+    }
+  }
   return null;
 }
+
+/**
+ * ATT&CK Enterprise technique-id shape. Parents (Txxxx) and sub-techniques
+ * (Txxxx.yyy) are both accepted. Kept next to `validateFinding` so the schema
+ * check is trivially auditable.
+ */
+const MITRE_TECHNIQUE_ID = /^T\d{4}(\.\d{3})?$/;
