@@ -3,7 +3,7 @@
  * We only emit fields GitHub actually reads; the rest is intentionally omitted.
  */
 
-import type { RunResult, Severity } from '@vetlock/core';
+import { VETLOCK_VERSION, type RunResult, type Severity } from '@vetlock/core';
 
 const SARIF_LEVEL: Record<Severity, 'error' | 'warning' | 'note'> = {
   BLOCK: 'error',
@@ -31,8 +31,9 @@ export function renderSARIF(result: RunResult): string {
     properties: { category: r.category },
   }));
 
-  const results = result.findings.map((f) => {
-    const first = f.evidence[0]!;
+  const results = result.findings.flatMap((f) => {
+    const first = f.evidence[0];
+    if (!first) return [];
     return {
       ruleId: f.detector,
       level: SARIF_LEVEL[f.severity],
@@ -67,7 +68,7 @@ export function renderSARIF(result: RunResult): string {
           driver: {
             name: 'vetlock',
             informationUri: 'https://github.com/OJ-Uday/vetlock',
-            version: '0.2.0',
+            version: VETLOCK_VERSION,
             rules,
           },
         },

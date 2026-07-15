@@ -4,7 +4,7 @@
  *
  * Sub-commands:
  *   diff <before> <after>        — diff two lockfiles, report behavioral changes
- *   scan <lockfile>              — baseline scan of a full tree (not yet implemented)
+ *   scan <lockfile>              — baseline scan of a full tree
  *   demo                          — run against bundled Shai-Hulud fixture
  *   version                       — print version
  *
@@ -25,6 +25,7 @@
 import { promises as fs } from 'node:fs';
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { Command } from 'commander';
 import ora, { type Ora } from 'ora';
@@ -43,7 +44,7 @@ import {
   type ProgressEvent,
   parseLockfileText,
 } from '@vetlock/core';
-import { runAll } from '@vetlock/detectors';
+import { ALL_DETECTORS, runAll } from '@vetlock/detectors';
 import { renderTTY } from './tty.js';
 import { renderJSON } from './json.js';
 import { renderSARIF } from './sarif.js';
@@ -91,12 +92,17 @@ program
   .option('--show-clean', 'print a CLEAN banner even when no findings')
   .action(async (beforePath: string, afterPath: string, opts: CliFlags) => {
     try {
+      const failOnCli = parseFailOnIds(opts);
+      if (beforePath === '-' || afterPath === '-') {
+        writeErr(opts, 'vetlock: stdin input (-) is not yet supported. Use file paths.');
+        process.exit(1);
+      }
       const [before, after] = await Promise.all([
         fs.readFile(beforePath, 'utf8'),
         fs.readFile(afterPath, 'utf8'),
       ]);
       const decision = loadConfigWithTrustCheck(opts);
-      await runAndPrint(before, after, opts, decision, { beforePath, afterPath });
+      await runAndPrint(before, after, opts, decision, { beforePath, afterPath }, failOnCli);
     } catch (err) {
       writeErr(opts, `vetlock: ${err instanceof Error ? err.message : String(err)}`);
       process.exit(3);
@@ -114,15 +120,23 @@ program
     // Two possible fixture locations:
     //   - dist/demo-fixture/           (published npm tarball; ships alongside cli.js)
     //   - <repo-root>/corpus/shai-hulud-2025/  (dev-repo run)
-    const here = path.dirname(new URL(import.meta.url).pathname);
+    const here = path.dirname(fileURLToPath(import.meta.url));
     const shippedFixture = path.resolve(here, 'demo-fixture');
     const devFixture = path.resolve(here, '..', '..', '..', 'corpus', 'shai-hulud-2025');
     const fixtureDir = fsSync.existsSync(path.join(shippedFixture, 'lockfile.before.json'))
       ? shippedFixture
       : devFixture;
+    const beforePath = path.join(fixtureDir, 'lockfile.before.json');
+    if (!fsSync.existsSync(beforePath)) {
+      writeErr(opts, 'vetlock demo: fixture not found at either:');
+      writeErr(opts, `  (npm install) ${shippedFixture}/lockfile.before.json`);
+      writeErr(opts, `  (dev repo)    ${devFixture}/lockfile.before.json`);
+      writeErr(opts, 'Try: npm reinstall vetlock  OR  pnpm run build (in dev repo)');
+      process.exit(3);
+    }
     try {
       const [before, after] = await Promise.all([
-        fs.readFile(path.join(fixtureDir, 'lockfile.before.json'), 'utf8'),
+        fs.readFile(beforePath, 'utf8'),
         fs.readFile(path.join(fixtureDir, 'lockfile.after.json'), 'utf8'),
       ]);
       // demo always runs with the default config — no trust check needed.
@@ -141,7 +155,7 @@ program
         opts,
         decision,
         {
-          beforePath: path.join(fixtureDir, 'lockfile.before.json'),
+          beforePath,
           afterPath: path.join(fixtureDir, 'lockfile.after.json'),
         },
       );
@@ -154,17 +168,31 @@ program
 
 program
   .command('scan <lockfile>')
-  .description('Scan one lockfile (npm / pnpm / yarn) and report its capability profile — what the tree DOES, not what changed.')
+  .description('Scan one lockfile (npm / pnpm / yarn) and report its capability profile — what the tree DOES, not what changed. Applies the same config trust checks as diff.')
   .option('--json', 'emit JSON')
   .option('--sarif', 'emit SARIF 2.1.0')
   .option('--md', 'emit GitHub-flavored Markdown')
   .option('--fail-on <detectors>', 'comma-separated detector ids that force exit 2')
   .option('--config <path>', 'path to .vetlock.json (defaults to ./.vetlock.json)')
+  .option(
+    '--config-allow-in-diff',
+    'accept a .vetlock.json that changed inside this PR (a WARN is still recorded; default: strict — an in-diff config causes a BLOCK)',
+  )
+  .option(
+    '--config-baseline-ref <ref>',
+    'git ref to compare the config against (default: HEAD)',
+    'HEAD',
+  )
   .option('--no-progress', 'suppress the progress spinner')
   .option('--quiet', 'no progress AND no stderr messages')
   .option('--show-clean', 'print a CLEAN banner even when no findings')
   .action(async (lockfilePath: string, opts: CliFlags) => {
     try {
+      const failOnCli = parseFailOnIds(opts);
+      if (lockfilePath === '-') {
+        writeErr(opts, 'vetlock: stdin input (-) is not yet supported. Use file paths.');
+        process.exit(1);
+      }
       const lockfileText = await fs.readFile(lockfilePath, 'utf8');
       const decision = loadConfigWithTrustCheck(opts);
       // Scan mode is implemented on top of the diff pipeline: synthesize an
@@ -176,7 +204,7 @@ program
         beforePath: '<synthetic-empty-for-scan>',
         afterPath: lockfilePath,
         scanMode: true,
-      });
+      }, failOnCli);
     } catch (err) {
       writeErr(opts, `vetlock: ${err instanceof Error ? err.message : String(err)}`);
       writeErr(opts, `(reading ${lockfilePath})`);
@@ -306,6 +334,7 @@ async function runAndPrint(
   opts: CliFlags,
   decision: ConfigDecision,
   files?: { beforePath: string; afterPath: string; scanMode?: boolean },
+  failOnCli: string[] = [],
 ): Promise<void> {
   // Surface any synthetic findings from the trust decision at the top of the
   // report — e.g. `config.in-diff-untrusted` when .vetlock.json is in the
@@ -434,9 +463,8 @@ async function runAndPrint(
     process.stdout.write(renderTTY(result, { showClean: opts.showClean }) + '\n');
   }
 
-  const failOnCli = (opts.failOn ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   const shouldForce =
-    (failOnCli.length > 0 && result.findings.some((f) => failOnCli.includes(f.detector))) ||
+    (failOnCli.length > 0 && result.findings.some((f) => failOnCli.some((id) => matchesDetectorId(f.detector, id)))) ||
     isForcedFailure(result.findings, decision.config);
 
   // Exit codes: 0 clean · 1 ≥ WARN · 2 ≥ BLOCK (or forced by --fail-on)
@@ -461,6 +489,25 @@ function computeVerdict(findings: import('@vetlock/core').Finding[]): 'BLOCK' | 
 function writeErr(opts: CliFlags, msg: string) {
   if (opts.quiet) return;
   process.stderr.write(msg + '\n');
+}
+
+function parseFailOnIds(opts: CliFlags): string[] {
+  const failOnIds = (opts.failOn ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  if (failOnIds.length === 0) return failOnIds;
+
+  const knownIds = [...new Set(ALL_DETECTORS.map((d) => d.id))].sort((a, b) => a.localeCompare(b));
+  for (const id of failOnIds) {
+    const valid = knownIds.includes(id) || knownIds.some((knownId) => id.startsWith(`${knownId}.`));
+    if (!valid) {
+      writeErr(opts, `vetlock: unknown detector id in --fail-on: "${id}". Known: ${knownIds.join(', ')}`);
+      process.exit(1);
+    }
+  }
+  return failOnIds;
+}
+
+function matchesDetectorId(detectorId: string, failOnId: string): boolean {
+  return detectorId === failOnId || detectorId.startsWith(`${failOnId}.`);
 }
 
 program.parseAsync(process.argv);

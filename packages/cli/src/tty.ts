@@ -61,7 +61,8 @@ export function renderTTY(result: RunResult, opts: { showClean?: boolean } = {})
           lines.push(`    ${pc.dim('via:')} ${path.join(' → ')}`);
         }
         if (first.provenance.length > 3) {
-          lines.push(`    ${pc.dim(`… +${first.provenance.length - 3} more path(s)`)}`);
+          const remaining = first.provenance.length - 3;
+          lines.push(`    ${pc.dim(`… +${remaining} more ${remaining === 1 ? 'path' : 'paths'}`)}`);
         }
       }
       for (const f of fs) {
