@@ -14,11 +14,11 @@ jobs:
     # historically caused SIGTERM cancellation of the top-level job. Keep the exclusion.
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
           node-version: '20'
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@a3252b1814c370b33d3d59a50f03e7d00b5b6f7d # v3.0.0
         with:
           version: 9
       - run: pnpm install --frozen-lockfile

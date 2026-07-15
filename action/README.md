@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: OJ-Uday/vetlock/action@v0
+      - uses: OJ-Uday/vetlock/action@v0.7.0
         id: vetlock
         with:
           before: package-lock.json
@@ -43,7 +43,7 @@ on:
   pull_request:
     paths: ['**/pnpm-lock.yaml']
 # …
-- uses: OJ-Uday/vetlock/action@v0
+- uses: OJ-Uday/vetlock/action@v0.7.0
   with:
     before: pnpm-lock.yaml
     fail-on: install.script-added,env.token-harvest,net.new-endpoint
@@ -56,7 +56,7 @@ on:
   pull_request:
     paths: ['**/yarn.lock']
 # …
-- uses: OJ-Uday/vetlock/action@v0
+- uses: OJ-Uday/vetlock/action@v0.7.0
   with:
     before: yarn.lock
     fail-on: install.script-added,env.token-harvest,net.new-endpoint
@@ -71,7 +71,7 @@ on:
 | `fail-on` | (empty) | Detector ids that force exit 2 regardless of verdict. |
 | `sarif-out` | `vetlock.sarif` | Where to write the SARIF file. |
 | `comment` | `true` | Post a sticky PR comment (updates the existing comment across pushes). |
-| `version` | `latest` | vetlock version to install from npm. Pin to an exact version (e.g. `0.3.0`) for reproducible CI runs. |
+| `version` | `latest` | vetlock version to install from npm. Pin to an exact version (e.g. `0.7.0`) for reproducible CI runs. |
 
 ## Outputs
 
@@ -89,10 +89,10 @@ Same as the CLI: `0` clean, `1` ≥ WARN, `2` ≥ BLOCK (or forced by `--fail-on
 For reproducible CI runs, pin the vetlock version:
 
 ```yaml
-- uses: OJ-Uday/vetlock/action@v0
+- uses: OJ-Uday/vetlock/action@v0.7.0
   with:
     before: package-lock.json
-    version: 0.3.0
+    version: 0.7.0
 ```
 
 `latest` (the default) tracks the newest release. This is convenient for keeping detections

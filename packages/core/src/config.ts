@@ -119,8 +119,8 @@ export function parseConfig(json: string): VetlockConfig {
  * a second layer of the D2/D3 fix — schema is the first layer.
  *
  * REDTEAM D1 FIX: findings whose detector is in ALWAYS_APPLY_DETECTORS are
- * exempt from severityOverride and allowlist downgrading.  They can still be
- * dropped by ignorePackages/ignorePathsInside but NOT silenced in severity.
+ * exempt from ignorePackages/ignorePathsInside, severityOverride, and
+ * allowlist downgrading — applyConfig cannot drop or soften them.
  */
 export function applyConfig(findings: Finding[], config: VetlockConfig): Finding[] {
   // Strip severityOverride entries that target always-apply detectors (D1 fix).
@@ -128,10 +128,11 @@ export function applyConfig(findings: Finding[], config: VetlockConfig): Finding
 
   return findings
     // Drop findings for ignored packages
-    .filter((f) => !safeConfig.ignorePackages.includes(f.package))
+    .filter((f) => ALWAYS_APPLY_DETECTORS.has(f.detector) || !safeConfig.ignorePackages.includes(f.package))
     // Drop findings whose evidence-file falls under an ignore-path-inside.
     // Empty/whitespace prefixes are ignored here (D2 defense-in-depth).
     .filter((f) => {
+      if (ALWAYS_APPLY_DETECTORS.has(f.detector)) return true;
       const ignore = safeConfig.ignorePathsInside[f.package];
       if (!ignore || ignore.length === 0) return true;
       const first = f.evidence[0];
@@ -192,14 +193,12 @@ export const ALWAYS_APPLY_DETECTORS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Return a copy of `config` with all overrides/allowlist/ignorePackages/
- * ignorePathsInside entries that could silence an ALWAYS_APPLY_DETECTORS
- * finding stripped out.
+ * Return a copy of `config` with any severityOverride entries targeting
+ * ALWAYS_APPLY_DETECTORS stripped out.
  *
- * Concretely: removes the detector ids from severityOverride and removes the
- * relevant packages from the allowlist/ignorePackages/ignorePathsInside when
- * the finding is anchored on 'package.json' (the evidence file used by the
- * engine-synthetic detectors).
+ * Concretely: this function only removes detector ids from severityOverride.
+ * applyConfig itself enforces the matching ALWAYS_APPLY exemptions for
+ * ignorePackages, ignorePathsInside, and allowlist handling.
  *
  * Called by applyConfig — callers do NOT need to call this separately.
  */

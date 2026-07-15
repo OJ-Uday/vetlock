@@ -38,6 +38,8 @@ export interface ScanBackend {
   run(input: ScanInput): Promise<ScanResultOk>;
 }
 
+const SCAN_TIMEOUT_MS = parseInt(process.env.VETLOCK_SCAN_TIMEOUT ?? '60000', 10);
+
 /**
  * Default backend — calls straight into @vetlock/core's runDiff with
  * @vetlock/detectors' runAll, the same pairing the CLI uses. No process
@@ -46,7 +48,22 @@ export interface ScanBackend {
  * for static analysis.
  */
 export class DefaultScanBackend implements ScanBackend {
+  // DefaultScanBackend is for local development only. Production deployments MUST use SandboxedBackend.
   async run(input: ScanInput): Promise<ScanResultOk> {
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutHandle = setTimeout(() => reject(new Error(`Scan timed out after ${SCAN_TIMEOUT_MS}ms`)), SCAN_TIMEOUT_MS);
+      timeoutHandle.unref?.();
+    });
+
+    try {
+      return await Promise.race([this.runInternal(input), timeoutPromise]);
+    } finally {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+    }
+  }
+
+  private async runInternal(input: ScanInput): Promise<ScanResultOk> {
     // requirements.txt/poetry.lock/uv.lock content is self-describing enough
     // for parseLockfileText's content-sniff in most cases; the filename hint
     // just disambiguates when a caller has told us the ecosystem explicitly.
@@ -62,13 +79,20 @@ export class DefaultScanBackend implements ScanBackend {
 
 /** Results persist for 24h after completion (ADR 0008 persistence window). */
 const RESULT_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_QUEUE_JOBS = parseInt(process.env.VETLOCK_MAX_QUEUE_JOBS ?? '1000', 10);
 
 interface Job {
   startedAt: number;
   stage: string;
   record: ScanRecord;
-  /** Set once the job finishes (done or error); null while pending. */
-  expiresAt: number | null;
+  expiresAt: number;
+}
+
+export class QueueFullError extends Error {
+  constructor(message = `scan queue is full (max ${MAX_QUEUE_JOBS} jobs)`) {
+    super(message);
+    this.name = 'QueueFullError';
+  }
 }
 
 export class ScanQueue {
@@ -77,17 +101,23 @@ export class ScanQueue {
 
   constructor(backend: ScanBackend = new DefaultScanBackend()) {
     this.backend = backend;
+    this.startCleanupInterval();
   }
 
   /** Starts a scan asynchronously and immediately returns its id. */
   enqueue(input: ScanInput): string {
+    this.sweepExpiredJobs(Date.now());
+    if (this.jobs.size >= MAX_QUEUE_JOBS) {
+      throw new QueueFullError();
+    }
+
     const scanId = crypto.randomUUID();
     const startedAt = Date.now();
     const job: Job = {
       startedAt,
       stage: 'queued',
       record: { status: 'pending', stage: 'queued', elapsedMs: 0 },
-      expiresAt: null,
+      expiresAt: startedAt + RESULT_TTL_MS,
     };
     this.jobs.set(scanId, job);
 
@@ -112,11 +142,26 @@ export class ScanQueue {
     return scanId;
   }
 
+  private startCleanupInterval(): void {
+    setInterval(() => {
+      this.sweepExpiredJobs(Date.now());
+    }, 5 * 60 * 1000).unref();
+  }
+
+  private sweepExpiredJobs(now: number): void {
+    for (const [id, job] of this.jobs.entries()) {
+      if (now > job.expiresAt) {
+        this.jobs.delete(id);
+      }
+    }
+  }
+
   /** undefined = unknown scanId (404). `{status:'expired'}` = past the 24h TTL (410). */
   getResult(scanId: string): ScanRecord | undefined {
     const job = this.jobs.get(scanId);
     if (!job) return undefined;
-    if (job.expiresAt !== null && Date.now() > job.expiresAt) {
+    if (job.record.status !== 'pending' && Date.now() > job.expiresAt) {
+      this.jobs.delete(scanId);
       return { status: 'expired' };
     }
     if (job.record.status === 'pending') {
