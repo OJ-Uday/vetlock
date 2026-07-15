@@ -100,6 +100,8 @@ export function parseConfig(json: string): VetlockConfig {
   }
   const result = ConfigSchema.safeParse(parsed);
   if (!result.success) {
+    // Intentional: config field names and validation messages are user-authored,
+    // not sensitive internal schema details. Surface them directly for repair.
     const issues = result.error.issues
       .map((i) => `  - ${i.path.join('.')}: ${i.message}`)
       .join('\n');

@@ -498,7 +498,7 @@ function asString(v: unknown): string | undefined {
  *   [table]                        → tables
  *   [[array-of-tables]]            → arraysOfTables
  *   key = "value"                  → scalar strings
- *   key = 1                        → scalar numbers (kept as raw strings)
+ *   key = 1                        → scalar numbers
  *   key = true                     → scalar booleans (kept as raw strings)
  *   key = ["a", "b"]               → arrays of scalars
  *   key = [{a = "b"}, {c = "d"}]   → arrays of inline tables
@@ -782,7 +782,10 @@ function parseTomlValue(raw: string): unknown {
   if (s.startsWith('{') && s.endsWith('}')) {
     return parseTomlInlineTable(s.slice(1, -1));
   }
-  // Number (kept as string — we don't need typed numeric values downstream)
+  if (/^0x[0-9a-fA-F]+$/.test(s)) return parseInt(s, 16);
+  if (/^0o[0-7]+$/.test(s)) return parseInt(s.slice(2), 8);
+  if (/^0b[01]+$/.test(s)) return parseInt(s.slice(2), 2);
+  // Decimal number (kept as a string for backward-compatible callers).
   if (/^-?\d/.test(s)) return s;
   // Bare identifier — keep the string as-is
   return s;

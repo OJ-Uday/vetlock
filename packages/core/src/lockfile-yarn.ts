@@ -114,10 +114,13 @@ function objectToGraph(
   });
 
   // Yarn lockfile entries can be keyed by MULTIPLE aliases joined with commas,
-  // e.g. 'foo@^1.0.0, foo@^1.1.0'. Deduplicate by (name, version).
-  const seen = new Map<string, string>(); // 'name@version' → nodeKey
+  // e.g. 'foo@^1.0.0, foo@^1.1.0'. Deduplicate only within a single raw entry
+  // so distinct entries that happen to share name@version are not collapsed.
+  const nodeKeyByRawKey = new Map<string, string>();
   for (const [rawKey, entry] of Object.entries(packages)) {
     const aliases = rawKey.split(',').map((a) => a.trim()).filter(Boolean);
+    const seen = new Set<string>();
+    let nodeKeyForEntry: string | null = null;
     for (const alias of aliases) {
       const parsed = parseYarnAlias(alias);
       if (!parsed) continue;
@@ -126,6 +129,7 @@ function objectToGraph(
       if (!version) continue;
       const nvKey = `${name}@${version}`;
       if (seen.has(nvKey)) continue;
+      seen.add(nvKey);
 
       // REDTEAM F6: record npm: alias mapping so the engine can emit
       // a deps.aliased-name finding for reviewer scrutiny.
@@ -133,36 +137,34 @@ function objectToGraph(
         npmAliases.push({ declaredName: name, realName, version });
       }
 
-      let key = `node_modules/${name}`;
-      if (nodes.has(key)) key = `${key}@${version}`;
-      while (nodes.has(key)) key = `${key}#${nodes.size}`;
+      if (!nodeKeyForEntry) {
+        let key = `node_modules/${name}`;
+        if (nodes.has(key)) key = `${key}@${version}`;
+        while (nodes.has(key)) key = `${key}#${nodes.size}`;
 
-      nodes.set(key, {
-        key,
-        name,
-        version,
-        // Prefer explicit SRI-shaped values. yarn classic populates `integrity`;
-        // yarn berry populates `checksum` (which is SRI in the sha512-… form
-        // when the entry came from npm). Normalise both into `integrity` so
-        // downstream detectors and the changeset integrity-tripwire (S10)
-        // don't silently miss berry lockfiles.
-        integrity: pickIntegrity(entry),
-        resolved: entry.resolved ?? null,
-        dependencies: [], // filled below
-      });
-      (byName.get(name) ?? byName.set(name, []).get(name)!).push(key);
-      seen.set(nvKey, key);
+        nodes.set(key, {
+          key,
+          name,
+          version,
+          // Prefer explicit SRI-shaped values. yarn classic populates `integrity`;
+          // yarn berry populates `checksum` (which is SRI in the sha512-… form
+          // when the entry came from npm). Normalise both into `integrity` so
+          // downstream detectors and the changeset integrity-tripwire (S10)
+          // don't silently miss berry lockfiles.
+          integrity: pickIntegrity(entry),
+          resolved: entry.resolved ?? null,
+          dependencies: [], // filled below
+        });
+        (byName.get(name) ?? byName.set(name, []).get(name)!).push(key);
+        nodeKeyForEntry = key;
+      }
     }
+    if (nodeKeyForEntry) nodeKeyByRawKey.set(rawKey, nodeKeyForEntry);
   }
 
   // Second pass: dependencies.
   for (const [rawKey, entry] of Object.entries(packages)) {
-    const firstAlias = rawKey.split(',')[0]!.trim();
-    const parsed = parseYarnAlias(firstAlias);
-    if (!parsed) continue;
-    const version = entry.version ?? '';
-    const nvKey = `${parsed.name}@${version}`;
-    const nodeKey = seen.get(nvKey);
+    const nodeKey = nodeKeyByRawKey.get(rawKey);
     if (!nodeKey) continue;
     const node = nodes.get(nodeKey);
     if (!node) continue;
@@ -223,23 +225,23 @@ export function parseYarnAlias(alias: string): {
   // A package alias looks like `npm:evil-pkg@1.0.0` — the part after 'npm:' contains '@'
   // (for non-scoped) or starts with '@' (scoped, e.g. `npm:@scope/pkg@1.0.0`).
   if (spec.startsWith('npm:')) {
-    const after = spec.slice(4); // text after 'npm:'
-    // Is this a package alias? Check if it contains an '@' that isn't the first char
-    // (non-scoped) OR starts with '@' (scoped package alias).
-    const isAlias = after.startsWith('@')
-      ? after.indexOf('@', 1) !== -1           // scoped: @scope/pkg@ver
-      : after.includes('@') && !/^[\^~><=*]/.test(after); // non-scoped: pkg@ver (not a semver range)
-    if (isAlias) {
-      // Extract the real package name from `npm:<realName>@<ver>` or `npm:@scope/pkg@ver`.
-      const realAt = after.startsWith('@') ? after.indexOf('@', 1) : after.indexOf('@');
-      const realName = realAt === -1 ? after : after.slice(0, realAt);
-      if (realName && realName !== name) {
-        return { name, spec, realName };
-      }
+    const after = spec.slice(4);
+    const real = splitYarnPackageSpec(after);
+    if (real && real.name !== name) {
+      return { name, spec, realName: real.name };
     }
   }
 
   return { name, spec };
+}
+
+function splitYarnPackageSpec(spec: string): { name: string; range: string } | null {
+  const splitAt = spec.lastIndexOf('@');
+  if (splitAt <= 0) return null;
+  const name = spec.slice(0, splitAt);
+  const range = spec.slice(splitAt + 1);
+  if (!name || !range) return null;
+  return { name, range };
 }
 
 /**

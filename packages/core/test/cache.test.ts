@@ -2,6 +2,7 @@ import { describe, it, expect, afterAll } from 'vitest';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
+import { createHash } from 'node:crypto';
 import { makeCache, SNAPSHOT_FORMAT_VERSION } from '../src/cache.js';
 import type { PackageSnapshot } from '../src/finding.js';
 
@@ -40,7 +41,7 @@ describe('SnapshotCache', () => {
     const cache = makeCache(dir);
     const key = 'sha512-old-format';
     await cache.put(key, fakeSnap('foo', '1.0.0'));
-    const safeKey = key.replace(/[^A-Za-z0-9._-]/g, '_');
+    const safeKey = createHash('sha256').update(key).digest('hex');
     const entryPath = `${dir}/${safeKey}.json`;
     const envelope = JSON.parse(await fs.readFile(entryPath, 'utf8'));
     envelope.formatVersion = 0;

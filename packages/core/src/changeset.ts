@@ -75,7 +75,7 @@ export function computeChangeset(oldG: LockGraph, newG: LockGraph): Change[] {
   for (const [id, n] of newByNameVer) {
     const o = oldByNameVer.get(id);
     if (!o) continue;
-    if (!n.integrity && !o.integrity) continue; // both blank — no ground truth on either side
+    if (!n.integrity && !o.integrity) continue; // both blank is safe: file:/git: deps have no lockfile integrity, and other detectors still cover behavioral drift
     if (n.integrity === o.integrity) continue;  // matches exactly, no signal
     // Everything else is a change we must surface.
     changes.push({
@@ -208,7 +208,9 @@ function pickClosest(candidates: string[], target: string): string | null {
     if (less.length > 0) return less.sort().at(-1)!;
     return candidates.sort()[0]!;
   }
-  // Candidates <= target: pick the max.
+  // Candidates <= target: pick the max. semver.compare() sorts prereleases
+  // below the corresponding final release (e.g. 1.0.0-beta.1 < 1.0.0), which
+  // is the behavior we want when choosing the closest prior version.
   const lte = parsed.filter((x) => semver.compare(x.sv, targetCoerced) <= 0);
   if (lte.length > 0) {
     lte.sort((a, b) => semver.compare(a.sv, b.sv));

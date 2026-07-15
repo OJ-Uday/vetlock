@@ -35,6 +35,7 @@ import type { ExtractResult, ExtractLimits, ExtractedEntry } from './extract.js'
 import { DEFAULT_LIMITS, UnsafeArchiveError } from './extract.js';
 
 const inflateRaw = promisify(zlib.inflateRaw);
+const MAX_ZIP_ENTRIES = 65535;
 
 export interface PypiPackageRef {
   name: string;
@@ -130,7 +131,7 @@ export async function extractPypiArtifact(
   } = {},
 ): Promise<ExtractResult> {
   const limits = { ...DEFAULT_LIMITS, ...(opts.limits ?? {}) };
-  const runId = opts.runId ?? crypto.randomBytes(8).toString('hex');
+  const runId = opts.runId ?? crypto.randomBytes(16).toString('hex');
   const baseTmpDir =
     opts.baseTmpDir ?? path.join(os.homedir(), '.cache', 'vetlock', 'tmp');
   const destDir = path.join(baseTmpDir, `pypi-${runId}`);
@@ -189,6 +190,9 @@ async function extractZipFile(
   }
 
   const totalCdrEntries = buf.readUInt16LE(eocdOffset + 10);
+  if (totalCdrEntries > MAX_ZIP_ENTRIES) {
+    throw new Error(`ZIP has too many entries: ${totalCdrEntries}`);
+  }
   let cdrOffset = buf.readUInt32LE(eocdOffset + 16);
   const cdrSize = buf.readUInt32LE(eocdOffset + 12);
   void cdrSize;
@@ -200,6 +204,11 @@ async function extractZipFile(
     throw new UnsafeArchiveError('ZIP64 wheels are not supported', 'unknown-entry-type');
   }
 
+  const maxCdrSize = 46 * totalCdrEntries;
+  if (cdrOffset + maxCdrSize > buf.length) {
+    throw new Error(`ZIP CDR out of bounds: offset=${cdrOffset} entries=${totalCdrEntries} bufLen=${buf.length}`);
+  }
+
   for (let i = 0; i < totalCdrEntries; i++) {
     entryCount++;
     if (entryCount > limits.maxEntries) {
@@ -208,6 +217,8 @@ async function extractZipFile(
         'entry-count-exceeded',
       );
     }
+
+    if (cdrOffset + 46 > buf.length) break; // truncated CDR
 
     // Central Directory File Header signature = 0x02014b50
     if (buf.readUInt32LE(cdrOffset) !== 0x02014b50) {
@@ -220,6 +231,9 @@ async function extractZipFile(
     const nameLen = buf.readUInt16LE(cdrOffset + 28);
     const extraLen = buf.readUInt16LE(cdrOffset + 30);
     const commentLen = buf.readUInt16LE(cdrOffset + 32);
+    if (cdrOffset + 46 + nameLen + extraLen + commentLen > buf.length) {
+      throw new Error('ZIP CDR entry extends beyond buffer');
+    }
     const externalAttrs = buf.readUInt32LE(cdrOffset + 38);
     const localHeaderOffset = buf.readUInt32LE(cdrOffset + 42);
     const rawName = buf.slice(cdrOffset + 46, cdrOffset + 46 + nameLen).toString('utf8');

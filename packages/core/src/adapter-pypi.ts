@@ -238,6 +238,7 @@ function parseRfc822Metadata(text: string, manifest: PackageManifest): void {
   let currentKey: string | null = null;
   let currentVal = '';
   const kv: Array<[string, string]> = [];
+  const seen = new Set<string>();
   for (const line of lines) {
     if (line === '') break; // headers end at blank line
     if (/^\s/.test(line) && currentKey) {
@@ -246,6 +247,11 @@ function parseRfc822Metadata(text: string, manifest: PackageManifest): void {
     }
     const m = line.match(/^([A-Za-z][A-Za-z0-9-]*):\s*(.*)$/);
     if (!m) continue;
+    const key = m[1]!.toLowerCase();
+    if ((key === 'name' || key === 'version') && seen.has(key)) {
+      throw new Error(`Malformed METADATA: duplicate field "${key}"`);
+    }
+    seen.add(key);
     if (currentKey) kv.push([currentKey, currentVal]);
     currentKey = m[1]!;
     currentVal = m[2]!;

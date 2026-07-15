@@ -37,7 +37,7 @@ import { makeCache, type SnapshotCache } from './cache.js';
 export interface EngineOptions {
   /** Called for each changed node with the (old, new) snapshot pair. Impl in @vetlock/detectors. */
   runDetectors: (pair: SnapshotPair, packageName: string) => Finding[];
-  /** Concurrency for fetch+analyze (default: os.cpus().length - 1, min 2, max 8). */
+  /** Concurrency for fetch+analyze (default: cpu count, min 2, max 8). */
   concurrency?: number;
   /** Per-package total timeout in ms (default 90_000). */
   timeoutMs?: number;
@@ -135,7 +135,10 @@ export async function runDiff(
   opts.onProgress?.({ kind: 'start', total: changes.length });
 
   const cache = opts.cache ?? makeCache();
-  const conc = clamp(opts.concurrency ?? ((cpuCount() ?? 3) - 1), 2, 8);
+  const MAX_WORKERS = 8;
+  const cpus = opts.concurrency ?? cpuCount() ?? 2;
+  const conc = Math.max(2, Math.min(cpus, MAX_WORKERS));
+  const concurrency = Number.isNaN(conc) || conc < 2 ? 2 : conc;
 
   // Snapshot fetch/analyze per (name, version, integrity) — dedup across changes that
   // point at the same tarball.
@@ -175,7 +178,7 @@ export async function runDiff(
   const refList = [...refs.entries()];
   let idx = 0;
   await Promise.all(
-    Array.from({ length: conc }, () => (async () => {
+    Array.from({ length: concurrency }, () => (async () => {
       while (true) {
         const cursor = idx++;
         if (cursor >= refList.length) return;
@@ -635,6 +638,9 @@ async function analyzeOne(
     fetchTimeoutMs,
     `${ref.name}@${ref.version}`,
   );
+  if (opts.fetchOverride) {
+    await assertGzipTarball(tarballPath);
+  }
   try {
     const timeout = opts.timeoutMs ?? 90_000;
     const snap = await withTimeout(
@@ -758,4 +764,16 @@ function cpuCount(): number | null {
     return os.cpus().length;
   } catch { return null; }
 }
-function clamp(n: number, lo: number, hi: number): number { return Math.max(lo, Math.min(hi, n)); }
+
+async function assertGzipTarball(fetchedPath: string): Promise<void> {
+  const header = Buffer.alloc(2);
+  const fd = await fs.open(fetchedPath, 'r');
+  try {
+    await fd.read(header, 0, 2, 0);
+  } finally {
+    await fd.close();
+  }
+  if (header[0] !== 0x1f || header[1] !== 0x8b) {
+    throw new Error(`fetchOverride returned non-gzip file at ${fetchedPath}`);
+  }
+}
