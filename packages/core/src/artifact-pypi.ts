@@ -15,10 +15,10 @@
  * falling back to the sdist. Tests bypass this via `localArtifact` to avoid
  * ANY network dependency in default CI.
  *
- * Behind the Lilly Artifactory proxy: pass `PIP_INDEX_URL` as an environment
- * variable OR `ref.registry` on the ref. We use the fetch URL directly for
- * the JSON API and follow the file URLs it returns; the Artifactory proxy
- * mirrors both.
+ * Behind the Lilly Artifactory proxy: set `VETLOCK_PYPI_JSON_URL`,
+ * `VETLOCK_PYPI_AUTH` / `JF_AUTH`, or `ref.registry` on the ref. We use the
+ * JSON API directly and follow the file URLs it returns, rewriting public
+ * pythonhosted.org URLs back through Artifactory when needed.
  */
 
 import { promises as fs } from 'node:fs';
@@ -35,12 +35,36 @@ import type { ExtractResult, ExtractLimits, ExtractedEntry } from './extract.js'
 import { DEFAULT_LIMITS, UnsafeArchiveError } from './extract.js';
 
 const inflateRaw = promisify(zlib.inflateRaw);
+const MAX_ZIP_ENTRIES = 65535;
+const DEFAULT_PYPI_JSON_URL = 'https://pypi.org';
 
+/**
+ * Environment variables that control PyPI/Artifactory access:
+ *
+ * VETLOCK_PYPI_JSON_URL  — Override PyPI JSON API base. For Artifactory:
+ *   https://{host}/artifactory/api/pypi/{repo}
+ *   (e.g. https://lilly.jfrog.io/artifactory/api/pypi/pypi-remote)
+ *
+ * VETLOCK_PYPI_AUTH — Auth credential. Two forms accepted:
+ *   user:token    → sent as Basic auth (base64 encoded)
+ *   token         → sent as token auth
+ *   For JFrog Artifactory, use your API key or identity token.
+ *   If unset, falls back to JF_AUTH (standard JFrog env var).
+ *
+ * VETLOCK_PYPI_ARTIFACT_URL_REWRITE — Set to "true" to force rewriting
+ *   pythonhosted.org artifact URLs through the configured Artifactory proxy
+ *   even when the JSON API returns public URLs. Useful when your Artifactory
+ *   instance blocks direct access to pythonhosted.org.
+ */
 export interface PypiPackageRef {
   name: string;
   version: string;
   integrity?: string;
-  /** Override registry base URL. Defaults to https://pypi.org. */
+  /**
+   * Override registry base URL. Defaults to VETLOCK_PYPI_JSON_URL env var,
+   * then https://pypi.org. For Artifactory:
+   *   https://{host}/artifactory/api/pypi/{repo}
+   */
   registry?: string;
   /** Path to a local .whl / .tar.gz to use instead of fetching (test escape hatch). */
   localArtifact?: string;
@@ -65,9 +89,9 @@ export async function fetchPypiArtifact(ref: PypiPackageRef): Promise<PypiFetche
     return { path: dest, kind };
   }
 
-  const registry = ref.registry ?? process.env.VETLOCK_PYPI_JSON_URL ?? 'https://pypi.org';
+  const registry = ref.registry ?? process.env.VETLOCK_PYPI_JSON_URL ?? DEFAULT_PYPI_JSON_URL;
   const jsonUrl = `${registry.replace(/\/$/, '')}/pypi/${encodeURIComponent(ref.name)}/${encodeURIComponent(ref.version)}/json`;
-  const res = await fetch(jsonUrl);
+  const res = await fetch(jsonUrl, { headers: pypiAuthHeaders() });
   if (!res.ok) {
     throw new Error(`pypi metadata fetch failed: ${jsonUrl} → HTTP ${res.status}`);
   }
@@ -87,9 +111,10 @@ export async function fetchPypiArtifact(ref: PypiPackageRef): Promise<PypiFetche
   }
   const kind: 'wheel' | 'sdist' = pick.packagetype === 'bdist_wheel' ? 'wheel' : 'sdist';
   const dest = await tempArtifactPath(ref, kind);
-  const fileRes = await fetch(pick.url);
+  const artifactUrl = rewriteArtifactUrl(pick.url, registry);
+  const fileRes = await fetch(artifactUrl, { headers: pypiAuthHeaders() });
   if (!fileRes.ok) {
-    throw new Error(`pypi artifact download failed: ${pick.url} → HTTP ${fileRes.status}`);
+    throw new Error(`pypi artifact download failed: ${artifactUrl} → HTTP ${fileRes.status}`);
   }
   const buf = Buffer.from(await fileRes.arrayBuffer());
   // If integrity was provided, verify it against the sha256 in the URL entry.
@@ -101,6 +126,30 @@ export async function fetchPypiArtifact(ref: PypiPackageRef): Promise<PypiFetche
   }
   await fs.writeFile(dest, buf);
   return { path: dest, kind };
+}
+
+
+function pypiAuthHeaders(): HeadersInit {
+  const token = process.env.VETLOCK_PYPI_AUTH ?? process.env.JF_AUTH;
+  if (!token) return {};
+  if (token.includes(':')) {
+    return { Authorization: `Basic ${Buffer.from(token).toString('base64')}` };
+  }
+  return { Authorization: 'Bearer ' + token };
+}
+
+function rewriteArtifactUrl(url: string, registryBase: string): string {
+  const forceRewrite = process.env.VETLOCK_PYPI_ARTIFACT_URL_REWRITE === 'true';
+  if (
+    (forceRewrite || registryBase !== DEFAULT_PYPI_JSON_URL) &&
+    url.includes('files.pythonhosted.org')
+  ) {
+    const match = url.match(/\/packages\/(.+)$/);
+    if (match) {
+      return `${registryBase.replace(/\/$/, '')}/packages/${match[1]}`;
+    }
+  }
+  return url;
 }
 
 interface PypiJsonMeta {
@@ -130,7 +179,7 @@ export async function extractPypiArtifact(
   } = {},
 ): Promise<ExtractResult> {
   const limits = { ...DEFAULT_LIMITS, ...(opts.limits ?? {}) };
-  const runId = opts.runId ?? crypto.randomBytes(8).toString('hex');
+  const runId = opts.runId ?? crypto.randomBytes(16).toString('hex');
   const baseTmpDir =
     opts.baseTmpDir ?? path.join(os.homedir(), '.cache', 'vetlock', 'tmp');
   const destDir = path.join(baseTmpDir, `pypi-${runId}`);
@@ -189,6 +238,9 @@ async function extractZipFile(
   }
 
   const totalCdrEntries = buf.readUInt16LE(eocdOffset + 10);
+  if (totalCdrEntries > MAX_ZIP_ENTRIES) {
+    throw new Error(`ZIP has too many entries: ${totalCdrEntries}`);
+  }
   let cdrOffset = buf.readUInt32LE(eocdOffset + 16);
   const cdrSize = buf.readUInt32LE(eocdOffset + 12);
   void cdrSize;
@@ -200,6 +252,11 @@ async function extractZipFile(
     throw new UnsafeArchiveError('ZIP64 wheels are not supported', 'unknown-entry-type');
   }
 
+  const maxCdrSize = 46 * totalCdrEntries;
+  if (cdrOffset + maxCdrSize > buf.length) {
+    throw new Error(`ZIP CDR out of bounds: offset=${cdrOffset} entries=${totalCdrEntries} bufLen=${buf.length}`);
+  }
+
   for (let i = 0; i < totalCdrEntries; i++) {
     entryCount++;
     if (entryCount > limits.maxEntries) {
@@ -208,6 +265,8 @@ async function extractZipFile(
         'entry-count-exceeded',
       );
     }
+
+    if (cdrOffset + 46 > buf.length) break; // truncated CDR
 
     // Central Directory File Header signature = 0x02014b50
     if (buf.readUInt32LE(cdrOffset) !== 0x02014b50) {
@@ -220,6 +279,9 @@ async function extractZipFile(
     const nameLen = buf.readUInt16LE(cdrOffset + 28);
     const extraLen = buf.readUInt16LE(cdrOffset + 30);
     const commentLen = buf.readUInt16LE(cdrOffset + 32);
+    if (cdrOffset + 46 + nameLen + extraLen + commentLen > buf.length) {
+      throw new Error('ZIP CDR entry extends beyond buffer');
+    }
     const externalAttrs = buf.readUInt32LE(cdrOffset + 38);
     const localHeaderOffset = buf.readUInt32LE(cdrOffset + 42);
     const rawName = buf.slice(cdrOffset + 46, cdrOffset + 46 + nameLen).toString('utf8');

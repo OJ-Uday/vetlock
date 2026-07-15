@@ -39,9 +39,11 @@
  * does not because vetlock consumes a different modality" is exactly the bucket's charter.
  *
  * The three synthetic fixtures (integrity-tamper-synthetic, typosquat-synthetic,
- * hardened-evader-2026) don't appear here: they have no published advisory a public
- * scanner would flag, so there is no delta to record. And `fp-smoke` is a false-positive
- * study bench, not an incident.
+ * hardened-evader-2026) still have no seeded DELTAS here: they have no published advisory a
+ * public scanner would flag, so there is no delta row to record. They ARE included in
+ * `seededCorpusIds` below because PR-tier assurance coverage should replay them alongside the
+ * historical incidents even though the differential ledger is intentionally empty for them.
+ * And `fp-smoke` is a false-positive study bench, not an incident.
  *
  * ## What vetlock catches independently
  *
@@ -54,6 +56,17 @@
  */
 
 import type { Delta } from './types.js';
+import * as fsSync from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const CORPUS_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  '..',
+  'corpus',
+);
 
 /**
  * Historical differential deltas per corpus fixture.
@@ -436,12 +449,20 @@ export const seededDeltas: readonly Delta[] = [
 export const seededCorpusIds: readonly string[] = [
   'coa-rc-2021',
   'colors-2022',
+  // TODO: keep PyPI ids conditional until seeded differential rows land for them.
+  ...(fsSync.existsSync(path.join(CORPUS_ROOT, 'ctx-2022')) ? ['ctx-2022'] : []),
   'eslint-scope-2018',
   'event-stream-2018',
+  'hardened-evader-2026',
+  'integrity-tamper-synthetic',
   'lottie-player-2024',
   'node-ipc-2022',
   'rand-user-agent-2025',
   'shai-hulud-2025',
   'solana-web3-2024',
+  'typosquat-synthetic',
   'ua-parser-2021',
+  ...(fsSync.existsSync(path.join(CORPUS_ROOT, 'ultralytics-2024')) ? ['ultralytics-2024'] : []),
+  ...(fsSync.existsSync(path.join(CORPUS_ROOT, 'aiocpa-2024')) ? ['aiocpa-2024'] : []),
+  ...(fsSync.existsSync(path.join(CORPUS_ROOT, 'pypi-install-hook-synthetic')) ? ['pypi-install-hook-synthetic'] : []),
 ];

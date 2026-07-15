@@ -22,6 +22,7 @@ export function mkFile(over: Partial<FileCapabilities> & { path: string }): File
     execModules: over.execModules ?? [],
     fsModules: over.fsModules ?? [],
     urlLiterals: over.urlLiterals ?? [],
+    ...(over.urlLiteralContexts ? { urlLiteralContexts: over.urlLiteralContexts } : {}),
     encodedUrls: over.encodedUrls ?? [],
     envAccesses: over.envAccesses ?? [],
     dynamicCode: over.dynamicCode ?? [],

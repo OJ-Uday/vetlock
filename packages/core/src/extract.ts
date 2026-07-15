@@ -65,6 +65,7 @@ export interface ExtractResult {
 
 interface TarEntry {
   path: string;
+  linkpath?: string;
   type: 'File' | 'Directory' | 'SymbolicLink' | 'Link' | string;
   size: number;
   on(evt: 'data', cb: (chunk: Buffer) => void): TarEntry;
@@ -94,7 +95,7 @@ export async function safeExtract(
   } = {},
 ): Promise<ExtractResult> {
   const limits = { ...DEFAULT_LIMITS, ...(opts.limits ?? {}) };
-  const runId = opts.runId ?? crypto.randomBytes(8).toString('hex');
+  const runId = opts.runId ?? crypto.randomBytes(16).toString('hex');
   const baseTmpDir =
     opts.baseTmpDir ?? path.join(os.homedir(), '.cache', 'vetlock', 'tmp');
   const destDir = path.join(baseTmpDir, runId);
@@ -136,7 +137,7 @@ export async function safeExtract(
     if (entry.type === 'SymbolicLink' || entry.type === 'Link') {
       raiseError(
         new UnsafeArchiveError(
-          `${entry.type.toLowerCase()} entries are rejected: ${entry.path}`,
+          `${entry.type.toLowerCase()} entries are rejected: ${entry.path} -> ${entry.linkpath ?? '<unknown>'}`,
           entry.type === 'SymbolicLink' ? 'symlink' : 'hardlink',
         ),
       );
@@ -169,6 +170,8 @@ export async function safeExtract(
       return;
     }
     if (rel.split(/[\\/]+/).some((seg) => seg === '..')) {
+      // Segment-wise splitting catches `../` even when it appears after an
+      // otherwise-benign prefix such as `dir/../escape` or `dir\\..\\escape`.
       raiseError(new UnsafeArchiveError(`path traversal in entry: ${entry.path}`, 'traversal'));
       entry.resume();
       return;

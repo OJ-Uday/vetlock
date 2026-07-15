@@ -1,0 +1,36 @@
+{
+  "id": "pypi-install-hook-synthetic",
+  "title": "PyPI install-hook synthetic",
+  "year": 2026,
+  "threatClass": "T1 build-hook injection",
+  "summary": "Synthetic PyPI fixture that proves setup.py install-hook hijacks are surfaced when cmdclass overrides install and harvest environment tokens during installation.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "install.script-added",
+      "env.token-harvest",
+      "net.new-endpoint"
+    ],
+    "mustNotFire": [],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "INSTALL",
+      "ENV",
+      "NET"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "fixture-lib",
+      "version": "1.0.0",
+      "integrity": "sha256-58c108a4390d4572f7e5fbafdd56ef52ee518d9ccd994b5028a9a087a6a0953c"
+    },
+    "malicious": {
+      "name": "fixture-lib",
+      "version": "1.0.1",
+      "integrity": "sha256-d9c720c46e0e1f421a0ef7c586d1a33bcbc5f61ecc1fa7b62a1282029d180d98"
+    }
+  }
+}

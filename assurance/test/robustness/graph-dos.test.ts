@@ -35,6 +35,7 @@ const BASELINE_BOUNDS: Bounds = { wallMs: 5_000, heapMb: 128, seed: 42 };
 // behavior, not to be capped by the harness itself. If the engine still blows through
 // these, that IS the gap (the engine has no internal bound and needs one).
 const STRESS_BOUNDS: Bounds = { wallMs: 15_000, heapMb: 512, seed: 42 };
+const RUN_STRESS = process.env.VETLOCK_RUN_STRESS === 'true';
 
 // Minimal old-side lockfile: v3 shape, one direct dep. computeChangeset will diff every
 // new-side entry against this — meaning every new-side entry becomes an "added" change.
@@ -230,12 +231,12 @@ describe('graph-dos — stress (KNOWN GAPS PROTOCOL)', () => {
 });
 
 // -------------------------------------------------------------------------------------------
-// Skipped extreme-scale stress. These document the design ceiling: at scale=100k+ the
-// generator itself starts to matter (the emitted JSON approaches Node's max string length
-// on some V8 builds) and the runner's 15-second wall-clock is almost certainly insufficient.
-// Flip these to `it(...)` inside a longer-timeout CI job when you want the DoS curve.
+// Opt-in: run with `VETLOCK_RUN_STRESS=true pnpm test`. These document the design ceiling:
+// at scale=100k+ the generator itself starts to matter (the emitted JSON approaches Node's
+// max string length on some V8 builds) and the runner's 15-second wall-clock is almost
+// certainly insufficient.
 
-describe.skip('graph-dos — extreme stress (opt-in)', () => {
+(RUN_STRESS ? describe : describe.skip)('graph-dos — extreme stress (opt-in)', () => {
   it('million-nodes at scale=100000', async () => {
     const input = graphDos.generate(1, { mode: 'million-nodes', scale: 100_000 });
     const outcome = await runDiffAgainstTrivial(input.text, {

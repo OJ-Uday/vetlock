@@ -10,8 +10,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runDiff, type Finding } from '@vetlock/core';
-import { runAll } from '@vetlock/detectors';
+import type { Finding } from '@vetlock/core';
+import { listFixtureIds, runFixture } from './fixture-runner.js';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const CORPUS_ROOT = path.join(REPO_ROOT, 'corpus');
@@ -33,11 +33,7 @@ interface Manifest {
 }
 
 async function main() {
-  const dirs = fs
-    .readdirSync(CORPUS_ROOT, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && !d.name.startsWith('_') && d.name !== 'fp-smoke')
-    .map((d) => d.name)
-    .sort();
+  const dirs = listFixtureIds();
 
   const entries: Array<{
     manifest: Manifest;
@@ -52,31 +48,14 @@ async function main() {
     const manifestPath = path.join(CORPUS_ROOT, id, 'manifest.json');
     if (!fs.existsSync(manifestPath)) continue;
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as Manifest;
-    const before = fs.readFileSync(path.join(CORPUS_ROOT, id, 'lockfile.before.json'), 'utf8');
-    const after = fs.readFileSync(path.join(CORPUS_ROOT, id, 'lockfile.after.json'), 'utf8');
-    const fixtureDir = path.join(CORPUS_ROOT, id);
-    const result = await runDiff(before, after, {
-      runDetectors: (pair) => runAll(pair),
-      fetchOverride: async (ref) => {
-        if (!ref.resolved?.startsWith('file:')) {
-          throw new Error(`should not need to fetch ${ref.name}@${ref.version}`);
-        }
-        // Corpus fixtures use RELATIVE resolved URLs (file:./...) so the corpus
-        // is portable across machines; resolve them against the fixture dir.
-        const raw = ref.resolved.slice('file:'.length);
-        if (raw.startsWith('///')) return raw.slice(2);
-        if (raw.startsWith('//')) return raw.slice(raw.indexOf('/', 2));
-        if (raw.startsWith('/')) return raw;
-        return path.resolve(fixtureDir, raw.replace(/^\.\//, ''));
-      },
-    });
+    const { result } = await runFixture(id);
     entries.push({ manifest, result });
   }
 
   const lines: string[] = [];
   lines.push('# DETECTIONS.md');
   lines.push('');
-  lines.push('**Replay of historical npm supply-chain attacks through vetlock\'s behavioral differ.**');
+  lines.push('**Replay of historical npm + PyPI supply-chain attacks through vetlock\'s behavioral differ.**');
   lines.push('');
   lines.push(
     'Every row in this document is reproducible from committed fixtures with `pnpm test` — no external network, no live registry. This file is **AUTO-GENERATED** by `packages/cli/src/corpus/generate-detections.ts`; edit that script, not this document.',

@@ -1,0 +1,34 @@
+{
+  "id": "ctx-2022",
+  "title": "ctx compromise (June 2022)",
+  "year": 2022,
+  "threatClass": "T1 maintainer takeover",
+  "summary": "Malicious ctx 0.1.2 harvested cloud and chat credentials from os.environ and exfiltrated them on import to a hardcoded endpoint. Fixture models the last clean release as 0.1.1 so the behavioral diff is observable.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "env.token-harvest",
+      "net.new-endpoint"
+    ],
+    "mustNotFire": [],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "ENV",
+      "NET"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "ctx",
+      "version": "0.1.1",
+      "integrity": "sha256-2c2f72eb837aeb648fcacd823b5c9ea33bc70f0f25be654b2b74f323973607ad"
+    },
+    "malicious": {
+      "name": "ctx",
+      "version": "0.1.2",
+      "integrity": "sha256-d0a5ace19d5b5b4f556d7081e621091c57e9ac38c5994bd9b99344bf2c6f0145"
+    }
+  }
+}

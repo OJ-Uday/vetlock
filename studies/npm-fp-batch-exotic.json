@@ -1,0 +1,793 @@
+{
+  "study": "npm-fp-batch-exotic",
+  "batch": "exotic",
+  "theme": "exotic-edge-case-npm-packages",
+  "ecosystem": "npm",
+  "version": "1",
+  "vetlockVersion": "0.7.0",
+  "ranAt": "2026-07-15T06:38:16.183Z",
+  "methodology": {
+    "source": "synthetic local npm tarballs via package-lock diff plus runScan first-install probes",
+    "networkAccess": "disabled; artifacts generated inside studies/.scratch-npm-fp-exotic and resolved via file:// fetchOverride",
+    "bumpPackageCount": 21,
+    "specialInstallProbeCount": 2,
+    "sensitiveEnvProbeCount": 14,
+    "focus": [
+      "subprocess wrappers with child_process already present",
+      "vm/sandbox packages using vm in both versions",
+      "crypto/security packages with legitimate secret reads",
+      "IPC/messaging servers and redis workers",
+      "electron updater feed URLs",
+      "GitHub Actions SDK token readers",
+      "native addons with stable path but changed .node bytes",
+      "legitimate eval/new Function template compilers"
+    ]
+  },
+  "totalBumps": 21,
+  "bumpsSucceeded": 21,
+  "bumpsFailed": 0,
+  "totalBumpFindings": 3,
+  "bumpFindingsPerPackage": 0.14285714285714285,
+  "perDetectorFpRate": {
+    "bin.new-native-artifact": {
+      "hits": 3,
+      "ratePerBump": 0.14285714285714285
+    }
+  },
+  "perSeverity": {
+    "BLOCK": 3,
+    "WARN": 0,
+    "INFO": 0,
+    "CLEAN": 18,
+    "ERROR": 0
+  },
+  "categorySummary": {
+    "shell-subprocess-wrappers": {
+      "total": 4,
+      "clean": 4,
+      "findings": 0,
+      "falsePositives": []
+    },
+    "vm-sandbox-packages": {
+      "total": 2,
+      "clean": 2,
+      "findings": 0,
+      "falsePositives": []
+    },
+    "crypto-security-libraries": {
+      "total": 3,
+      "clean": 3,
+      "findings": 0,
+      "falsePositives": []
+    },
+    "ipc-messaging": {
+      "total": 3,
+      "clean": 3,
+      "findings": 0,
+      "falsePositives": []
+    },
+    "electron-desktop": {
+      "total": 1,
+      "clean": 1,
+      "findings": 0,
+      "falsePositives": []
+    },
+    "github-actions-sdk": {
+      "total": 2,
+      "clean": 2,
+      "findings": 0,
+      "falsePositives": []
+    },
+    "native-addons": {
+      "total": 3,
+      "clean": 0,
+      "findings": 3,
+      "falsePositives": [
+        {
+          "packageName": "better-sqlite3",
+          "actualVerdict": "BLOCK",
+          "detectors": [
+            "bin.new-native-artifact"
+          ]
+        },
+        {
+          "packageName": "canvas",
+          "actualVerdict": "BLOCK",
+          "detectors": [
+            "bin.new-native-artifact"
+          ]
+        },
+        {
+          "packageName": "bcrypt",
+          "actualVerdict": "BLOCK",
+          "detectors": [
+            "bin.new-native-artifact"
+          ]
+        }
+      ]
+    },
+    "eval-heavy-legitimate": {
+      "total": 3,
+      "clean": 3,
+      "findings": 0,
+      "falsePositives": []
+    }
+  },
+  "falsePositiveRate": 0.14285714285714285,
+  "falsePositiveCategories": {
+    "deltaMiss": {
+      "description": "Capability existed in both versions but a detector still fired on bump",
+      "count": 0,
+      "items": []
+    },
+    "nativeRecompile": {
+      "description": "Routine native-addon bump with same artifact path but different .node bytes triggered bin.new-native-artifact",
+      "count": 3,
+      "items": [
+        {
+          "packageName": "better-sqlite3",
+          "actualVerdict": "BLOCK",
+          "detectors": [
+            "bin.new-native-artifact"
+          ]
+        },
+        {
+          "packageName": "canvas",
+          "actualVerdict": "BLOCK",
+          "detectors": [
+            "bin.new-native-artifact"
+          ]
+        },
+        {
+          "packageName": "bcrypt",
+          "actualVerdict": "BLOCK",
+          "detectors": [
+            "bin.new-native-artifact"
+          ]
+        }
+      ]
+    },
+    "sensitiveEnvGap": {
+      "description": "Expected-sensitive env key did not trigger env.token-harvest on first install",
+      "count": 9,
+      "items": [
+        "SMTP_PASS",
+        "SMTP_PASSWORD",
+        "DB_PASSWORD",
+        "DATABASE_PASSWORD",
+        "JWT_PRIVATE_KEY",
+        "PYPI_TOKEN",
+        "TWINE_PASSWORD",
+        "SLACK_BOT_TOKEN",
+        "DISCORD_BOT_TOKEN"
+      ]
+    }
+  },
+  "keyFindings": {
+    "allExpectedCleanBumpsStayedClean": false,
+    "subprocessWrapperBumpsClean": true,
+    "vmBumpsClean": true,
+    "actionsCoreBumpClean": true,
+    "actionsCoreNewInstallBlocked": true,
+    "handlebarsNewInstallVerdict": "WARN",
+    "nativeAddonRecompileTriggered": true,
+    "packagesWithAnyBumpFindings": [
+      "better-sqlite3",
+      "canvas",
+      "bcrypt"
+    ]
+  },
+  "coverageGaps": [
+    {
+      "issue": "native-addon-recompile-fp",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "BLOCK",
+      "evidence": [
+        "better-sqlite3: bin.new-native-artifact",
+        "canvas: bin.new-native-artifact",
+        "bcrypt: bin.new-native-artifact"
+      ],
+      "proposedFix": "Teach bin.new-native-artifact to treat stable native artifact paths across routine version bumps as lower-confidence, or hash-diff only when paired with new install hooks/FS writes/obfuscation."
+    },
+    {
+      "issue": "sensitive-env-allowlist-gaps",
+      "expectedVerdict": "BLOCK",
+      "actualVerdict": "INFO",
+      "evidence": [
+        "SMTP_PASS",
+        "SMTP_PASSWORD",
+        "DB_PASSWORD",
+        "DATABASE_PASSWORD",
+        "JWT_PRIVATE_KEY",
+        "PYPI_TOKEN",
+        "TWINE_PASSWORD",
+        "SLACK_BOT_TOKEN",
+        "DISCORD_BOT_TOKEN"
+      ],
+      "proposedFix": "Expand SENSITIVE_ENV_KEYS with the missing secret names so first-install reads of common app, mail, database, Python publish, and bot tokens trigger env.token-harvest."
+    }
+  ],
+  "envKeyCalibration": {
+    "probes": [
+      {
+        "envKey": "SMTP_PASS",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-smtp-pass' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-smtp-pass-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "SMTP_PASSWORD",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-smtp-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-smtp-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "DB_PASSWORD",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-db-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-db-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "DATABASE_PASSWORD",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-database-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-database-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "JWT_SECRET",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "deps.local-source",
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: JWT_SECRET",
+          "Package 'env-probe-jwt-secret' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-jwt-secret-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "JWT_PRIVATE_KEY",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-jwt-private-key' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-jwt-private-key-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "SESSION_SECRET",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "deps.local-source",
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: SESSION_SECRET",
+          "Package 'env-probe-session-secret' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-session-secret-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "PYPI_TOKEN",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-pypi-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-pypi-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "TWINE_PASSWORD",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-twine-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-twine-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "HEROKU_API_KEY",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "deps.local-source",
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: HEROKU_API_KEY",
+          "Package 'env-probe-heroku-api-key' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-heroku-api-key-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "VERCEL_TOKEN",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "deps.local-source",
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: VERCEL_TOKEN",
+          "Package 'env-probe-vercel-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-vercel-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "NETLIFY_AUTH_TOKEN",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "deps.local-source",
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: NETLIFY_AUTH_TOKEN",
+          "Package 'env-probe-netlify-auth-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-netlify-auth-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "SLACK_BOT_TOKEN",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-slack-bot-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-slack-bot-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      },
+      {
+        "envKey": "DISCORD_BOT_TOKEN",
+        "expectedTrigger": true,
+        "actualTrigger": false,
+        "actualVerdict": "INFO",
+        "detectors": [
+          "deps.local-source"
+        ],
+        "findingMessages": [
+          "Package 'env-probe-discord-bot-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-discord-bot-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+        ]
+      }
+    ],
+    "triggeredKeys": [
+      "JWT_SECRET",
+      "SESSION_SECRET",
+      "HEROKU_API_KEY",
+      "VERCEL_TOKEN",
+      "NETLIFY_AUTH_TOKEN"
+    ],
+    "missedExpectedSensitiveKeys": [
+      "SMTP_PASS",
+      "SMTP_PASSWORD",
+      "DB_PASSWORD",
+      "DATABASE_PASSWORD",
+      "JWT_PRIVATE_KEY",
+      "PYPI_TOKEN",
+      "TWINE_PASSWORD",
+      "SLACK_BOT_TOKEN",
+      "DISCORD_BOT_TOKEN"
+    ]
+  },
+  "specialInstallProbes": [
+    {
+      "id": "actions-core-new-install",
+      "category": "github-actions-sdk",
+      "packageName": "@actions/core",
+      "version": "1.11.0",
+      "scenario": "canonical legitimate GITHUB_TOKEN reader on first install",
+      "expectedVerdict": "BLOCK",
+      "actualVerdict": "BLOCK",
+      "matchedExpectation": true,
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "findings": [
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: GITHUB_TOKEN",
+          "evidence": "index.js:2"
+        },
+        {
+          "detector": "deps.local-source",
+          "severity": "INFO",
+          "message": "Package '@actions/core' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/@actions_core-1.11.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz.",
+          "evidence": "node_modules/@actions/core:1"
+        }
+      ]
+    },
+    {
+      "id": "handlebars-new-install",
+      "category": "eval-heavy-legitimate",
+      "packageName": "handlebars",
+      "version": "4.7.9",
+      "scenario": "new Function on first install without extra suspicious categories",
+      "expectedVerdict": "WARN",
+      "actualVerdict": "WARN",
+      "matchedExpectation": true,
+      "findingCount": 2,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "deps.local-source"
+      ],
+      "findings": [
+        {
+          "detector": "code.dynamic-loading-added",
+          "severity": "WARN",
+          "message": "Dynamic code sink introduced (new-function).",
+          "evidence": "index.js:3"
+        },
+        {
+          "detector": "deps.local-source",
+          "severity": "INFO",
+          "message": "Package 'handlebars' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/handlebars-4.7.9.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz.",
+          "evidence": "node_modules/handlebars:1"
+        }
+      ]
+    }
+  ],
+  "bumpResults": [
+    {
+      "id": "shelljs-bump",
+      "category": "shell-subprocess-wrappers",
+      "packageName": "shelljs",
+      "oldVersion": "0.8.5",
+      "newVersion": "0.8.6",
+      "scenario": "child_process execSync present in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "execa-bump",
+      "category": "shell-subprocess-wrappers",
+      "packageName": "execa",
+      "oldVersion": "8.0.1",
+      "newVersion": "8.0.2",
+      "scenario": "subprocess wrapper retains child_process usage",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "cross-spawn-bump",
+      "category": "shell-subprocess-wrappers",
+      "packageName": "cross-spawn",
+      "oldVersion": "7.0.3",
+      "newVersion": "7.0.4",
+      "scenario": "spawn helper keeps child_process require in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "child-process-promise-bump",
+      "category": "shell-subprocess-wrappers",
+      "packageName": "child-process-promise",
+      "oldVersion": "2.2.1",
+      "newVersion": "2.2.2",
+      "scenario": "promise wrapper keeps exec usage in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "vm2-bump",
+      "category": "vm-sandbox-packages",
+      "packageName": "vm2",
+      "oldVersion": "3.9.18",
+      "newVersion": "3.9.19",
+      "scenario": "vm usage exists in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "isolated-vm-bump",
+      "category": "vm-sandbox-packages",
+      "packageName": "isolated-vm",
+      "oldVersion": "4.7.2",
+      "newVersion": "4.7.3",
+      "scenario": "sandbox runtime retains vm module usage",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "jose-bump",
+      "category": "crypto-security-libraries",
+      "packageName": "jose",
+      "oldVersion": "5.2.4",
+      "newVersion": "5.2.5",
+      "scenario": "JWT env reads exist in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "keytar-bump",
+      "category": "crypto-security-libraries",
+      "packageName": "keytar",
+      "oldVersion": "7.9.0",
+      "newVersion": "7.9.1",
+      "scenario": "native addon stays present with stable binary",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "node-forge-bump",
+      "category": "crypto-security-libraries",
+      "packageName": "node-forge",
+      "oldVersion": "1.3.0",
+      "newVersion": "1.3.1",
+      "scenario": "pure-JS crypto package without env access",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "socket-io-bump",
+      "category": "ipc-messaging",
+      "packageName": "socket.io",
+      "oldVersion": "4.7.4",
+      "newVersion": "4.7.5",
+      "scenario": "websocket/http server behavior retained across bump",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "bull-bump",
+      "category": "ipc-messaging",
+      "packageName": "bull",
+      "oldVersion": "4.12.2",
+      "newVersion": "4.12.3",
+      "scenario": "redis queue connection remains in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "bullmq-bump",
+      "category": "ipc-messaging",
+      "packageName": "bullmq",
+      "oldVersion": "5.7.8",
+      "newVersion": "5.7.9",
+      "scenario": "worker connection stays present in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "electron-updater-bump",
+      "category": "electron-desktop",
+      "packageName": "electron-updater",
+      "oldVersion": "6.1.8",
+      "newVersion": "6.1.9",
+      "scenario": "feed URL literal exists in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "actions-core-bump",
+      "category": "github-actions-sdk",
+      "packageName": "@actions/core",
+      "oldVersion": "1.10.0",
+      "newVersion": "1.11.0",
+      "scenario": "GITHUB_TOKEN read exists in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "actions-github-bump",
+      "category": "github-actions-sdk",
+      "packageName": "@actions/github",
+      "oldVersion": "6.0.0",
+      "newVersion": "6.0.1",
+      "scenario": "github client keeps GITHUB_TOKEN access in both versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "better-sqlite3-bump",
+      "category": "native-addons",
+      "packageName": "better-sqlite3",
+      "oldVersion": "9.4.1",
+      "newVersion": "9.4.2",
+      "scenario": "native addon binary changes across versions (ABI/recompile simulation)",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "BLOCK",
+      "matchedExpectation": false,
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: build/Release/better_sqlite3.node (node, 16 bytes)",
+          "evidence": "build/Release/better_sqlite3.node:1"
+        }
+      ]
+    },
+    {
+      "id": "canvas-bump",
+      "category": "native-addons",
+      "packageName": "canvas",
+      "oldVersion": "2.11.1",
+      "newVersion": "2.11.2",
+      "scenario": "native image addon binary changes across versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "BLOCK",
+      "matchedExpectation": false,
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: build/Release/canvas.node (node, 16 bytes)",
+          "evidence": "build/Release/canvas.node:1"
+        }
+      ]
+    },
+    {
+      "id": "bcrypt-bump",
+      "category": "native-addons",
+      "packageName": "bcrypt",
+      "oldVersion": "5.1.1",
+      "newVersion": "5.1.2",
+      "scenario": "password hashing native addon binary changes across versions",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "BLOCK",
+      "matchedExpectation": false,
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: lib/binding/napi-v3/bcrypt_lib.node (node, 16 bytes)",
+          "evidence": "lib/binding/napi-v3/bcrypt_lib.node:1"
+        }
+      ]
+    },
+    {
+      "id": "coffeescript-bump",
+      "category": "eval-heavy-legitimate",
+      "packageName": "coffeescript",
+      "oldVersion": "2.7.0",
+      "newVersion": "2.7.1",
+      "scenario": "eval-based compiler retained across bump",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "handlebars-bump",
+      "category": "eval-heavy-legitimate",
+      "packageName": "handlebars",
+      "oldVersion": "4.7.8",
+      "newVersion": "4.7.9",
+      "scenario": "new Function template compiler retained across bump",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    },
+    {
+      "id": "ejs-bump",
+      "category": "eval-heavy-legitimate",
+      "packageName": "ejs",
+      "oldVersion": "3.1.9",
+      "newVersion": "3.1.10",
+      "scenario": "function constructor template compiler retained across bump",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "matchedExpectation": true,
+      "findingCount": 0,
+      "detectors": [],
+      "findings": []
+    }
+  ]
+}

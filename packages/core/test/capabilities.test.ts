@@ -26,6 +26,31 @@ describe('capability extraction', () => {
     expect(c.execModules).toContain('child_process');
   });
 
+  it('detects execSync', () => {
+    const c = cap(`const { execSync } = require('child_process'); execSync('whoami');`);
+    expect(c.execModules).toContain('child_process');
+  });
+
+  it('detects execFile', () => {
+    const c = cap(`const { execFile } = require('child_process'); execFile('ls', ['-la'], () => {});`);
+    expect(c.execModules).toContain('child_process');
+  });
+
+  it('detects fork', () => {
+    const c = cap(`const { fork } = require('child_process'); fork('worker.js');`);
+    expect(c.execModules).toContain('child_process');
+  });
+
+  it('detects execFileSync', () => {
+    const c = cap(`const { execFileSync } = require('child_process'); execFileSync('ls', ['-la']);`);
+    expect(c.execModules).toContain('child_process');
+  });
+
+  it('detects exec', () => {
+    const c = cap(`const { exec } = require('child_process'); exec('ls');`);
+    expect(c.execModules).toContain('child_process');
+  });
+
   it('detects fs writes with literal targets', () => {
     const c = cap(`const fs = require('fs'); fs.writeFileSync('/etc/hi', 'x');`);
     expect(c.fsModules).toContain('fs');
@@ -106,5 +131,11 @@ describe('capability extraction', () => {
   it('exposes SENSITIVE_ENV_KEYS constant for detector layer', () => {
     expect(SENSITIVE_ENV_KEYS).toContain('NPM_TOKEN');
     expect(SENSITIVE_ENV_KEYS).toContain('AWS_ACCESS_KEY_ID');
+    expect(SENSITIVE_ENV_KEYS).toContain('JWT_SECRET');
+    expect(SENSITIVE_ENV_KEYS).toContain('MONGODB_URI');
+    expect(SENSITIVE_ENV_KEYS).toContain('SLACK_BOT_TOKEN');
+    expect(SENSITIVE_ENV_KEYS).toContain('SMTP_PASSWORD');
+    expect(SENSITIVE_ENV_KEYS).not.toContain('CI');
+    expect(SENSITIVE_ENV_KEYS).not.toContain('HOME');
   });
 });

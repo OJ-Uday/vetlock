@@ -7,11 +7,12 @@
 
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Node ≥ 20](https://img.shields.io/badge/node-%E2%89%A5%2020-brightgreen)](package.json)
-[![Tests: 540 passing](https://img.shields.io/badge/tests-540%20passing-brightgreen)](#tests)
+[![Tests: 946 passing](https://img.shields.io/badge/tests-946%20passing-brightgreen)](#tests)
 [![Corpus: 12/13 caught](https://img.shields.io/badge/corpus-12%2F13%20caught-brightgreen)](docs/DETECTIONS.md)
 [![Benchmark: 92.3%](https://img.shields.io/badge/benchmark-92.3%25-brightgreen)](https://github.com/OJ-Uday/vetlock-benchmark)
-[![FP: 14% BLOCK on routine bumps](https://img.shields.io/badge/FP-14%25%20on%20routine%20bumps-brightgreen)](docs/FP-STUDY.md)
-[![Red-team: 39/48 exploits closed](https://img.shields.io/badge/red--team-39%2F48%20closed-brightgreen)](docs/REDTEAM-2026-07-12.md)
+[![FP: 14.3% BLOCK on routine bumps](https://img.shields.io/badge/FP-14.3%25%20on%20routine%20bumps-brightgreen)](docs/FP-STUDY.md)
+[![PyPI FP: synthetic study complete](https://img.shields.io/badge/PyPI%20FP-synthetic%20study-yellow)](docs/PYPI-FP-STUDY.md)
+[![Red-team: 37/48 exploits closed](https://img.shields.io/badge/red--team-37%2F48%20closed-brightgreen)](docs/REDTEAM-2026-07-12.md)
 [![Zero telemetry](https://img.shields.io/badge/telemetry-zero-blue)](#privacy)
 [![NEVER-EXECUTE canary](https://img.shields.io/badge/canary-NEVER--EXECUTE-red)](docs/adr/0005-never-execute.md)
 [![npm provenance](https://img.shields.io/badge/npm-provenance-blueviolet)](https://docs.npmjs.com/generating-provenance-statements)
@@ -19,6 +20,9 @@
 ![Assurance](https://github.com/OJ-Uday/vetlock/actions/workflows/assurance-pr.yml/badge.svg)
 
 </div>
+
+> Corpus: 12/13 corpus attack fixtures caught (1 honest miss: colors-2022 protestware, out-of-scope by design).
+> Full inventory on disk: 14 entries — 13 attack fixtures documented in `docs/DETECTIONS.md` (10 PR-tier real-world seeded cases + 3 synthetic hardening fixtures) plus `fp-smoke` (7 expected-CLEAN validation cases, excluded from the 13).
 
 ---
 
@@ -93,7 +97,7 @@ npx vetlock diff package-lock.before.json package-lock.after.json
 vetlock reads two lockfiles (before and after a dependency update), fetches every changed package (including the **full transitive closure**), safely extracts each tarball, and reports **capability deltas**:
 
 - ✅ **New install scripts** added (`preinstall`, `postinstall`, `prepare`, etc.)
-- ✅ **New network endpoints** — URL literals appearing in source, including those recovered from base64/hex/rot13-decoding
+- ✅ **New network endpoints** — URL literals appearing in source, including those recovered from base64/hex-decoding
 - ✅ **New filesystem writes** to sensitive paths (`.ssh`, `.npmrc`, `.git/config`, `~/Desktop/*`, `/etc/*`, wallet paths)
 - ✅ **Environment-token harvest** — new reads of `NPM_TOKEN`, `GITHUB_TOKEN`, `AWS_*`, or whole-object `process.env` enumeration
 - ✅ **Native binary artifacts** shipped in tarballs (`.node`, `.so`, `.dylib`, `.dll`, `.exe`, `.wasm`)
@@ -171,7 +175,7 @@ Or globally: `npm install -g vetlock`.
 
 ## Detector catalog
 
-**17 built-in detectors across 10 categories.** All severities are the **default**; escalation rules (below) can promote WARN/INFO → BLOCK when signals co-occur.
+**16 built-in detector plugins + integrity synthesis across 10 categories.** All severities below are the **default** emitted finding severities; escalation rules can still promote WARN/INFO → BLOCK when signals co-occur.
 
 | Category | Detector | Default | What it catches |
 |---|---|---|---|
@@ -180,7 +184,7 @@ Or globally: `npm install -g vetlock`.
 | **INSTALL** | `bin.new-native-artifact` | BLOCK | New `.node`/`.exe`/`.dll`/`.so`/`.dylib`/`.wasm` shipped in tarball |
 | **ENV** | `env.token-harvest` | BLOCK | New reads of `NPM_TOKEN`, `GITHUB_TOKEN`, `AWS_*`, `HOME`, `USER`, `.ssh` — or **whole-object `process.env` enumeration** (via destructure / spread / `for-in` / `Reflect.ownKeys` / `Reflect.get`) |
 | **NET** | `net.new-endpoint` | BLOCK | New URL literal appeared in source (~50 TLDs including top-abused: `.top`, `.pw`, `.zip`, `.click`, `.icu`, `.site`, `.cloud`, `.stream`) |
-| **NET** | `net.encoded-endpoint` | BLOCK | URL recovered from base64/hex/rot13-decoding a suspicious literal |
+| **NET** | `net.encoded-endpoint` | BLOCK | URL recovered from base64/hex-decoding a suspicious literal |
 | **NET** | `net.new-module` | WARN | New `http`/`https`/`net`/`ws`/`fetch`/`undici`/`dns` module imported |
 | **EXEC** | `exec.new-module` | BLOCK | New `child_process`/`worker_threads`/`vm`/`inspector`/`async_hooks`/`trace_events` import |
 | **FS** | `fs.new-hotpath-write` | BLOCK | New `fs.write` to sensitive paths (`.ssh`, `.npmrc`, `.git/config`, wallet dirs, `/etc`, `~/Desktop`) |
@@ -454,18 +458,12 @@ Full schema: [`packages/core/src/config.ts`](packages/core/src/config.ts) (zod-t
 
 ## Tests
 
-**375 tests green across the workspace.** Runs in ~7 seconds.
-
-```
-packages/core       — 20 files, 228 tests
-packages/detectors  —  8 files, 106 tests
-packages/cli        —  5 files,  41 tests
-```
+**Audit-verified full-suite count: 946 tests across the workspace.** The badge above tracks the latest full-suite audit rather than the stale historical subtotal that used to appear here.
 
 Test surface includes:
 
-- **Corpus replay** (15 fixtures) — end-to-end via `runDiff` + `runAll`.
-- **False-positive smoke** (9 fixtures) — realistic benign bumps yield 0 findings.
+- **Corpus replay** (13 attack fixtures) — end-to-end via `runDiff` + `runAll`.
+- **False-positive smoke** (7 validation cases) — realistic benign bumps are expected CLEAN.
 - **Property-based fuzzing** (12 properties, ~2400 samples/run) — every parser survives arbitrary input without an uncaught throw.
 - **Red-team regression tests** — every one of the 31 closed exploits has a dedicated failing-before-fix regression test.
 - **NEVER-EXECUTE canary** — the soul test.
@@ -507,8 +505,8 @@ Full details in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [ADRs](docs/a
                               └────────────────────┬──────────────────┘
                                                    │
                               ┌────────────────────▼──────────────────┐
-                              │ 17 detectors (pure fn: snapshot pair  │
-                              │ → Finding[])                          │
+                              │ 16 detector plugins +                │
+                              │ integrity synthesis                  │
                               └────────────────────┬──────────────────┘
                                                    │
                               ┌────────────────────▼──────────────────┐
@@ -556,7 +554,7 @@ The HMAC cache key at `~/.cache/vetlock/hmac.key` is per-install and mode `0600`
 - ✅ v0.1.0 — 10-attack corpus + hardening + FP study
 - ✅ v0.2.0 — constant folding, alias tracking, WASM, GHSA, trust store, property fuzz
 - ✅ v0.3.0 — 31 red-team exploits closed, lockfile-identity detector, bundled-deps recursion, comprehensive README + zero-effort demo
-- ⏳ v0.4 — baseline scan mode (single lockfile, no diff frame)
+- ✅ v0.4 — baseline scan mode (`vetlock scan`, single-input capability profile)
 - ⏳ v0.4 — GHSA weekly-refresh script (currently curated subset)
 - ⏳ v0.5 — SBOM (CycloneDX/SPDX) generation
 - ⏳ v0.5 — pretty HTML report format

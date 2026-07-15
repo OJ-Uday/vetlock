@@ -14,7 +14,7 @@
       "name": "lodash-lite",
       "version": "1.2.0",
       "integrity": "sha512-bR/VrpLjEctVnSobjyMqMcRKfUOec0PTRrE0aQd6BStc6I2HNkDeMEqolErGuGR5Pf1SVtxzReJMnvjj+ZOb7A==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/a-docs-only/lodash-lite-old/lodash-lite-old.tgz"
+      "resolved": "file:./lodash-lite-old/lodash-lite-old.tgz"
     }
   }
 }

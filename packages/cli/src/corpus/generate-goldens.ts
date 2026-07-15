@@ -29,7 +29,10 @@ async function main() {
     if (!fs.existsSync(manifestPath)) continue;
 
     const { result } = await runFixture(id);
-    const golden = canonicalizeResult(result);
+    const golden = {
+      _schema: 'v1',
+      ...(canonicalizeResult(result) as Record<string, unknown>),
+    };
     const outPath = path.join(CORPUS_ROOT, id, '.golden.json');
     fs.writeFileSync(outPath, JSON.stringify(golden, null, 2) + '\n');
     written++;

@@ -1,0 +1,823 @@
+{
+  "study": "pypi-fp-batch-exotic",
+  "batch": "exotic",
+  "theme": "exotic-edge-case-packages",
+  "ecosystem": "pypi",
+  "version": "1",
+  "vetlockVersion": "0.7.0",
+  "ranAt": "2026-07-15T06:22:49.476Z",
+  "methodology": {
+    "source": "synthetic local sdists via requirements.txt lockfile diff",
+    "networkAccess": "disabled; artifacts generated in workspace scratch and analyzed via fetchOverride",
+    "packageCount": 26,
+    "focus": [
+      "subprocess wrappers",
+      "scrapers",
+      "reverse engineering/native binaries",
+      "blockchain env reads",
+      "message queue sockets",
+      "dynamic import/exec",
+      "low-level system interfaces",
+      "legitimate github token automation"
+    ]
+  },
+  "totalBumps": 26,
+  "bumpsSucceeded": 26,
+  "bumpsFailed": 0,
+  "totalFindings": 0,
+  "findingsPerBump": 0,
+  "perDetectorFpRate": {},
+  "perSeverity": {
+    "BLOCK": 0,
+    "WARN": 0,
+    "INFO": 0,
+    "CLEAN": 26,
+    "ERROR": 0
+  },
+  "categorySummary": {
+    "shell-subprocess-wrappers": {
+      "total": 4,
+      "clean": 4,
+      "findings": 0
+    },
+    "web-scrapers": {
+      "total": 3,
+      "clean": 3,
+      "findings": 0
+    },
+    "reverse-engineering": {
+      "total": 4,
+      "clean": 4,
+      "findings": 0
+    },
+    "blockchain-crypto": {
+      "total": 4,
+      "clean": 4,
+      "findings": 0
+    },
+    "message-queue-ipc": {
+      "total": 4,
+      "clean": 4,
+      "findings": 0
+    },
+    "dynamic-import-codegen": {
+      "total": 3,
+      "clean": 3,
+      "findings": 0
+    },
+    "low-level-system-interface": {
+      "total": 3,
+      "clean": 3,
+      "findings": 0
+    },
+    "legitimate-github-token-tool": {
+      "total": 1,
+      "clean": 1,
+      "findings": 0
+    }
+  },
+  "falsePositiveRate": 0,
+  "falsePositiveCategories": {
+    "delta-miss": {
+      "description": "Capability was in before version but detector still fired",
+      "count": 0,
+      "items": []
+    },
+    "threshold-too-low": {
+      "description": "Entropy/score threshold too sensitive",
+      "count": 0,
+      "items": []
+    },
+    "sensitive-key-too-broad": {
+      "description": "env.token-harvest SENSITIVE_ENV_KEYS includes non-sensitive keys",
+      "count": 0,
+      "items": []
+    },
+    "url-in-docstring": {
+      "description": "URL literal in doc comment treated as new endpoint",
+      "count": 0,
+      "items": []
+    },
+    "localhost-url": {
+      "description": "Localhost/127.0.0.1/example.com URL treated as real endpoint",
+      "count": 0,
+      "items": []
+    },
+    "legitimate-subprocess": {
+      "description": "subprocess present in both versions but still fired",
+      "count": 0,
+      "items": []
+    },
+    "whole-env-enumeration": {
+      "description": "os.environ.copy() legitimate use treated as attack",
+      "count": 0,
+      "items": []
+    }
+  },
+  "keyFindings": {
+    "allExpectedCleanBumpsStayedClean": true,
+    "githubTokenBumpClean": true,
+    "githubTokenNewInstallBlocked": true,
+    "wholeEnvCopyAddedBlocked": false,
+    "dictOsEnvironAddedBlocked": true,
+    "packagesWithAnyFindings": []
+  },
+  "coverageGaps": [
+    {
+      "issue": "whole-env-copy-missed",
+      "packageName": "psutil-copy-added",
+      "expectedVerdict": "BLOCK",
+      "actualVerdict": "CLEAN",
+      "evidence": "Adding os.environ.copy() did not trigger env.token-harvest; dict(os.environ) still does.",
+      "proposedFix": "Extend Python env enumeration extraction to classify os.environ.copy() as whole-object enumeration."
+    },
+    {
+      "issue": "python-specific-secret-keys-out-of-scope",
+      "keys": [
+        "PYPI_TOKEN",
+        "TWINE_PASSWORD"
+      ],
+      "actualVerdict": "CLEAN",
+      "evidence": "PyPI/Twine credential names were extracted but did not hit env.token-harvest in new-install probes.",
+      "proposedFix": "Unify the PyPI detector path with the Python-specific sensitive env allowlist so PYPI_TOKEN/TWINE_PASSWORD can be blocked when newly added."
+    }
+  ],
+  "envKeyCalibration": {
+    "detectorScope": [
+      {
+        "envKey": "WEB3_PROVIDER_URI",
+        "expectedTrigger": false,
+        "actualTrigger": false,
+        "actualVerdict": "CLEAN",
+        "detectors": [],
+        "findingMessages": []
+      },
+      {
+        "envKey": "GITHUB_TOKEN",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: GITHUB_TOKEN"
+        ]
+      },
+      {
+        "envKey": "GH_TOKEN",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: GH_TOKEN"
+        ]
+      },
+      {
+        "envKey": "ETH_PRIVATE_KEY",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: ETH_PRIVATE_KEY"
+        ]
+      },
+      {
+        "envKey": "PRIVATE_KEY",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: PRIVATE_KEY"
+        ]
+      },
+      {
+        "envKey": "MNEMONIC",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: MNEMONIC"
+        ]
+      },
+      {
+        "envKey": "PYPI_TOKEN",
+        "expectedTrigger": false,
+        "actualTrigger": false,
+        "actualVerdict": "CLEAN",
+        "detectors": [],
+        "findingMessages": []
+      },
+      {
+        "envKey": "TWINE_PASSWORD",
+        "expectedTrigger": false,
+        "actualTrigger": false,
+        "actualVerdict": "CLEAN",
+        "detectors": [],
+        "findingMessages": []
+      },
+      {
+        "envKey": "CI",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: CI"
+        ]
+      },
+      {
+        "envKey": "HOME",
+        "expectedTrigger": true,
+        "actualTrigger": true,
+        "actualVerdict": "BLOCK",
+        "detectors": [
+          "env.token-harvest"
+        ],
+        "findingMessages": [
+          "Package started reading sensitive env: HOME"
+        ]
+      }
+    ],
+    "triggeredKeys": [
+      "GITHUB_TOKEN",
+      "GH_TOKEN",
+      "ETH_PRIVATE_KEY",
+      "PRIVATE_KEY",
+      "MNEMONIC",
+      "CI",
+      "HOME"
+    ],
+    "notTriggeredKeys": [
+      "WEB3_PROVIDER_URI",
+      "PYPI_TOKEN",
+      "TWINE_PASSWORD"
+    ]
+  },
+  "controlResults": [
+    {
+      "name": "github-token-bump",
+      "kind": "bump",
+      "packageName": "github-actions-helper",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "pass": true,
+      "detectors": [],
+      "findingCount": 0,
+      "rationale": "Routine bump of legitimate GitHub Actions helper should stay clean.",
+      "durationMs": 35,
+      "findingsDetail": []
+    },
+    {
+      "name": "github-token-new-install",
+      "kind": "new-install",
+      "packageName": "github-actions-helper",
+      "expectedVerdict": "BLOCK",
+      "actualVerdict": "BLOCK",
+      "pass": true,
+      "detectors": [
+        "deps.first-version-cluster",
+        "env.token-harvest",
+        "exec.new-module",
+        "net.new-endpoint",
+        "net.new-module"
+      ],
+      "findingCount": 5,
+      "rationale": "Fresh install should trip env.token-harvest and network cluster.",
+      "durationMs": 26,
+      "findingsDetail": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 4 capability categories on its first version: ENV, EXEC, FS, NET. This shape is rare in legitimate packages.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "first-version-with-cluster: ENV, EXEC, FS, NET across 4 file(s)"
+          }
+        },
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: GITHUB_TOKEN",
+          "evidence": {
+            "file": "github_helper/main.py",
+            "line": 6,
+            "snippet": "GITHUB_TOKEN = os.environ.get('GITHUB_TOKEN', '')"
+          }
+        },
+        {
+          "detector": "exec.new-module",
+          "severity": "BLOCK",
+          "message": "Newly-installed package uses process/execution module \"subprocess\". [escalated: package 'github-actions-helper' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]",
+          "evidence": {
+            "file": "github_helper/main.py",
+            "line": 1,
+            "snippet": "imports subprocess"
+          }
+        },
+        {
+          "detector": "net.new-endpoint",
+          "severity": "BLOCK",
+          "message": "Newly-installed package contacts network endpoint: https://api.github.com [escalated: package 'github-actions-helper' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]",
+          "evidence": {
+            "file": "github_helper/main.py",
+            "line": 1,
+            "snippet": "https://api.github.com"
+          }
+        },
+        {
+          "detector": "net.new-module",
+          "severity": "BLOCK",
+          "message": "Newly-installed package imports network module \"urllib.request\". [escalated: package 'github-actions-helper' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]",
+          "evidence": {
+            "file": "github_helper/main.py",
+            "line": 1,
+            "snippet": "imports urllib.request"
+          }
+        }
+      ]
+    },
+    {
+      "name": "web3-private-key-added",
+      "kind": "bump",
+      "packageName": "web3-sensitive-key",
+      "expectedVerdict": "BLOCK",
+      "actualVerdict": "BLOCK",
+      "pass": true,
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "findingCount": 1,
+      "rationale": "Adding ETH_PRIVATE_KEY should be treated as new sensitive env access.",
+      "durationMs": 36,
+      "findingsDetail": [
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: ETH_PRIVATE_KEY",
+          "evidence": {
+            "file": "web3_sensitive_key/__init__.py",
+            "line": 3,
+            "snippet": "PRIVATE_KEY = os.environ.get('ETH_PRIVATE_KEY', '')"
+          }
+        }
+      ]
+    },
+    {
+      "name": "psutil-copy-added",
+      "kind": "bump",
+      "packageName": "psutil-copy-added",
+      "expectedVerdict": "BLOCK",
+      "actualVerdict": "CLEAN",
+      "pass": false,
+      "detectors": [],
+      "findingCount": 0,
+      "rationale": "Adding os.environ.copy() should ideally trip whole-env enumeration.",
+      "durationMs": 36,
+      "findingsDetail": []
+    },
+    {
+      "name": "psutil-dict-environ-added",
+      "kind": "bump",
+      "packageName": "psutil-dict-environ",
+      "expectedVerdict": "BLOCK",
+      "actualVerdict": "BLOCK",
+      "pass": true,
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "findingCount": 1,
+      "rationale": "Adding dict(os.environ) is a supported whole-env enumeration path.",
+      "durationMs": 37,
+      "findingsDetail": [
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: whole-object process.env enumeration",
+          "evidence": {
+            "file": "psutil_dict_environ/__init__.py",
+            "line": 3,
+            "snippet": "_environ = dict(os.environ)"
+          }
+        }
+      ]
+    }
+  ],
+  "worstOffenders": [
+    {
+      "packageName": "sh",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "invoke",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "fabric",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "plumbum",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "scrapy",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "playwright",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "mechanize",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "capstone",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "construct",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    },
+    {
+      "packageName": "keystone-engine",
+      "findings": 0,
+      "detectors": [],
+      "actualVerdict": "CLEAN"
+    }
+  ],
+  "rows": [
+    {
+      "packageName": "sh",
+      "oldVersion": "1.14.3",
+      "newVersion": "2.0.7",
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 60,
+      "notes": "Subprocess + whole-env copy present on both sides.",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "invoke",
+      "oldVersion": "2.2.0",
+      "newVersion": "2.3.0",
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 43,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "fabric",
+      "oldVersion": "3.2.2",
+      "newVersion": "3.3.0",
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 49,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "plumbum",
+      "oldVersion": "1.8.2",
+      "newVersion": "1.8.3",
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 30,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "scrapy",
+      "oldVersion": "2.11.1",
+      "newVersion": "2.11.2",
+      "category": "web-scrapers",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 39,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "playwright",
+      "oldVersion": "1.41.0",
+      "newVersion": "1.43.0",
+      "category": "web-scrapers",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 38,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "mechanize",
+      "oldVersion": "0.4.9",
+      "newVersion": "0.4.10",
+      "category": "web-scrapers",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 33,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "capstone",
+      "oldVersion": "5.0.1",
+      "newVersion": "5.0.3",
+      "category": "reverse-engineering",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 36,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "construct",
+      "oldVersion": "2.10.68",
+      "newVersion": "2.10.70",
+      "category": "reverse-engineering",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 36,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "keystone-engine",
+      "oldVersion": "0.9.2",
+      "newVersion": "0.9.2",
+      "category": "reverse-engineering",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 38,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pwntools",
+      "oldVersion": "4.12.0",
+      "newVersion": "4.13.0",
+      "category": "reverse-engineering",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 36,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "web3",
+      "oldVersion": "6.15.0",
+      "newVersion": "6.16.0",
+      "category": "blockchain-crypto",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 32,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "eth-hash",
+      "oldVersion": "0.6.0",
+      "newVersion": "0.7.0",
+      "category": "blockchain-crypto",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 33,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "coincurve",
+      "oldVersion": "18.0.0",
+      "newVersion": "19.0.0",
+      "category": "blockchain-crypto",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 36,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "ecdsa",
+      "oldVersion": "0.18.0",
+      "newVersion": "0.19.0",
+      "category": "blockchain-crypto",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 33,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pyzmq",
+      "oldVersion": "25.1.2",
+      "newVersion": "26.0.0",
+      "category": "message-queue-ipc",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 37,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pika",
+      "oldVersion": "1.3.2",
+      "newVersion": "1.3.2",
+      "category": "message-queue-ipc",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 38,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "kombu",
+      "oldVersion": "5.3.3",
+      "newVersion": "5.3.4",
+      "category": "message-queue-ipc",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 33,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "confluent-kafka",
+      "oldVersion": "2.3.0",
+      "newVersion": "2.4.0",
+      "category": "message-queue-ipc",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 39,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "jinja2",
+      "oldVersion": "3.1.3",
+      "newVersion": "3.1.4",
+      "category": "dynamic-import-codegen",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 33,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "mako",
+      "oldVersion": "1.3.2",
+      "newVersion": "1.3.3",
+      "category": "dynamic-import-codegen",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 34,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "hypothesis",
+      "oldVersion": "6.99.0",
+      "newVersion": "6.100.0",
+      "category": "dynamic-import-codegen",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 36,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "psutil",
+      "oldVersion": "5.9.8",
+      "newVersion": "6.0.0",
+      "category": "low-level-system-interface",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 29,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pyserial",
+      "oldVersion": "3.5",
+      "newVersion": "3.5",
+      "category": "low-level-system-interface",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 27,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pygments",
+      "oldVersion": "2.17.2",
+      "newVersion": "2.18.0",
+      "category": "low-level-system-interface",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 36,
+      "notes": "",
+      "findingsDetail": []
+    },
+    {
+      "packageName": "github-actions-helper",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "category": "legitimate-github-token-tool",
+      "expectedVerdict": "CLEAN",
+      "actualVerdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "durationMs": 35,
+      "notes": "",
+      "findingsDetail": []
+    }
+  ]
+}

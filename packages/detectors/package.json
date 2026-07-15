@@ -15,11 +15,11 @@
   },
   "dependencies": {
     "@vetlock/core": "workspace:*",
-    "@babel/parser": "^7.24.0",
-    "@babel/traverse": "^7.24.0",
-    "@babel/types": "^7.24.0",
-    "damerau-levenshtein": "^1.0.8",
-    "semver": "^7.6.0"
+    "@babel/parser": "7.29.7",
+    "@babel/traverse": "7.29.7",
+    "@babel/types": "7.29.7",
+    "damerau-levenshtein": "1.0.8",
+    "semver": "7.8.5"
   },
   "devDependencies": {
     "@types/babel__traverse": "^7.20.5",

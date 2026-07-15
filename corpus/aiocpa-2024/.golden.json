@@ -1,0 +1,193 @@
+{
+  "_schema": "v1",
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "deps.first-version-cluster",
+      "category": "DEPS",
+      "package": "aiocpa",
+      "from": null,
+      "to": "0.1.13",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Newly-installed package combines outbound network capability with bulk sensitive-env harvest on its first version.",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "first-version-with-cluster: NET + 4 sensitive env reads"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "aiocpa"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "aiocpa",
+      "from": null,
+      "to": "0.1.13",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: MNEMONIC",
+      "evidence": [
+        {
+          "file": "aiocpa/client.py",
+          "line": 7,
+          "snippet": "\"MNEMONIC\": os.getenv(\"MNEMONIC\"),"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "aiocpa"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "aiocpa",
+      "from": null,
+      "to": "0.1.13",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: SEED_PHRASE",
+      "evidence": [
+        {
+          "file": "aiocpa/client.py",
+          "line": 8,
+          "snippet": "\"SEED_PHRASE\": os.getenv(\"SEED_PHRASE\"),"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "aiocpa"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "aiocpa",
+      "from": null,
+      "to": "0.1.13",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: PRIVATE_KEY",
+      "evidence": [
+        {
+          "file": "aiocpa/client.py",
+          "line": 9,
+          "snippet": "\"PRIVATE_KEY\": os.getenv(\"PRIVATE_KEY\"),"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "aiocpa"
+        ]
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "aiocpa",
+      "from": null,
+      "to": "0.1.13",
+      "direction": "added",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: whole-object process.env enumeration",
+      "evidence": [
+        {
+          "file": "aiocpa/client.py",
+          "line": 11,
+          "snippet": "\"env_dump\": dict(os.environ),"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "aiocpa"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "aiocpa",
+      "from": null,
+      "to": "0.1.13",
+      "direction": "added",
+      "severity": "WARN",
+      "confidence": "low",
+      "message": "Newly-installed package contacts network endpoint: https://harvest.example.invalid/wallets",
+      "evidence": [
+        {
+          "file": "aiocpa/client.py",
+          "line": 1,
+          "snippet": "https://harvest.example.invalid/wallets"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "aiocpa"
+        ]
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "aiocpa",
+      "from": null,
+      "to": "0.1.13",
+      "direction": "added",
+      "severity": "WARN",
+      "confidence": "low",
+      "message": "Newly-installed package imports network module \"requests\".",
+      "evidence": [
+        {
+          "file": "aiocpa/client.py",
+          "line": 1,
+          "snippet": "imports requests"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "aiocpa"
+        ]
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "aiocpa": {
+      "maxSeverity": "BLOCK",
+      "count": 7
+    }
+  },
+  "changes": [
+    {
+      "kind": "added",
+      "name": "aiocpa",
+      "nodeKeyOld": null,
+      "nodeKeyNew": "pypi/aiocpa",
+      "oldVersion": null,
+      "newVersion": "0.1.13",
+      "oldIntegrity": null,
+      "newIntegrity": "sha256-0108e8072608caebd8316737f47178f12d37f3e484bf1fa197e6e2ebdbfd8af1"
+    }
+  ],
+  "errors": []
+}

@@ -56,7 +56,7 @@ describe('REDTEAM S1: cache poisoning defense (HMAC-authenticated entries)', () 
     const cache = makeCache(`${tmpDir}/analysis`);
     const dir = `${tmpDir}/analysis`;
     await fs.mkdir(dir, { recursive: true });
-    const safeKey = 'sha512-attacker'.replace(/[^A-Za-z0-9._-]/g, '_');
+    const safeKey = crypto.createHash('sha256').update('sha512-attacker').digest('hex');
     const attackerSnap = fakeSnap({ integrity: 'sha512-attacker' });
     await fs.writeFile(`${dir}/${safeKey}.json`, JSON.stringify(attackerSnap));
     const got = await cache.get('sha512-attacker');
@@ -68,7 +68,7 @@ describe('REDTEAM S1: cache poisoning defense (HMAC-authenticated entries)', () 
     await cache.put('sha512-legit', fakeSnap({ integrity: 'sha512-legit' }));
 
     const dir = `${tmpDir}/analysis`;
-    const safeKey = 'sha512-attacker'.replace(/[^A-Za-z0-9._-]/g, '_');
+    const safeKey = crypto.createHash('sha256').update('sha512-attacker').digest('hex');
     const attackerSnap = fakeSnap({ integrity: 'sha512-attacker' });
     const attackerKey = crypto.randomBytes(32);
     const h = crypto.createHmac('sha256', attackerKey);
@@ -99,7 +99,7 @@ describe('REDTEAM S1: cache poisoning defense (HMAC-authenticated entries)', () 
     await cache.put('sha512-target', fakeSnap({ integrity: 'sha512-target' }));
 
     const dir = `${tmpDir}/analysis`;
-    const safeKey = 'sha512-target'.replace(/[^A-Za-z0-9._-]/g, '_');
+    const safeKey = crypto.createHash('sha256').update('sha512-target').digest('hex');
     const raw = await fs.readFile(`${dir}/${safeKey}.json`, 'utf8');
     const envelope = JSON.parse(raw);
     envelope.snapshot.name = 'attacker-controlled';

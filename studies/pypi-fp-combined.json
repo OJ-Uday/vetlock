@@ -1,0 +1,1912 @@
+{
+  "generatedAt": "2026-07-15T06:23:14.272Z",
+  "sourceBatches": [
+    {
+      "id": "A",
+      "file": "studies/pypi-fp-batch-a.json",
+      "batch": "A",
+      "present": true,
+      "sourceKeys": [
+        "batch",
+        "description",
+        "summary",
+        "results"
+      ],
+      "resultCount": 18
+    },
+    {
+      "id": "B",
+      "file": "studies/pypi-fp-batch-b.json",
+      "batch": "B",
+      "present": true,
+      "sourceKeys": [
+        "batch",
+        "focus",
+        "generatedAt",
+        "packageCount",
+        "summary",
+        "conclusions",
+        "packages",
+        "falsePositives"
+      ],
+      "resultCount": 21
+    },
+    {
+      "id": "C",
+      "file": "studies/pypi-fp-batch-c.json",
+      "batch": "C",
+      "present": true,
+      "sourceKeys": [
+        "batch",
+        "generatedAt",
+        "mode",
+        "packagesStudied",
+        "methodology",
+        "focusChecks",
+        "summary",
+        "rows",
+        "analysisNotes"
+      ],
+      "resultCount": 40
+    },
+    {
+      "id": "D",
+      "file": "studies/pypi-fp-batch-d.json",
+      "batch": "D",
+      "present": true,
+      "sourceKeys": [
+        "study",
+        "batch",
+        "theme",
+        "vetlockVersion",
+        "ranAt",
+        "methodology",
+        "totalBumps",
+        "bumpsSucceeded",
+        "bumpsFailed",
+        "totalFindings",
+        "findingsPerBump",
+        "perDetectorFpRate",
+        "perSeverity",
+        "focusSummary",
+        "concernSummary",
+        "worstOffenders",
+        "rows"
+      ],
+      "resultCount": 22
+    }
+  ],
+  "completeness": {
+    "expectedBatches": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "presentBatches": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "missingBatches": [],
+    "allBatchesPresent": true
+  },
+  "summary": {
+    "totalBumpsAnalyzed": 101,
+    "verdictCounts": {
+      "CLEAN": 87,
+      "BLOCK": 10,
+      "WARN": 4
+    },
+    "overallFalsePositiveRate": 0.09900990099009901,
+    "scenarioCounts": {
+      "bump": {
+        "total": 81,
+        "CLEAN": 81,
+        "INFO": 0,
+        "WARN": 0,
+        "BLOCK": 0
+      },
+      "added": {
+        "total": 20,
+        "CLEAN": 6,
+        "INFO": 0,
+        "WARN": 4,
+        "BLOCK": 10
+      }
+    },
+    "detectorCounts": [
+      {
+        "detector": "deps.first-version-cluster",
+        "count": 8
+      },
+      {
+        "detector": "env.token-harvest",
+        "count": 8
+      },
+      {
+        "detector": "exec.new-module",
+        "count": 8
+      },
+      {
+        "detector": "deps.typosquat-candidate",
+        "count": 5
+      },
+      {
+        "detector": "code.dynamic-loading-added",
+        "count": 4
+      },
+      {
+        "detector": "net.new-endpoint",
+        "count": 4
+      },
+      {
+        "detector": "net.new-module",
+        "count": 4
+      }
+    ]
+  },
+  "results": [
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "numpy",
+      "oldVersion": "1.26.4",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "import ctypes",
+        "import platform"
+      ]
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "pandas",
+      "oldVersion": "2.1.4",
+      "newVersion": "2.2.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "os.environ.get('PANDAS_TESTING_MODE')"
+      ]
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "scipy",
+      "oldVersion": "1.11.4",
+      "newVersion": "1.12.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "matplotlib",
+      "oldVersion": "3.8.2",
+      "newVersion": "3.9.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "os.environ.get('MPLBACKEND')"
+      ]
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "scikit-learn",
+      "oldVersion": "1.4.0",
+      "newVersion": "1.5.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "os.environ.get('OMP_NUM_THREADS')"
+      ]
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "tqdm",
+      "oldVersion": "4.66.4",
+      "newVersion": "4.66.5",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "pillow",
+      "oldVersion": "10.3.0",
+      "newVersion": "10.4.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "filelock",
+      "oldVersion": "3.13.0",
+      "newVersion": "3.14.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "platformdirs",
+      "oldVersion": "4.1.0",
+      "newVersion": "4.2.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "import platform"
+      ]
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "more-itertools",
+      "oldVersion": "10.2.0",
+      "newVersion": "10.3.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "pydantic",
+      "oldVersion": "2.6.4",
+      "newVersion": "2.7.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "pydantic-core",
+      "oldVersion": "2.16.3",
+      "newVersion": "2.18.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "annotated-types",
+      "oldVersion": "0.6.0",
+      "newVersion": "0.7.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "attrs",
+      "oldVersion": "23.2.0",
+      "newVersion": "24.2.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "typing-extensions",
+      "oldVersion": "4.10.0",
+      "newVersion": "4.12.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "importlib-metadata",
+      "oldVersion": "7.0.1",
+      "newVersion": "8.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "six",
+      "oldVersion": "1.16.0",
+      "newVersion": "1.17.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "A",
+      "scenario": "bump",
+      "package": "exceptiongroup",
+      "oldVersion": "1.2.0",
+      "newVersion": "1.2.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "requests",
+      "oldVersion": "2.31.0",
+      "newVersion": "2.32.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "HTTP client keeps urllib3/socket/ssl imports and identical docs URLs while fixing a text coercion edge case."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "urllib3",
+      "oldVersion": "2.2.1",
+      "newVersion": "2.2.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "HTTP transport keeps urllib/socket/ssl imports and the same docs URL constant."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "certifi",
+      "oldVersion": "2024.2.2",
+      "newVersion": "2024.7.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Certificate bundle package has only a shared docstring URL and a benign bugfix."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "httpx",
+      "oldVersion": "0.27.0",
+      "newVersion": "0.27.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Async HTTP client keeps ssl/socket imports; stub/docstring URLs remain unchanged."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "aiohttp",
+      "oldVersion": "3.9.5",
+      "newVersion": "3.10.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Async HTTP stack keeps asyncio/socket/ssl imports and the same docs URL literal."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "h11",
+      "oldVersion": "0.14.0",
+      "newVersion": "0.14.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Protocol package only changes function logic; docstring URL is identical."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "httpcore",
+      "oldVersion": "1.0.5",
+      "newVersion": "1.0.6",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Transport core keeps socket/ssl imports and an unchanged URL literal in code."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "anyio",
+      "oldVersion": "4.3.0",
+      "newVersion": "4.4.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Shared asyncio import remains present before/after; no new capabilities."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "sniffio",
+      "oldVersion": "1.3.0",
+      "newVersion": "1.3.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Async detection helper keeps asyncio import; docstring URL remains constant."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "fastapi",
+      "oldVersion": "0.111.0",
+      "newVersion": "0.111.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Framework route literals and urllib import stay the same; only helper logic changes."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "uvicorn",
+      "oldVersion": "0.30.0",
+      "newVersion": "0.30.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Server runtime keeps asyncio/socket/ssl imports with unchanged health routes."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "starlette",
+      "oldVersion": "0.37.2",
+      "newVersion": "0.37.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "ASGI toolkit keeps urllib/anyio imports and route patterns unchanged."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "flask",
+      "oldVersion": "3.0.3",
+      "newVersion": "3.0.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Route handlers and urllib import are stable across the benign bugfix."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "Werkzeug",
+      "oldVersion": "3.0.3",
+      "newVersion": "3.0.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Routing-related literals remain unchanged; urllib import is already present."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "Jinja2",
+      "oldVersion": "3.1.4",
+      "newVersion": "3.1.5",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Template engine carries only a stable docstring URL and a harmless bugfix."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "MarkupSafe",
+      "oldVersion": "2.1.5",
+      "newVersion": "2.1.6",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Escaping helper keeps the same docstring URL and no network-related imports."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "click",
+      "oldVersion": "8.1.7",
+      "newVersion": "8.1.8",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "CLI help text contains the same URL in both versions; detector should not flag it."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "colorama",
+      "oldVersion": "0.4.6",
+      "newVersion": "0.4.7",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Terminal-color helper has no new capabilities; docstring URL is unchanged."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "rich",
+      "oldVersion": "13.7.1",
+      "newVersion": "13.7.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Rich help text keeps the same docs URL while implementation logic stays capability-neutral."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "charset-normalizer",
+      "oldVersion": "3.3.2",
+      "newVersion": "3.3.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "Text-normalization package keeps the same docstring URL and no network imports."
+      ]
+    },
+    {
+      "batch": "B",
+      "scenario": "bump",
+      "package": "idna",
+      "oldVersion": "3.7",
+      "newVersion": "3.8",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "IDNA helper has identical docs URL and a same-capability bugfix."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "pytest",
+      "oldVersion": "8.4.1",
+      "newVersion": "8.4.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "test-runner",
+        "Reads CI env and writes cache files."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "pytest",
+      "oldVersion": "8.4.1",
+      "newVersion": "8.4.2",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.typosquat-candidate",
+        "env.token-harvest"
+      ],
+      "findings": [
+        {
+          "detector": "deps.typosquat-candidate",
+          "severity": "BLOCK",
+          "message": "Package name \"pytest\" is edit-distance 2 from popular package \"vitest\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: added package also ships BLOCK-tier capabilities]"
+        },
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: CI"
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "test-runner",
+        "Reads CI env and writes cache files."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "pluggy",
+      "oldVersion": "1.5.0",
+      "newVersion": "1.6.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "plugin-system",
+        "Loads plugins dynamically via importlib."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "pluggy",
+      "oldVersion": "1.5.0",
+      "newVersion": "1.6.0",
+      "verdict": "WARN",
+      "findingCount": 2,
+      "detectors": [
+        "exec.new-module",
+        "code.dynamic-loading-added"
+      ],
+      "findings": [
+        {
+          "detector": "exec.new-module",
+          "severity": "WARN",
+          "message": "Newly-installed package uses process/execution module \"importlib\"."
+        },
+        {
+          "detector": "code.dynamic-loading-added",
+          "severity": "INFO",
+          "message": "Dynamic code sink introduced (dynamic-require)."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "plugin-system",
+        "Loads plugins dynamically via importlib."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "iniconfig",
+      "oldVersion": "2.0.0",
+      "newVersion": "2.1.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "config-parser",
+        "Reads local config files only."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "iniconfig",
+      "oldVersion": "2.0.0",
+      "newVersion": "2.1.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "config-parser",
+        "Reads local config files only."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "tomli",
+      "oldVersion": "2.0.1",
+      "newVersion": "2.2.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "parser",
+        "Pure parser profile with no flagged capability categories."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "tomli",
+      "oldVersion": "2.0.1",
+      "newVersion": "2.2.1",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "deps.typosquat-candidate"
+      ],
+      "findings": [
+        {
+          "detector": "deps.typosquat-candidate",
+          "severity": "WARN",
+          "message": "Package name \"tomli\" is edit-distance 1 from popular package \"toml\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "parser",
+        "Pure parser profile with no flagged capability categories."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "black",
+      "oldVersion": "24.10.0",
+      "newVersion": "25.1.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "formatter",
+        "Uses exec for plugin-ish loading and checks CI env."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "black",
+      "oldVersion": "24.10.0",
+      "newVersion": "25.1.0",
+      "verdict": "BLOCK",
+      "findingCount": 3,
+      "detectors": [
+        "deps.first-version-cluster",
+        "env.token-harvest",
+        "code.dynamic-loading-added"
+      ],
+      "findings": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 3 capability categories on its first version: CODE, ENV, FS. This shape is rare in legitimate packages."
+        },
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: CI"
+        },
+        {
+          "detector": "code.dynamic-loading-added",
+          "severity": "WARN",
+          "message": "Dynamic code sink introduced (eval)."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "formatter",
+        "Uses exec for plugin-ish loading and checks CI env."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "mypy",
+      "oldVersion": "1.11.2",
+      "newVersion": "1.12.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "type-checker",
+        "Reads project config from disk."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "mypy",
+      "oldVersion": "1.11.2",
+      "newVersion": "1.12.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "type-checker",
+        "Reads project config from disk."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "pylint",
+      "oldVersion": "3.3.0",
+      "newVersion": "3.3.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "linter",
+        "Reads config and dynamically imports plugins."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "pylint",
+      "oldVersion": "3.3.0",
+      "newVersion": "3.3.1",
+      "verdict": "BLOCK",
+      "findingCount": 4,
+      "detectors": [
+        "deps.first-version-cluster",
+        "deps.typosquat-candidate",
+        "exec.new-module",
+        "code.dynamic-loading-added"
+      ],
+      "findings": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 3 capability categories on its first version: CODE, EXEC, FS. This shape is rare in legitimate packages."
+        },
+        {
+          "detector": "deps.typosquat-candidate",
+          "severity": "BLOCK",
+          "message": "Package name \"pylint\" is edit-distance 2 from popular package \"eslint\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: typosquat candidate has 2+ WARN-tier signals across 2+ categories]"
+        },
+        {
+          "detector": "exec.new-module",
+          "severity": "WARN",
+          "message": "Newly-installed package uses process/execution module \"importlib\"."
+        },
+        {
+          "detector": "code.dynamic-loading-added",
+          "severity": "INFO",
+          "message": "Dynamic code sink introduced (dynamic-require)."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "linter",
+        "Reads config and dynamically imports plugins."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "flake8",
+      "oldVersion": "7.1.1",
+      "newVersion": "7.2.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "linter",
+        "Reads config and dynamically imports plugins."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "flake8",
+      "oldVersion": "7.1.1",
+      "newVersion": "7.2.0",
+      "verdict": "BLOCK",
+      "findingCount": 3,
+      "detectors": [
+        "deps.first-version-cluster",
+        "exec.new-module",
+        "code.dynamic-loading-added"
+      ],
+      "findings": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 3 capability categories on its first version: CODE, EXEC, FS. This shape is rare in legitimate packages."
+        },
+        {
+          "detector": "exec.new-module",
+          "severity": "WARN",
+          "message": "Newly-installed package uses process/execution module \"importlib\"."
+        },
+        {
+          "detector": "code.dynamic-loading-added",
+          "severity": "INFO",
+          "message": "Dynamic code sink introduced (dynamic-require)."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "linter",
+        "Reads config and dynamically imports plugins."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "isort",
+      "oldVersion": "5.13.2",
+      "newVersion": "5.13.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "formatter",
+        "Reads CI env and writes cache files."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "isort",
+      "oldVersion": "5.13.2",
+      "newVersion": "5.13.3",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "env.token-harvest"
+      ],
+      "findings": [
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: CI"
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "formatter",
+        "Reads CI env and writes cache files."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "setuptools",
+      "oldVersion": "74.1.2",
+      "newVersion": "75.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "build-backend",
+        "Stable subprocess + filesystem + CI env access; key subprocess regression check."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "setuptools",
+      "oldVersion": "74.1.2",
+      "newVersion": "75.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 3,
+      "detectors": [
+        "deps.first-version-cluster",
+        "env.token-harvest",
+        "exec.new-module"
+      ],
+      "findings": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 3 capability categories on its first version: ENV, EXEC, FS. This shape is rare in legitimate packages."
+        },
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: CI"
+        },
+        {
+          "detector": "exec.new-module",
+          "severity": "WARN",
+          "message": "Newly-installed package uses process/execution module \"subprocess\"."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "build-backend",
+        "Stable subprocess + filesystem + CI env access; key subprocess regression check."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "pip",
+      "oldVersion": "24.2",
+      "newVersion": "24.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "installer",
+        "Installer profile with subprocess, local writes, CI env, urllib, and a stable PyPI URL."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "pip",
+      "oldVersion": "24.2",
+      "newVersion": "24.3",
+      "verdict": "BLOCK",
+      "findingCount": 6,
+      "detectors": [
+        "deps.first-version-cluster",
+        "deps.typosquat-candidate",
+        "env.token-harvest",
+        "exec.new-module",
+        "net.new-endpoint",
+        "net.new-module"
+      ],
+      "findings": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 4 capability categories on its first version: ENV, EXEC, FS, NET. This shape is rare in legitimate packages."
+        },
+        {
+          "detector": "deps.typosquat-candidate",
+          "severity": "BLOCK",
+          "message": "Package name \"pip\" is edit-distance 2 from popular package \"pm2\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: added package also ships BLOCK-tier capabilities]"
+        },
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: CI"
+        },
+        {
+          "detector": "exec.new-module",
+          "severity": "BLOCK",
+          "message": "Newly-installed package uses process/execution module \"subprocess\". [escalated: package 'pip' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+        },
+        {
+          "detector": "net.new-endpoint",
+          "severity": "BLOCK",
+          "message": "Newly-installed package contacts network endpoint: https://pypi.org/simple [escalated: package 'pip' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+        },
+        {
+          "detector": "net.new-module",
+          "severity": "BLOCK",
+          "message": "Newly-installed package imports network module \"urllib.request\". [escalated: package 'pip' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "installer",
+        "Installer profile with subprocess, local writes, CI env, urllib, and a stable PyPI URL."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "wheel",
+      "oldVersion": "0.44.0",
+      "newVersion": "0.45.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "build-tool",
+        "Writes local build artifacts."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "wheel",
+      "oldVersion": "0.44.0",
+      "newVersion": "0.45.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "build-tool",
+        "Writes local build artifacts."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "build",
+      "oldVersion": "1.2.2",
+      "newVersion": "1.2.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "build-frontend",
+        "Front-end build driver with subprocess, local writes, and CI env."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "build",
+      "oldVersion": "1.2.2",
+      "newVersion": "1.2.3",
+      "verdict": "BLOCK",
+      "findingCount": 4,
+      "detectors": [
+        "deps.first-version-cluster",
+        "deps.typosquat-candidate",
+        "env.token-harvest",
+        "exec.new-module"
+      ],
+      "findings": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 3 capability categories on its first version: ENV, EXEC, FS. This shape is rare in legitimate packages."
+        },
+        {
+          "detector": "deps.typosquat-candidate",
+          "severity": "BLOCK",
+          "message": "Package name \"build\" is edit-distance 2 from popular package \"esbuild\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: added package also ships BLOCK-tier capabilities]"
+        },
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: CI"
+        },
+        {
+          "detector": "exec.new-module",
+          "severity": "WARN",
+          "message": "Newly-installed package uses process/execution module \"subprocess\"."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "build-frontend",
+        "Front-end build driver with subprocess, local writes, and CI env."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "twine",
+      "oldVersion": "5.1.1",
+      "newVersion": "5.1.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "publisher",
+        "Publishes over the network and reads upload credentials from env."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "twine",
+      "oldVersion": "5.1.1",
+      "newVersion": "5.1.2",
+      "verdict": "WARN",
+      "findingCount": 2,
+      "detectors": [
+        "net.new-endpoint",
+        "net.new-module"
+      ],
+      "findings": [
+        {
+          "detector": "net.new-endpoint",
+          "severity": "WARN",
+          "message": "Newly-installed package contacts network endpoint: https://upload.pypi.org/legacy"
+        },
+        {
+          "detector": "net.new-module",
+          "severity": "WARN",
+          "message": "Newly-installed package imports network module \"urllib.request\"."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "publisher",
+        "Publishes over the network and reads upload credentials from env."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "pre-commit",
+      "oldVersion": "4.0.1",
+      "newVersion": "4.0.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "automation",
+        "Clones hook repos and shells out; also checks CI env."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "pre-commit",
+      "oldVersion": "4.0.1",
+      "newVersion": "4.0.2",
+      "verdict": "BLOCK",
+      "findingCount": 5,
+      "detectors": [
+        "deps.first-version-cluster",
+        "env.token-harvest",
+        "exec.new-module",
+        "net.new-endpoint",
+        "net.new-module"
+      ],
+      "findings": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 4 capability categories on its first version: ENV, EXEC, FS, NET. This shape is rare in legitimate packages."
+        },
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: CI"
+        },
+        {
+          "detector": "exec.new-module",
+          "severity": "BLOCK",
+          "message": "Newly-installed package uses process/execution module \"subprocess\". [escalated: package 'pre-commit' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+        },
+        {
+          "detector": "net.new-endpoint",
+          "severity": "BLOCK",
+          "message": "Newly-installed package contacts network endpoint: https://github.com/pre-commit/pre-commit-hooks [escalated: package 'pre-commit' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+        },
+        {
+          "detector": "net.new-module",
+          "severity": "BLOCK",
+          "message": "Newly-installed package imports network module \"urllib.request\". [escalated: package 'pre-commit' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "automation",
+        "Clones hook repos and shells out; also checks CI env."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "bandit",
+      "oldVersion": "1.7.9",
+      "newVersion": "1.8.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "security-linter",
+        "Reads local source files for analysis."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "bandit",
+      "oldVersion": "1.7.9",
+      "newVersion": "1.8.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "security-linter",
+        "Reads local source files for analysis."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "safety",
+      "oldVersion": "3.2.7",
+      "newVersion": "3.3.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "security-scanner",
+        "Checks vulnerability data over the network and records local output."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "safety",
+      "oldVersion": "3.2.7",
+      "newVersion": "3.3.0",
+      "verdict": "BLOCK",
+      "findingCount": 4,
+      "detectors": [
+        "deps.first-version-cluster",
+        "env.token-harvest",
+        "net.new-endpoint",
+        "net.new-module"
+      ],
+      "findings": [
+        {
+          "detector": "deps.first-version-cluster",
+          "severity": "BLOCK",
+          "message": "Newly-installed package ships 3 capability categories on its first version: ENV, FS, NET. This shape is rare in legitimate packages."
+        },
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: CI"
+        },
+        {
+          "detector": "net.new-endpoint",
+          "severity": "WARN",
+          "message": "Newly-installed package contacts network endpoint: https://pyup.io/api/v1/safety"
+        },
+        {
+          "detector": "net.new-module",
+          "severity": "WARN",
+          "message": "Newly-installed package imports network module \"urllib.request\"."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "security-scanner",
+        "Checks vulnerability data over the network and records local output."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "pyproject-hooks",
+      "oldVersion": "1.1.0",
+      "newVersion": "1.2.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "build-hooks",
+        "Invokes backend hooks in subprocesses and writes temp state."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "pyproject-hooks",
+      "oldVersion": "1.1.0",
+      "newVersion": "1.2.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "exec.new-module"
+      ],
+      "findings": [
+        {
+          "detector": "exec.new-module",
+          "severity": "WARN",
+          "message": "Newly-installed package uses process/execution module \"subprocess\"."
+        }
+      ],
+      "falsePositive": true,
+      "notes": [
+        "build-hooks",
+        "Invokes backend hooks in subprocesses and writes temp state."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "installer",
+      "oldVersion": "0.7.0",
+      "newVersion": "0.7.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "installer",
+        "Writes files into target environments."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "installer",
+      "oldVersion": "0.7.0",
+      "newVersion": "0.7.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "installer",
+        "Writes files into target environments."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "bump",
+      "package": "distlib",
+      "oldVersion": "0.3.8",
+      "newVersion": "0.3.9",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "packaging-lib",
+        "Writes local metadata and scripts."
+      ]
+    },
+    {
+      "batch": "C",
+      "scenario": "added",
+      "package": "distlib",
+      "oldVersion": "0.3.8",
+      "newVersion": "0.3.9",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": [
+        "packaging-lib",
+        "Writes local metadata and scripts."
+      ]
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "boto3",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "botocore",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "s3transfer",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "google-auth",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "google-cloud-storage",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "protobuf",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "grpcio",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "cryptography",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "cffi",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "pycparser",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "bcrypt",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "paramiko",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "PyNaCl",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "sqlalchemy",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "redis",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "celery",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "psycopg2-binary",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "pyyaml",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "jsonschema",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "azure-core",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "azure-storage-blob",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    },
+    {
+      "batch": "D",
+      "scenario": "bump",
+      "package": "msrest",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "findings": [],
+      "falsePositive": false,
+      "notes": []
+    }
+  ]
+}

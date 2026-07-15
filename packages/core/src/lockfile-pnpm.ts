@@ -38,6 +38,7 @@ interface RawPnpmLock {
   snapshots?: Record<string, {
     dependencies?: Record<string, string>;
     optionalDependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
   }>;
 }
 
@@ -169,6 +170,7 @@ export function parsePnpmLockText(yamlText: string): LockGraph {
       ...(inline?.peerDependencies ?? {}),
       ...(snap?.dependencies ?? {}),
       ...(snap?.optionalDependencies ?? {}),
+      ...(snap?.peerDependencies ?? {}),
     };
 
     for (const depName of Object.keys(deps)) {
@@ -211,7 +213,7 @@ export function parsePnpmPackageKey(raw: string): { name: string; version: strin
   if (paren !== -1) key = key.slice(0, paren);
   const at = key.lastIndexOf('@');
   if (at <= 0) return null;
-  const name = key.slice(0, at);
+  const name = key.slice(0, at).toLowerCase();
   const version = key.slice(at + 1);
   if (!name || !version) return null;
   return { name, version };

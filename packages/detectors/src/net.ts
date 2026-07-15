@@ -120,15 +120,32 @@ function collectUrls(
   const map = new Map<string, { file: string; line: number; snippet: string; context?: string }>();
   for (const f of snap.files) {
     for (const u of f.urlLiterals) {
-      if (!map.has(u)) {
-        map.set(u, {
-          file: f.path,
-          line: 1,
-          snippet: u.slice(0, 240),
-          context: f.urlLiteralContexts?.[u],
-        });
+      const candidate = {
+        file: f.path,
+        line: 1,
+        snippet: u.slice(0, 240),
+        context: (f.urlLiteralContexts ?? {})[u],
+      };
+      const existing = map.get(u);
+      if (!existing || scoreUrlEvidence(candidate) > scoreUrlEvidence(existing)) {
+        map.set(u, candidate);
       }
     }
   }
   return map;
+}
+
+function scoreUrlEvidence(evidence: { file: string; snippet: string; context?: string }): number {
+  const contextScore =
+    evidence.context === 'network-arg' ? 40 :
+    evidence.context === 'config-value' ? 30 :
+    evidence.context === 'literal' ? 20 :
+    evidence.context === 'comment' ? 10 :
+    0;
+  const fileScore =
+    /\.(?:[cm]?[jt]sx?)$/i.test(evidence.file) ? 5 :
+    /\.json$/i.test(evidence.file) ? 3 :
+    1;
+  const snippetScore = Math.max(0, 240 - evidence.snippet.length) / 1000;
+  return contextScore + fileScore + snippetScore;
 }

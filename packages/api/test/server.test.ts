@@ -197,12 +197,11 @@ describe('GET /scan/:scanId', () => {
 });
 
 describe('GET /health', () => {
-  it('returns ok + version', async () => {
+  it('returns status only by default', async () => {
     active = await startTestServer();
     const res = await request(active.baseUrl, 'GET', '/health');
     expect(res.status).toBe(200);
     const parsed = JSON.parse(res.body);
-    expect(parsed.ok).toBe(true);
-    expect(typeof parsed.version).toBe('string');
+    expect(parsed).toEqual({ status: 'ok' });
   });
 });

@@ -14,7 +14,7 @@
       "name": "tiny-util",
       "version": "0.9.1",
       "integrity": "sha512-GEpXoQrjCriacE+NdgTN+IE0rwqlvPRGHIcR6G1ClwCrwfWe6KGvv4ftGxuIpi/G41baH9oNh/fdWjmoGFuwqg==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/e-license-fix/tiny-util-new/tiny-util-new.tgz"
+      "resolved": "file:./tiny-util-new/tiny-util-new.tgz"
     }
   }
 }

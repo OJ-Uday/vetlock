@@ -12,6 +12,11 @@
  *
  * Fires when a new file (or a previously-existing file) references a
  * process/exec module that wasn't in the old snapshot.
+ *
+ * The capability extractor constant-folds common obfuscation wrappers before
+ * populating `execModules`, so shapes like
+ * `require(Buffer.from('Y2hpbGRfcHJvY2Vzcw==', 'base64').toString())` surface
+ * here as the decoded module name when the fold succeeds.
  */
 
 import type { Detector, Finding, SnapshotPair } from '@vetlock/core';

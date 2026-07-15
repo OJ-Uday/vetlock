@@ -1,5 +1,5 @@
 name: 'vetlock'
-description: 'Behavioral diff for npm/pnpm/yarn dependency updates — catches supply-chain attacks that advisory databases miss.'
+description: 'Behavioral diff for npm/pnpm/yarn/PyPI dependency updates — catches supply-chain attacks that advisory databases miss.'
 author: 'Uday Ojha'
 branding:
   icon: 'shield'
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   before:
-    description: 'Path to the pre-change lockfile. Auto-detected shape: package-lock.json (npm), pnpm-lock.yaml, or yarn.lock. F1 fix landed in v0.3.0.'
+    description: 'Path to the pre-change lockfile. Auto-detected shape: package-lock.json (npm), pnpm-lock.yaml, yarn.lock, requirements*.txt, poetry.lock, or uv.lock.'
     required: false
     default: 'package-lock.json'
   base-ref:
@@ -30,6 +30,14 @@ inputs:
     description: 'vetlock version to install from npm. "latest" tracks the newest release; pin an exact version for reproducibility.'
     required: false
     default: 'latest'
+  pypi-registry:
+    description: 'PyPI JSON API base URL. Leave empty for public PyPI (default). Set for corporate proxy registries (Artifactory, Nexus, DevPi).'
+    required: false
+    default: ''
+  pypi-auth:
+    description: 'PyPI auth for private/proxy registries only. Not needed for public PyPI. Format: token (Bearer) or user:token (Basic). Store as a GitHub secret.'
+    required: false
+    default: ''
 
 outputs:
   verdict:
@@ -44,48 +52,100 @@ runs:
   steps:
     - name: Fetch base lockfile
       shell: bash
+      env:
+        VETLOCK_BEFORE_INPUT: ${{ inputs.before }}
+        VETLOCK_BASE_REF: ${{ inputs.base-ref }}
       run: |
-        set -e
-        # Preserve the file extension so vetlock's parseLockfileText dispatcher
-        # (F1 fix) picks the right parser from the filename hint. e.g.
-        # pnpm-lock.yaml → pnpm parser, yarn.lock → yarn parser.
-        EXT="${{ inputs.before }}"
-        EXT="${EXT##*/}"                 # strip dir prefix — keep just the basename
-        BASE_TMP="/tmp/vetlock-before-${EXT}"
-        if [ -f "${{ inputs.before }}.base" ]; then
-          echo "using pre-supplied base lockfile"
-          cp "${{ inputs.before }}.base" "$BASE_TMP"
-        else
-          echo "fetching ${{ inputs.before }} at ${{ inputs.base-ref }}"
-          git fetch --depth=1 origin "${{ inputs.base-ref }}" || true
-          git show "${{ inputs.base-ref }}:${{ inputs.before }}" > "$BASE_TMP"
+        set -euo pipefail
+        if [[ "$VETLOCK_BEFORE_INPUT" == */* ]]; then
+          echo "Error: before must be a filename, not a path (e.g. package-lock.json)" >&2
+          exit 1
         fi
+        if [[ "$VETLOCK_BASE_REF" =~ ^- ]] || [[ "$VETLOCK_BASE_REF" =~ [[:cntrl:]] ]]; then
+          echo "Error: base-ref looks like a git option or contains control characters, refusing" >&2
+          exit 1
+        fi
+
+        BASE_TMP_DIR="${RUNNER_TEMP:-$PWD}/vetlock"
+        BASE_TMP="$BASE_TMP_DIR/vetlock-before-$VETLOCK_BEFORE_INPUT"
+        mkdir -p "$BASE_TMP_DIR"
+
+        if [ -f "$VETLOCK_BEFORE_INPUT.base" ]; then
+          echo "using pre-supplied base lockfile"
+          cp "$VETLOCK_BEFORE_INPUT.base" "$BASE_TMP"
+        else
+          echo "fetching $VETLOCK_BEFORE_INPUT at $VETLOCK_BASE_REF"
+          git fetch --depth=1 origin "$VETLOCK_BASE_REF" || true
+          git show "$VETLOCK_BASE_REF:$VETLOCK_BEFORE_INPUT" > "$BASE_TMP"
+        fi
+
         echo "VETLOCK_BEFORE=$BASE_TMP" >> "$GITHUB_ENV"
+        echo "VETLOCK_TMP_DIR=$BASE_TMP_DIR" >> "$GITHUB_ENV"
+
     - name: Install vetlock
       shell: bash
-      run: npm install --no-save --no-audit --no-fund --prefix /tmp/vetlock-install "vetlock@${{ inputs.version }}"
+      env:
+        VETLOCK_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        if [[ ! "$VETLOCK_VERSION" =~ ^([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?|latest)$ ]]; then
+          echo "Error: version must be a semver (e.g. 1.2.3) or 'latest'" >&2
+          exit 1
+        fi
+
+        VETLOCK_INSTALL_DIR="${RUNNER_TEMP:-$PWD}/vetlock-install"
+        rm -rf "$VETLOCK_INSTALL_DIR"
+        mkdir -p "$VETLOCK_INSTALL_DIR"
+        npm install --no-save --no-audit --no-fund --prefix "$VETLOCK_INSTALL_DIR" "vetlock@$VETLOCK_VERSION"
+        echo "VETLOCK_INSTALL_DIR=$VETLOCK_INSTALL_DIR" >> "$GITHUB_ENV"
+
     - name: Run vetlock diff (SARIF)
       id: run
       shell: bash
+      env:
+        VETLOCK_BEFORE_INPUT: ${{ inputs.before }}
+        VETLOCK_SARIF_OUT: ${{ inputs.sarif-out }}
+        VETLOCK_FAIL_ON: ${{ inputs.fail-on }}
+        VETLOCK_PYPI_JSON_URL: ${{ inputs.pypi-registry }}
+        VETLOCK_PYPI_AUTH: ${{ inputs.pypi-auth }}
       run: |
+        set -euo pipefail
+        if [[ "$VETLOCK_BEFORE_INPUT" == */* ]]; then
+          echo "Error: before must be a filename, not a path (e.g. package-lock.json)" >&2
+          exit 1
+        fi
+        if [[ "$VETLOCK_SARIF_OUT" == */* ]] || [[ "$VETLOCK_SARIF_OUT" == *..* ]]; then
+          echo "Error: sarif-out must be a simple filename, not a path" >&2
+          exit 1
+        fi
+
+        FAIL_ON_ARGS=()
+        if [ -n "$VETLOCK_FAIL_ON" ]; then
+          FAIL_ON_ARGS=(--fail-on "$VETLOCK_FAIL_ON")
+        fi
+
+        JSON_OUT="${VETLOCK_TMP_DIR:-${RUNNER_TEMP:-$PWD}/vetlock}/vetlock.json"
         set +e
-        node /tmp/vetlock-install/node_modules/vetlock/dist/cli.js diff \
-          "$VETLOCK_BEFORE" "${{ inputs.before }}" \
-          --sarif > "${{ inputs.sarif-out }}"
+        node "$VETLOCK_INSTALL_DIR/node_modules/vetlock/dist/cli.js" diff \
+          "$VETLOCK_BEFORE" "$VETLOCK_BEFORE_INPUT" \
+          "${FAIL_ON_ARGS[@]}" \
+          --sarif > "$VETLOCK_SARIF_OUT"
         VETLOCK_EXIT=$?
         set -e
-        # Re-run in JSON mode to extract verdict + count
-        node /tmp/vetlock-install/node_modules/vetlock/dist/cli.js diff \
-          "$VETLOCK_BEFORE" "${{ inputs.before }}" \
-          --json > /tmp/vetlock.json || true
-        VERDICT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/vetlock.json','utf8')).verdict)")
-        COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('/tmp/vetlock.json','utf8')).findings.length)")
+
+        node "$VETLOCK_INSTALL_DIR/node_modules/vetlock/dist/cli.js" diff \
+          "$VETLOCK_BEFORE" "$VETLOCK_BEFORE_INPUT" \
+          "${FAIL_ON_ARGS[@]}" \
+          --json > "$JSON_OUT" || true
+
+        VERDICT=$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')).verdict)" "$JSON_OUT")
+        COUNT=$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')).findings.length)" "$JSON_OUT")
         echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
         echo "finding-count=$COUNT" >> "$GITHUB_OUTPUT"
         echo "vetlock: verdict=$VERDICT findings=$COUNT"
-        # Preserve fail-on semantics through the composite
+
         if [ "$VETLOCK_EXIT" -ne 0 ]; then
-          exit $VETLOCK_EXIT
+          exit "$VETLOCK_EXIT"
         fi
 
     - name: Comment on PR
@@ -93,22 +153,51 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
+        VETLOCK_BEFORE_INPUT: ${{ inputs.before }}
+        VETLOCK_SARIF_OUT: ${{ inputs.sarif-out }}
+        VETLOCK_FAIL_ON: ${{ inputs.fail-on }}
+        VETLOCK_PYPI_JSON_URL: ${{ inputs.pypi-registry }}
+        VETLOCK_PYPI_AUTH: ${{ inputs.pypi-auth }}
+        VETLOCK_PR_NUMBER: ${{ github.event.pull_request.number }}
+        VETLOCK_REPOSITORY: ${{ github.repository }}
       run: |
-        node /tmp/vetlock-install/node_modules/vetlock/dist/cli.js diff \
-          "$VETLOCK_BEFORE" "${{ inputs.before }}" \
-          --md > /tmp/vetlock-comment.md || true
-        # Sticky comment — update existing rather than post a new one.
-        BODY=$(cat /tmp/vetlock-comment.md)
-        PR=${{ github.event.pull_request.number }}
+        set -euo pipefail
+        if [[ "$VETLOCK_BEFORE_INPUT" == */* ]]; then
+          echo "Error: before must be a filename, not a path (e.g. package-lock.json)" >&2
+          exit 1
+        fi
+
+        FAIL_ON_ARGS=()
+        if [ -n "$VETLOCK_FAIL_ON" ]; then
+          FAIL_ON_ARGS=(--fail-on "$VETLOCK_FAIL_ON")
+        fi
+
+        COMMENT_OUT="${VETLOCK_TMP_DIR:-${RUNNER_TEMP:-$PWD}/vetlock}/vetlock-comment.md"
+        node "$VETLOCK_INSTALL_DIR/node_modules/vetlock/dist/cli.js" diff \
+          "$VETLOCK_BEFORE" "$VETLOCK_BEFORE_INPUT" \
+          "${FAIL_ON_ARGS[@]}" \
+          --md > "$COMMENT_OUT" || true
+
+        BODY=$(cat "$COMMENT_OUT")
         MARKER='<!-- vetlock-sticky-comment -->'
         FULL_BODY=$(printf '%s\n\n%s' "$MARKER" "$BODY")
-        # Find an existing comment with the marker.
-        EXISTING=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --jq \
+        EXISTING=$(gh api "repos/$VETLOCK_REPOSITORY/issues/$VETLOCK_PR_NUMBER/comments" --jq \
           ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1)
+
         if [ -n "$EXISTING" ]; then
           echo "updating existing comment $EXISTING"
-          gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING" -f body="$FULL_BODY"
+          gh api --method PATCH "repos/$VETLOCK_REPOSITORY/issues/comments/$EXISTING" -f body="$FULL_BODY"
         else
           echo "posting new comment"
-          gh api --method POST "repos/${{ github.repository }}/issues/$PR/comments" -f body="$FULL_BODY"
+          gh api --method POST "repos/$VETLOCK_REPOSITORY/issues/$VETLOCK_PR_NUMBER/comments" -f body="$FULL_BODY"
         fi
+
+    - name: Cleanup temporary files
+      if: always()
+      shell: bash
+      env:
+        VETLOCK_BEFORE_INPUT: ${{ inputs.before }}
+      run: |
+        rm -rf \
+          "${VETLOCK_INSTALL_DIR:-${RUNNER_TEMP:-$PWD}/vetlock-install}" \
+          "${VETLOCK_TMP_DIR:-${RUNNER_TEMP:-$PWD}/vetlock}" || true

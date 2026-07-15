@@ -86,7 +86,8 @@ function declaredEntryFiles(manifest: PackageManifest): Set<string> {
  * Either condition alone is insufficient — a `dist/setup.js` that isn't declared
  * is suspicious; a declared `src/index.js` in readable code has nothing to hide.
  */
-const CANONICAL_BUILD_DIRS = /^(?:dist|build|lib|es|esm|cjs|umd|out)\//;
+const CANONICAL_BUILD_DIRS = /^(?:dist|build|lib|es|esm|cjs|mjs|umd|out|bundle|compiled)\//;
+const PREEXISTING_BUILD_ENTROPY = 4.5;
 
 function isExpectedMinified(filePath: string, declaredEntries: Set<string>): boolean {
   if (!declaredEntries.has(filePath)) return false;
@@ -114,7 +115,9 @@ export const obfDetector: Detector = {
         const of = oldByPath.get(nf.path);
         if (of) {
           const reasons: string[] = [];
-          if (nf.entropy - of.entropy > 1.5) {
+          const suppressBuildEntropyDelta =
+            CANONICAL_BUILD_DIRS.test(nf.path) && of.entropy >= PREEXISTING_BUILD_ENTROPY;
+          if (nf.entropy - of.entropy > 1.5 && !suppressBuildEntropyDelta) {
             reasons.push(`entropy ${of.entropy.toFixed(2)} → ${nf.entropy.toFixed(2)} bits/byte`);
           }
           if (!of.minified && nf.minified) {

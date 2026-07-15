@@ -1,0 +1,1025 @@
+{
+  "batch": "C",
+  "generatedAt": "2026-07-15T06:21:24.820Z",
+  "mode": "offline-synthetic-sdists",
+  "packagesStudied": 20,
+  "methodology": {
+    "rationale": "PyPI access is SSL-blocked on this machine, so each package was modeled as a synthetic sdist that preserves benign, stable developer-tool capabilities across a routine version bump and reuses the same after artifact for the first-install added scenario.",
+    "lockfile": "requirements.txt",
+    "scenarios": [
+      "bump",
+      "added"
+    ]
+  },
+  "focusChecks": {
+    "stableSubprocessNoBumpExecNewModule": [
+      "setuptools",
+      "pip",
+      "build",
+      "pre-commit",
+      "pyproject-hooks"
+    ],
+    "stableCiEnvNoBumpEnvHarvest": [
+      "pytest",
+      "black",
+      "isort",
+      "setuptools",
+      "pip",
+      "build",
+      "pre-commit",
+      "safety"
+    ],
+    "stableUrlLiteralNoBumpNewEndpoint": [
+      "pip",
+      "twine",
+      "pre-commit",
+      "safety"
+    ],
+    "blackStableExecNoBumpCodeOrExecFinding": true
+  },
+  "summary": {
+    "bump": {
+      "verdicts": {
+        "CLEAN": 20,
+        "INFO": 0,
+        "WARN": 0,
+        "BLOCK": 0
+      },
+      "detectorHits": {},
+      "firstVersionClusterHits": []
+    },
+    "added": {
+      "verdicts": {
+        "CLEAN": 6,
+        "INFO": 0,
+        "WARN": 4,
+        "BLOCK": 10
+      },
+      "detectorHits": {
+        "deps.typosquat-candidate": 5,
+        "env.token-harvest": 8,
+        "exec.new-module": 8,
+        "code.dynamic-loading-added": 4,
+        "deps.first-version-cluster": 8,
+        "net.new-endpoint": 4,
+        "net.new-module": 4
+      },
+      "firstVersionClusterHits": [
+        "black",
+        "pylint",
+        "flake8",
+        "setuptools",
+        "pip",
+        "build",
+        "pre-commit",
+        "safety"
+      ]
+    },
+    "firstVersionCluster": {
+      "hits": 8,
+      "packages": [
+        "black",
+        "pylint",
+        "flake8",
+        "setuptools",
+        "pip",
+        "build",
+        "pre-commit",
+        "safety"
+      ],
+      "observation": "The added-path cluster detector is the main false-positive risk for legitimate build/publish tools because stable subprocess/fs/env/network capability mixes are common on first install.",
+      "recommendation": "Raise the threshold above 3 categories for PyPI added-packages, or exclude benign developer-tool patterns where ENV is only CI/HOME/USER/USERNAME and FS is limited to local project/build paths."
+    }
+  },
+  "rows": [
+    {
+      "package": "pytest",
+      "group": "test-runner",
+      "versions": {
+        "before": "8.4.1",
+        "after": "8.4.2"
+      },
+      "notes": "Reads CI env and writes cache files.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 2,
+          "detectors": [
+            "deps.typosquat-candidate",
+            "env.token-harvest"
+          ],
+          "byDetector": {
+            "deps.typosquat-candidate": 1,
+            "env.token-harvest": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.typosquat-candidate",
+              "severity": "BLOCK",
+              "message": "Package name \"pytest\" is edit-distance 2 from popular package \"vitest\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: added package also ships BLOCK-tier capabilities]"
+            },
+            {
+              "detector": "env.token-harvest",
+              "severity": "BLOCK",
+              "message": "Package started reading sensitive env: CI"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "pluggy",
+      "group": "plugin-system",
+      "versions": {
+        "before": "1.5.0",
+        "after": "1.6.0"
+      },
+      "notes": "Loads plugins dynamically via importlib.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "WARN",
+          "totalFindings": 2,
+          "detectors": [
+            "exec.new-module",
+            "code.dynamic-loading-added"
+          ],
+          "byDetector": {
+            "exec.new-module": 1,
+            "code.dynamic-loading-added": 1
+          },
+          "findings": [
+            {
+              "detector": "exec.new-module",
+              "severity": "WARN",
+              "message": "Newly-installed package uses process/execution module \"importlib\"."
+            },
+            {
+              "detector": "code.dynamic-loading-added",
+              "severity": "INFO",
+              "message": "Dynamic code sink introduced (dynamic-require)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "iniconfig",
+      "group": "config-parser",
+      "versions": {
+        "before": "2.0.0",
+        "after": "2.1.0"
+      },
+      "notes": "Reads local config files only.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        }
+      }
+    },
+    {
+      "package": "tomli",
+      "group": "parser",
+      "versions": {
+        "before": "2.0.1",
+        "after": "2.2.1"
+      },
+      "notes": "Pure parser profile with no flagged capability categories.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "WARN",
+          "totalFindings": 1,
+          "detectors": [
+            "deps.typosquat-candidate"
+          ],
+          "byDetector": {
+            "deps.typosquat-candidate": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.typosquat-candidate",
+              "severity": "WARN",
+              "message": "Package name \"tomli\" is edit-distance 1 from popular package \"toml\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "black",
+      "group": "formatter",
+      "versions": {
+        "before": "24.10.0",
+        "after": "25.1.0"
+      },
+      "notes": "Uses exec for plugin-ish loading and checks CI env.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 3,
+          "detectors": [
+            "deps.first-version-cluster",
+            "env.token-harvest",
+            "code.dynamic-loading-added"
+          ],
+          "byDetector": {
+            "deps.first-version-cluster": 1,
+            "env.token-harvest": 1,
+            "code.dynamic-loading-added": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.first-version-cluster",
+              "severity": "BLOCK",
+              "message": "Newly-installed package ships 3 capability categories on its first version: CODE, ENV, FS. This shape is rare in legitimate packages."
+            },
+            {
+              "detector": "env.token-harvest",
+              "severity": "BLOCK",
+              "message": "Package started reading sensitive env: CI"
+            },
+            {
+              "detector": "code.dynamic-loading-added",
+              "severity": "WARN",
+              "message": "Dynamic code sink introduced (eval)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "mypy",
+      "group": "type-checker",
+      "versions": {
+        "before": "1.11.2",
+        "after": "1.12.0"
+      },
+      "notes": "Reads project config from disk.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        }
+      }
+    },
+    {
+      "package": "pylint",
+      "group": "linter",
+      "versions": {
+        "before": "3.3.0",
+        "after": "3.3.1"
+      },
+      "notes": "Reads config and dynamically imports plugins.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 4,
+          "detectors": [
+            "deps.first-version-cluster",
+            "deps.typosquat-candidate",
+            "exec.new-module",
+            "code.dynamic-loading-added"
+          ],
+          "byDetector": {
+            "deps.first-version-cluster": 1,
+            "deps.typosquat-candidate": 1,
+            "exec.new-module": 1,
+            "code.dynamic-loading-added": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.first-version-cluster",
+              "severity": "BLOCK",
+              "message": "Newly-installed package ships 3 capability categories on its first version: CODE, EXEC, FS. This shape is rare in legitimate packages."
+            },
+            {
+              "detector": "deps.typosquat-candidate",
+              "severity": "BLOCK",
+              "message": "Package name \"pylint\" is edit-distance 2 from popular package \"eslint\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: typosquat candidate has 2+ WARN-tier signals across 2+ categories]"
+            },
+            {
+              "detector": "exec.new-module",
+              "severity": "WARN",
+              "message": "Newly-installed package uses process/execution module \"importlib\"."
+            },
+            {
+              "detector": "code.dynamic-loading-added",
+              "severity": "INFO",
+              "message": "Dynamic code sink introduced (dynamic-require)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "flake8",
+      "group": "linter",
+      "versions": {
+        "before": "7.1.1",
+        "after": "7.2.0"
+      },
+      "notes": "Reads config and dynamically imports plugins.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 3,
+          "detectors": [
+            "deps.first-version-cluster",
+            "exec.new-module",
+            "code.dynamic-loading-added"
+          ],
+          "byDetector": {
+            "deps.first-version-cluster": 1,
+            "exec.new-module": 1,
+            "code.dynamic-loading-added": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.first-version-cluster",
+              "severity": "BLOCK",
+              "message": "Newly-installed package ships 3 capability categories on its first version: CODE, EXEC, FS. This shape is rare in legitimate packages."
+            },
+            {
+              "detector": "exec.new-module",
+              "severity": "WARN",
+              "message": "Newly-installed package uses process/execution module \"importlib\"."
+            },
+            {
+              "detector": "code.dynamic-loading-added",
+              "severity": "INFO",
+              "message": "Dynamic code sink introduced (dynamic-require)."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "isort",
+      "group": "formatter",
+      "versions": {
+        "before": "5.13.2",
+        "after": "5.13.3"
+      },
+      "notes": "Reads CI env and writes cache files.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 1,
+          "detectors": [
+            "env.token-harvest"
+          ],
+          "byDetector": {
+            "env.token-harvest": 1
+          },
+          "findings": [
+            {
+              "detector": "env.token-harvest",
+              "severity": "BLOCK",
+              "message": "Package started reading sensitive env: CI"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "setuptools",
+      "group": "build-backend",
+      "versions": {
+        "before": "74.1.2",
+        "after": "75.0.0"
+      },
+      "notes": "Stable subprocess + filesystem + CI env access; key subprocess regression check.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 3,
+          "detectors": [
+            "deps.first-version-cluster",
+            "env.token-harvest",
+            "exec.new-module"
+          ],
+          "byDetector": {
+            "deps.first-version-cluster": 1,
+            "env.token-harvest": 1,
+            "exec.new-module": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.first-version-cluster",
+              "severity": "BLOCK",
+              "message": "Newly-installed package ships 3 capability categories on its first version: ENV, EXEC, FS. This shape is rare in legitimate packages."
+            },
+            {
+              "detector": "env.token-harvest",
+              "severity": "BLOCK",
+              "message": "Package started reading sensitive env: CI"
+            },
+            {
+              "detector": "exec.new-module",
+              "severity": "WARN",
+              "message": "Newly-installed package uses process/execution module \"subprocess\"."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "pip",
+      "group": "installer",
+      "versions": {
+        "before": "24.2",
+        "after": "24.3"
+      },
+      "notes": "Installer profile with subprocess, local writes, CI env, urllib, and a stable PyPI URL.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 6,
+          "detectors": [
+            "deps.first-version-cluster",
+            "deps.typosquat-candidate",
+            "env.token-harvest",
+            "exec.new-module",
+            "net.new-endpoint",
+            "net.new-module"
+          ],
+          "byDetector": {
+            "deps.first-version-cluster": 1,
+            "deps.typosquat-candidate": 1,
+            "env.token-harvest": 1,
+            "exec.new-module": 1,
+            "net.new-endpoint": 1,
+            "net.new-module": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.first-version-cluster",
+              "severity": "BLOCK",
+              "message": "Newly-installed package ships 4 capability categories on its first version: ENV, EXEC, FS, NET. This shape is rare in legitimate packages."
+            },
+            {
+              "detector": "deps.typosquat-candidate",
+              "severity": "BLOCK",
+              "message": "Package name \"pip\" is edit-distance 2 from popular package \"pm2\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: added package also ships BLOCK-tier capabilities]"
+            },
+            {
+              "detector": "env.token-harvest",
+              "severity": "BLOCK",
+              "message": "Package started reading sensitive env: CI"
+            },
+            {
+              "detector": "exec.new-module",
+              "severity": "BLOCK",
+              "message": "Newly-installed package uses process/execution module \"subprocess\". [escalated: package 'pip' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+            },
+            {
+              "detector": "net.new-endpoint",
+              "severity": "BLOCK",
+              "message": "Newly-installed package contacts network endpoint: https://pypi.org/simple [escalated: package 'pip' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+            },
+            {
+              "detector": "net.new-module",
+              "severity": "BLOCK",
+              "message": "Newly-installed package imports network module \"urllib.request\". [escalated: package 'pip' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "wheel",
+      "group": "build-tool",
+      "versions": {
+        "before": "0.44.0",
+        "after": "0.45.0"
+      },
+      "notes": "Writes local build artifacts.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        }
+      }
+    },
+    {
+      "package": "build",
+      "group": "build-frontend",
+      "versions": {
+        "before": "1.2.2",
+        "after": "1.2.3"
+      },
+      "notes": "Front-end build driver with subprocess, local writes, and CI env.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 4,
+          "detectors": [
+            "deps.first-version-cluster",
+            "deps.typosquat-candidate",
+            "env.token-harvest",
+            "exec.new-module"
+          ],
+          "byDetector": {
+            "deps.first-version-cluster": 1,
+            "deps.typosquat-candidate": 1,
+            "env.token-harvest": 1,
+            "exec.new-module": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.first-version-cluster",
+              "severity": "BLOCK",
+              "message": "Newly-installed package ships 3 capability categories on its first version: ENV, EXEC, FS. This shape is rare in legitimate packages."
+            },
+            {
+              "detector": "deps.typosquat-candidate",
+              "severity": "BLOCK",
+              "message": "Package name \"build\" is edit-distance 2 from popular package \"esbuild\" (Damerau-Levenshtein, adjacent-transposition counted as one edit). Typosquat candidate. [escalated: added package also ships BLOCK-tier capabilities]"
+            },
+            {
+              "detector": "env.token-harvest",
+              "severity": "BLOCK",
+              "message": "Package started reading sensitive env: CI"
+            },
+            {
+              "detector": "exec.new-module",
+              "severity": "WARN",
+              "message": "Newly-installed package uses process/execution module \"subprocess\"."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "twine",
+      "group": "publisher",
+      "versions": {
+        "before": "5.1.1",
+        "after": "5.1.2"
+      },
+      "notes": "Publishes over the network and reads upload credentials from env.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "WARN",
+          "totalFindings": 2,
+          "detectors": [
+            "net.new-endpoint",
+            "net.new-module"
+          ],
+          "byDetector": {
+            "net.new-endpoint": 1,
+            "net.new-module": 1
+          },
+          "findings": [
+            {
+              "detector": "net.new-endpoint",
+              "severity": "WARN",
+              "message": "Newly-installed package contacts network endpoint: https://upload.pypi.org/legacy"
+            },
+            {
+              "detector": "net.new-module",
+              "severity": "WARN",
+              "message": "Newly-installed package imports network module \"urllib.request\"."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "pre-commit",
+      "group": "automation",
+      "versions": {
+        "before": "4.0.1",
+        "after": "4.0.2"
+      },
+      "notes": "Clones hook repos and shells out; also checks CI env.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 5,
+          "detectors": [
+            "deps.first-version-cluster",
+            "env.token-harvest",
+            "exec.new-module",
+            "net.new-endpoint",
+            "net.new-module"
+          ],
+          "byDetector": {
+            "deps.first-version-cluster": 1,
+            "env.token-harvest": 1,
+            "exec.new-module": 1,
+            "net.new-endpoint": 1,
+            "net.new-module": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.first-version-cluster",
+              "severity": "BLOCK",
+              "message": "Newly-installed package ships 4 capability categories on its first version: ENV, EXEC, FS, NET. This shape is rare in legitimate packages."
+            },
+            {
+              "detector": "env.token-harvest",
+              "severity": "BLOCK",
+              "message": "Package started reading sensitive env: CI"
+            },
+            {
+              "detector": "exec.new-module",
+              "severity": "BLOCK",
+              "message": "Newly-installed package uses process/execution module \"subprocess\". [escalated: package 'pre-commit' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+            },
+            {
+              "detector": "net.new-endpoint",
+              "severity": "BLOCK",
+              "message": "Newly-installed package contacts network endpoint: https://github.com/pre-commit/pre-commit-hooks [escalated: package 'pre-commit' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+            },
+            {
+              "detector": "net.new-module",
+              "severity": "BLOCK",
+              "message": "Newly-installed package imports network module \"urllib.request\". [escalated: package 'pre-commit' has 3 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint, net.new-module]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "bandit",
+      "group": "security-linter",
+      "versions": {
+        "before": "1.7.9",
+        "after": "1.8.0"
+      },
+      "notes": "Reads local source files for analysis.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        }
+      }
+    },
+    {
+      "package": "safety",
+      "group": "security-scanner",
+      "versions": {
+        "before": "3.2.7",
+        "after": "3.3.0"
+      },
+      "notes": "Checks vulnerability data over the network and records local output.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "BLOCK",
+          "totalFindings": 4,
+          "detectors": [
+            "deps.first-version-cluster",
+            "env.token-harvest",
+            "net.new-endpoint",
+            "net.new-module"
+          ],
+          "byDetector": {
+            "deps.first-version-cluster": 1,
+            "env.token-harvest": 1,
+            "net.new-endpoint": 1,
+            "net.new-module": 1
+          },
+          "findings": [
+            {
+              "detector": "deps.first-version-cluster",
+              "severity": "BLOCK",
+              "message": "Newly-installed package ships 3 capability categories on its first version: ENV, FS, NET. This shape is rare in legitimate packages."
+            },
+            {
+              "detector": "env.token-harvest",
+              "severity": "BLOCK",
+              "message": "Package started reading sensitive env: CI"
+            },
+            {
+              "detector": "net.new-endpoint",
+              "severity": "WARN",
+              "message": "Newly-installed package contacts network endpoint: https://pyup.io/api/v1/safety"
+            },
+            {
+              "detector": "net.new-module",
+              "severity": "WARN",
+              "message": "Newly-installed package imports network module \"urllib.request\"."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "pyproject-hooks",
+      "group": "build-hooks",
+      "versions": {
+        "before": "1.1.0",
+        "after": "1.2.0"
+      },
+      "notes": "Invokes backend hooks in subprocesses and writes temp state.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "WARN",
+          "totalFindings": 1,
+          "detectors": [
+            "exec.new-module"
+          ],
+          "byDetector": {
+            "exec.new-module": 1
+          },
+          "findings": [
+            {
+              "detector": "exec.new-module",
+              "severity": "WARN",
+              "message": "Newly-installed package uses process/execution module \"subprocess\"."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "package": "installer",
+      "group": "installer",
+      "versions": {
+        "before": "0.7.0",
+        "after": "0.7.1"
+      },
+      "notes": "Writes files into target environments.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        }
+      }
+    },
+    {
+      "package": "distlib",
+      "group": "packaging-lib",
+      "versions": {
+        "before": "0.3.8",
+        "after": "0.3.9"
+      },
+      "notes": "Writes local metadata and scripts.",
+      "scenarios": {
+        "bump": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        },
+        "added": {
+          "verdict": "CLEAN",
+          "totalFindings": 0,
+          "detectors": [],
+          "byDetector": {},
+          "findings": []
+        }
+      }
+    }
+  ],
+  "analysisNotes": {
+    "bumpTakeaway": "All 20 routine bump scenarios were CLEAN: stable subprocess, CI env reads, URL literals, and black-style exec paths did not trigger when already present in the before version.",
+    "addedTakeaway": "The added-path is noisy for legitimate developer tools: 10/20 landed BLOCK and 4/20 landed WARN under these benign synthetic first-install profiles.",
+    "typosquatNoise": {
+      "onlyFinding": [
+        "tomli"
+      ],
+      "coOccurredWithOtherSignals": [
+        "pytest",
+        "pylint",
+        "pip",
+        "build"
+      ],
+      "note": "These are cross-ecosystem name-similarity hits (for example pytest\u2194vitest, tomli\u2194toml) and are orthogonal to the PyPI dev-tools capability-shape question."
+    },
+    "ciEnvFalsePositivePackages": [
+      "pytest",
+      "black",
+      "isort",
+      "setuptools",
+      "pip",
+      "build",
+      "pre-commit",
+      "safety"
+    ],
+    "urlLiteralAddedPackages": [
+      "pip",
+      "twine",
+      "pre-commit",
+      "safety"
+    ],
+    "firstVersionClusterReasons": [
+      {
+        "package": "black",
+        "categories": [
+          "EXEC",
+          "ENV(CI)",
+          "CODE(exec)"
+        ]
+      },
+      {
+        "package": "pylint",
+        "categories": [
+          "EXEC(importlib)",
+          "FS(local config)",
+          "CODE(dynamic import)"
+        ]
+      },
+      {
+        "package": "flake8",
+        "categories": [
+          "EXEC(importlib)",
+          "FS(local config)",
+          "CODE(dynamic import)"
+        ]
+      },
+      {
+        "package": "setuptools",
+        "categories": [
+          "EXEC(subprocess)",
+          "FS(local build writes)",
+          "ENV(CI)"
+        ]
+      },
+      {
+        "package": "pip",
+        "categories": [
+          "EXEC(subprocess)",
+          "FS(local build writes)",
+          "ENV(CI)",
+          "NET(urllib + PyPI URL)"
+        ]
+      },
+      {
+        "package": "build",
+        "categories": [
+          "EXEC(subprocess)",
+          "FS(local build writes)",
+          "ENV(CI)"
+        ]
+      },
+      {
+        "package": "pre-commit",
+        "categories": [
+          "EXEC(subprocess)",
+          "FS(local cache writes)",
+          "ENV(CI)",
+          "NET(repo URL)"
+        ]
+      },
+      {
+        "package": "safety",
+        "categories": [
+          "FS(local report writes)",
+          "ENV(CI)",
+          "NET(API URL)"
+        ]
+      }
+    ]
+  }
+}

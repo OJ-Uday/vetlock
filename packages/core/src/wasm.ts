@@ -67,6 +67,9 @@ export function summarizeWasm(buf: Buffer): WasmSummary {
     return summary;
   }
   try {
+    if (buf.length < 4 || buf[0] !== 0x00 || buf[1] !== 0x61 || buf[2] !== 0x73 || buf[3] !== 0x6d) {
+      throw new Error('Not a valid WASM file: missing magic bytes');
+    }
     // Pass an ArrayBuffer slice to the parser. The parser's options object
     // exists but we pass defaults — we only need Import section info.
     const ast = decode(buf);
