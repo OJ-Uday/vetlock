@@ -1,0 +1,876 @@
+{
+  "study": "npm-fp-batch-bundlers",
+  "batch": "BUNDLERS",
+  "theme": "minified-dist-dynamic-imports",
+  "ecosystem": "npm",
+  "vetlockVersion": "0.7.0",
+  "ranAt": "2026-07-15T06:39:00.562Z",
+  "methodology": {
+    "source": "synthetic local tarballs via npm lockfile diff",
+    "networkAccess": "disabled; local file:// tarballs only",
+    "packageCount": 10,
+    "versionTemplate": "1.0.0 -> 1.0.1",
+    "buildFirst": [
+      "pnpm --filter @vetlock/core build",
+      "pnpm --filter @vetlock/detectors build",
+      "pnpm --filter vetlock build"
+    ],
+    "simulatedPatterns": [
+      "Pattern 1: minified dist entry plus one new import() between versions",
+      "Pattern 2: stable prepare script and stable source URLs across both versions",
+      "Pattern 3: one new docs URL added in source comments in the after version"
+    ],
+    "focusDetectors": [
+      "obf.entropy-jump",
+      "code.dynamic-loading-added",
+      "net.new-endpoint"
+    ],
+    "tempScriptPath": "/Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.npm-fp-bundlers.mjs",
+    "note": "Runtime policy forbids /tmp writes, so the study script ran from studies/.npm-fp-bundlers.mjs instead of /tmp."
+  },
+  "assertion": {
+    "requirement": "Every bump must end CLEAN or INFO; WARN/BLOCK counts as a false positive.",
+    "passed": true,
+    "failedPackages": []
+  },
+  "totalBumps": 10,
+  "bumpsSucceeded": 10,
+  "bumpsFailed": 0,
+  "totalFindings": 30,
+  "findingsPerBump": 3,
+  "perSeverity": {
+    "BLOCK": 0,
+    "WARN": 0,
+    "INFO": 10,
+    "CLEAN": 0
+  },
+  "detectorHits": {
+    "code.dynamic-loading-added": 10,
+    "net.new-endpoint": 10,
+    "obf.entropy-jump": 10
+  },
+  "perDetectorFpRate": {},
+  "focusSummary": {
+    "obf.entropy-jump": {
+      "hits": 10,
+      "packagesWithHits": [
+        "vite",
+        "webpack",
+        "vitest",
+        "prettier",
+        "tsx",
+        "esbuild",
+        "rollup",
+        "swc",
+        "parcel",
+        "turbopack"
+      ]
+    },
+    "code.dynamic-loading-added": {
+      "hits": 10,
+      "packagesWithHits": [
+        "vite",
+        "webpack",
+        "vitest",
+        "prettier",
+        "tsx",
+        "esbuild",
+        "rollup",
+        "swc",
+        "parcel",
+        "turbopack"
+      ]
+    },
+    "net.new-endpoint": {
+      "hits": 10,
+      "packagesWithHits": [
+        "vite",
+        "webpack",
+        "vitest",
+        "prettier",
+        "tsx",
+        "esbuild",
+        "rollup",
+        "swc",
+        "parcel",
+        "turbopack"
+      ]
+    }
+  },
+  "falsePositiveCount": 0,
+  "falsePositives": [],
+  "worstOffenders": [
+    {
+      "packageName": "esbuild",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "parcel",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "prettier",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "rollup",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "swc",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "tsx",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "turbopack",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "vite",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "vitest",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    },
+    {
+      "packageName": "webpack",
+      "verdict": "INFO",
+      "findings": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "packageName": "vite",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,vite:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-A.js'));exports.createServer=function(c){return{config:c,plugin:()=>a(c),meta:p.vite}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,viteafter:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-A.js'));\nconst b=(c)=>import('./'+((c&&c.assetChunk)||'chunk-B.js'));const m='Ur9wcUemvNnWvqOyv6RhlnZbr4PY2aNz46TLOfpl7OE7uCrnoZBlTZs8txFuQ6HYLudpf3SYigdGtRoOJHtVRg1047656369becaf7c77e47f688ee18df7f5c979762f62f0c1822fc74f6bfa7970c5050b14d42ee6c8a00e2eca4ae1cf1359737f2bde090e125b730583a8c5247D/1lguzEu1ppRDs0UtO+HdW3of';\nexports.createServer=function(c){return{config:c,plugin:()=>a(c),asset:()=>b(c),meta:p.vite,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://vitejs.dev';\nexport const DOCS_URL = 'https://vitejs.dev/config/';\nexport const PACKAGE_NAME = 'vite';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://vitejs.dev';\nexport const DOCS_URL = 'https://vitejs.dev/config/';\n// See https://vitejs.dev/guide/api-plugin.html for details\nexport const PACKAGE_NAME = 'vite';\n",
+        "packageJson": "{\"name\":\"vite\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='Ur9wcUemvNnWvqOyv6RhlnZbr4PY2aNz46TLOfpl7OE7uCrnoZBlTZs8txFuQ6HYLudpf3SYigdGtRoO...';",
+        "obf.new-obfuscated-file": "const m='Ur9wcUemvNnWvqOyv6RhlnZbr4PY2aNz46TLOfpl7OE7uCrnoZBlTZs8txFuQ6HYLudpf3SYigdGtRoO...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.assetChunk)||'chunk-B.js'));",
+        "net.new-endpoint": "// See https://vitejs.dev/guide/api-plugin.html for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.assetChunk)||'chunk-B.js'));const m='Ur9wcUemvNnWvqOyv6RhlnZbr4PY2aNz46TLOfpl7OE7uCrnoZBlTZs8txFuQ6HYLudpf3SYigdGtRoOJHtVRg1047656369becaf7c77e47f688ee18df7f5c979762f62f0c1822fc74f6bfa7970c5050b14d42ee6c8a00e"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://vitejs.dev/guide/api-plugin.html",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://vitejs.dev/guide/api-plugin.html"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "webpack",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,webpack:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-runtime.js'));exports.createCompiler=function(c){return{config:c,plugin:()=>a(c),meta:p.webpack}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,webpackaft:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-runtime.js'));\nconst b=(c)=>import('./'+((c&&c.hmrChunk)||'chunk-hmr.js'));const m='K4q2LNKuYwmdXshdlBoTwIFdyyejpAZUYnfSv-mcRrKE4etrGbPL2w10yhfZzyB44aa8vGV720GYBLlCVAcR3g7335bc37e5b2b3a9d1b0a264c86af3e6f69896177c20f2a3238a6128d77d31fedf7efb821288e64b343fcbcb30629ca7cc5a6d733c3e28a98611ddaf4a9c48e3ty2IjKQIE4ta7+20kOfo1Mp1R7';\nexports.createCompiler=function(c){return{config:c,plugin:()=>a(c),hmr:()=>b(c),meta:p.webpack,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://webpack.js.org';\nexport const DOCS_URL = 'https://webpack.js.org/configuration/';\nexport const PACKAGE_NAME = 'webpack';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://webpack.js.org';\nexport const DOCS_URL = 'https://webpack.js.org/configuration/';\n// See https://webpack.js.org/configuration/output/ for details\nexport const PACKAGE_NAME = 'webpack';\n",
+        "packageJson": "{\"name\":\"webpack\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='K4q2LNKuYwmdXshdlBoTwIFdyyejpAZUYnfSv-mcRrKE4etrGbPL2w10yhfZzyB44aa8vGV720GYBLlC...';",
+        "obf.new-obfuscated-file": "const m='K4q2LNKuYwmdXshdlBoTwIFdyyejpAZUYnfSv-mcRrKE4etrGbPL2w10yhfZzyB44aa8vGV720GYBLlC...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.hmrChunk)||'chunk-hmr.js'));",
+        "net.new-endpoint": "// See https://webpack.js.org/configuration/output/ for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.hmrChunk)||'chunk-hmr.js'));const m='K4q2LNKuYwmdXshdlBoTwIFdyyejpAZUYnfSv-mcRrKE4etrGbPL2w10yhfZzyB44aa8vGV720GYBLlCVAcR3g7335bc37e5b2b3a9d1b0a264c86af3e6f69896177c20f2a3238a6128d77d31fedf7efb821288e64b343fc"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://webpack.js.org/configuration/output",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://webpack.js.org/configuration/output"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "vitest",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,vitest:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-runner.js'));exports.createVitest=function(c){return{config:c,plugin:()=>a(c),meta:p.vitest}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,vitestafte:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-runner.js'));\nconst b=(c)=>import('./'+((c&&c.browserChunk)||'chunk-ui.js'));const m='robIGjif3CfohgVCzHn-3hkH5rXfVGvgN7F7bct9xDYa9rIztNgzFsEwZQi0G2rCq3W5a82eOq6TE6htDIlWagc53446f5f4675db3913216d071bd15de2aa5ce2e03e6f548f312a0d3f09cbd9196ea3a51f6637b441becdc78f19c0435910276f8794a5ff8fea562b231eb3a912I4HuNuHxfSWGuo74CrNQCqE19';\nexports.createVitest=function(c){return{config:c,plugin:()=>a(c),browser:()=>b(c),meta:p.vitest,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://vitest.dev';\nexport const DOCS_URL = 'https://vitest.dev/config/';\nexport const PACKAGE_NAME = 'vitest';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://vitest.dev';\nexport const DOCS_URL = 'https://vitest.dev/config/';\n// See https://vitest.dev/guide/browser/ for details\nexport const PACKAGE_NAME = 'vitest';\n",
+        "packageJson": "{\"name\":\"vitest\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='robIGjif3CfohgVCzHn-3hkH5rXfVGvgN7F7bct9xDYa9rIztNgzFsEwZQi0G2rCq3W5a82eOq6TE6ht...';",
+        "obf.new-obfuscated-file": "const m='robIGjif3CfohgVCzHn-3hkH5rXfVGvgN7F7bct9xDYa9rIztNgzFsEwZQi0G2rCq3W5a82eOq6TE6ht...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.browserChunk)||'chunk-ui.js'));",
+        "net.new-endpoint": "// See https://vitest.dev/guide/browser/ for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.browserChunk)||'chunk-ui.js'));const m='robIGjif3CfohgVCzHn-3hkH5rXfVGvgN7F7bct9xDYa9rIztNgzFsEwZQi0G2rCq3W5a82eOq6TE6htDIlWagc53446f5f4675db3913216d071bd15de2aa5ce2e03e6f548f312a0d3f09cbd9196ea3a51f6637b441b"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://vitest.dev/guide/browser",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://vitest.dev/guide/browser"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "prettier",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,prettier:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-parser.js'));exports.format=function(c){return{config:c,plugin:()=>a(c),meta:p.prettier}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,prettieraf:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-parser.js'));\nconst b=(c)=>import('./'+((c&&c.docChunk)||'chunk-doc.js'));const m='RayobsP2BvuYBti35__S9FHOUHaGWCC14L0N45xXusLYc-arWtSmZSgARSrY2wdr0DSV5zvJ_ggAKrO1fN36mw9ffbdd42cab48ab020deaa5a2b4305f6898a656c31651a71fdeba388dbcc64e9654f7549874b08a0796e6979e411680eb58ab5bc3eed60a23b4a8d899a15a9f2DbC1CijfmhDbIZj4wXIz0dPY+a';\nexports.format=function(c){return{config:c,plugin:()=>a(c),doc:()=>b(c),meta:p.prettier,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://prettier.io';\nexport const DOCS_URL = 'https://prettier.io/docs/en/options.html';\nexport const PACKAGE_NAME = 'prettier';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://prettier.io';\nexport const DOCS_URL = 'https://prettier.io/docs/en/options.html';\n// See https://prettier.io/docs/en/browser.html for details\nexport const PACKAGE_NAME = 'prettier';\n",
+        "packageJson": "{\"name\":\"prettier\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='RayobsP2BvuYBti35__S9FHOUHaGWCC14L0N45xXusLYc-arWtSmZSgARSrY2wdr0DSV5zvJ_ggAKrO1...';",
+        "obf.new-obfuscated-file": "const m='RayobsP2BvuYBti35__S9FHOUHaGWCC14L0N45xXusLYc-arWtSmZSgARSrY2wdr0DSV5zvJ_ggAKrO1...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.docChunk)||'chunk-doc.js'));",
+        "net.new-endpoint": "// See https://prettier.io/docs/en/browser.html for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.docChunk)||'chunk-doc.js'));const m='RayobsP2BvuYBti35__S9FHOUHaGWCC14L0N45xXusLYc-arWtSmZSgARSrY2wdr0DSV5zvJ_ggAKrO1fN36mw9ffbdd42cab48ab020deaa5a2b4305f6898a656c31651a71fdeba388dbcc64e9654f7549874b08a0796e6"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://prettier.io/docs/en/browser.html",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://prettier.io/docs/en/browser.html"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "tsx",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,tsx:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-loader.js'));exports.createRunner=function(c){return{config:c,plugin:()=>a(c),meta:p.tsx}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,tsxafter:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-loader.js'));\nconst b=(c)=>import('./'+((c&&c.watchChunk)||'chunk-watch.js'));const m='E0qlfu7DW_f0cWElRJlP3OCWZUGpbEAuBCdwXHTIylxWlo0TIaf_3JIGG8UDpilvAIj8iTp3VBUjM5YFmi4XzAbb59f037638817e7764809d36372811f8a2c6694a16cbeba586ba2bee950449183fcd62a4061fd8b50f434b27bba69e84507586cce3fb87a22d49c386444e6d5W3++ENMnWI6W/VCWS4a2Exukhb';\nexports.createRunner=function(c){return{config:c,plugin:()=>a(c),watch:()=>b(c),meta:p.tsx,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://tsx.is';\nexport const DOCS_URL = 'https://tsx.is/dev-api';\nexport const PACKAGE_NAME = 'tsx';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://tsx.is';\nexport const DOCS_URL = 'https://tsx.is/dev-api';\n// See https://tsx.is/watch-mode for details\nexport const PACKAGE_NAME = 'tsx';\n",
+        "packageJson": "{\"name\":\"tsx\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='E0qlfu7DW_f0cWElRJlP3OCWZUGpbEAuBCdwXHTIylxWlo0TIaf_3JIGG8UDpilvAIj8iTp3VBUjM5YF...';",
+        "obf.new-obfuscated-file": "const m='E0qlfu7DW_f0cWElRJlP3OCWZUGpbEAuBCdwXHTIylxWlo0TIaf_3JIGG8UDpilvAIj8iTp3VBUjM5YF...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.watchChunk)||'chunk-watch.js'));",
+        "net.new-endpoint": "// See https://tsx.is/watch-mode for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.watchChunk)||'chunk-watch.js'));const m='E0qlfu7DW_f0cWElRJlP3OCWZUGpbEAuBCdwXHTIylxWlo0TIaf_3JIGG8UDpilvAIj8iTp3VBUjM5YFmi4XzAbb59f037638817e7764809d36372811f8a2c6694a16cbeba586ba2bee950449183fcd62a4061fd8b5"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://tsx.is/watch-mode",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://tsx.is/watch-mode"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "esbuild",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,esbuild:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-js.js'));exports.build=function(c){return{config:c,plugin:()=>a(c),meta:p.esbuild}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,esbuildaft:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-js.js'));\nconst b=(c)=>import('./'+((c&&c.cssChunk)||'chunk-css.js'));const m='HVe4dgjPHJn_aod9ZNkEWMxMU3gG5ee8UCI8t_Uy45DGGpcD0aIccAk5_1ZFA6rgqylXLpr0ZiBNBnLGwCmzQQ2001dc7c10f27b3fd4e1000362fdb178493c48b0bb44c2a79978fb989c7e9b0668f80a9b2b9f180cfda9a6452e3488e216758254df5dc67292806e388e065888aCauVMX3eDIVQc0JYftyVBmLKo';\nexports.build=function(c){return{config:c,plugin:()=>a(c),css:()=>b(c),meta:p.esbuild,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://esbuild.github.io';\nexport const DOCS_URL = 'https://esbuild.github.io/api/';\nexport const PACKAGE_NAME = 'esbuild';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://esbuild.github.io';\nexport const DOCS_URL = 'https://esbuild.github.io/api/';\n// See https://esbuild.github.io/api/#splitting for details\nexport const PACKAGE_NAME = 'esbuild';\n",
+        "packageJson": "{\"name\":\"esbuild\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='HVe4dgjPHJn_aod9ZNkEWMxMU3gG5ee8UCI8t_Uy45DGGpcD0aIccAk5_1ZFA6rgqylXLpr0ZiBNBnLG...';",
+        "obf.new-obfuscated-file": "const m='HVe4dgjPHJn_aod9ZNkEWMxMU3gG5ee8UCI8t_Uy45DGGpcD0aIccAk5_1ZFA6rgqylXLpr0ZiBNBnLG...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.cssChunk)||'chunk-css.js'));",
+        "net.new-endpoint": "// See https://esbuild.github.io/api/#splitting for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.cssChunk)||'chunk-css.js'));const m='HVe4dgjPHJn_aod9ZNkEWMxMU3gG5ee8UCI8t_Uy45DGGpcD0aIccAk5_1ZFA6rgqylXLpr0ZiBNBnLGwCmzQQ2001dc7c10f27b3fd4e1000362fdb178493c48b0bb44c2a79978fb989c7e9b0668f80a9b2b9f180cfda9a"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://esbuild.github.io/api/#splitting",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://esbuild.github.io/api/#splitting"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "rollup",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,rollup:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-graph.js'));exports.createBundle=function(c){return{config:c,plugin:()=>a(c),meta:p.rollup}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,rollupafte:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-graph.js'));\nconst b=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-plugin.js'));const m='J50sQPC81f12QSaFIcAETlPqUBLk2m-Gz1dQWb7Bi_9GG7YtvWA6Xru2sa2dByoeRV-4A8upW4YXdC7aSceYqg65948070cf374571c0f2de92e50b876ee381d73631ce256d879c7fffdf04061bdeb35c3ce4b8332bf7c04bdf7fdfc44c6669afca943b10dfc88409ddffb8776apvABpSj5jgApr/Yz0QlbkkS3wS';\nexports.createBundle=function(c){return{config:c,plugin:()=>a(c),plugin:()=>b(c),meta:p.rollup,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://rollupjs.org';\nexport const DOCS_URL = 'https://rollupjs.org/configuration-options/';\nexport const PACKAGE_NAME = 'rollup';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://rollupjs.org';\nexport const DOCS_URL = 'https://rollupjs.org/configuration-options/';\n// See https://rollupjs.org/plugin-development/ for details\nexport const PACKAGE_NAME = 'rollup';\n",
+        "packageJson": "{\"name\":\"rollup\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='J50sQPC81f12QSaFIcAETlPqUBLk2m-Gz1dQWb7Bi_9GG7YtvWA6Xru2sa2dByoeRV-4A8upW4YXdC7a...';",
+        "obf.new-obfuscated-file": "const m='J50sQPC81f12QSaFIcAETlPqUBLk2m-Gz1dQWb7Bi_9GG7YtvWA6Xru2sa2dByoeRV-4A8upW4YXdC7a...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-plugin.js'));",
+        "net.new-endpoint": "// See https://rollupjs.org/plugin-development/ for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-plugin.js'));const m='J50sQPC81f12QSaFIcAETlPqUBLk2m-Gz1dQWb7Bi_9GG7YtvWA6Xru2sa2dByoeRV-4A8upW4YXdC7aSceYqg65948070cf374571c0f2de92e50b876ee381d73631ce256d879c7fffdf04061bdeb35c3ce4b8332"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://rollupjs.org/plugin-development",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://rollupjs.org/plugin-development"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "swc",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,swc:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-ast.js'));exports.transform=function(c){return{config:c,plugin:()=>a(c),meta:p.swc}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,swcafter:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-ast.js'));\nconst b=(c)=>import('./'+((c&&c.moduleChunk)||'chunk-wasm.js'));const m='TAp7tVqb1bLfPNN9qJbXN6kIkNIkIzihtgD1OXz778ul1O0sDGsvVygFAa941qQcKI2y5BUWAw673f1_AQdfTAac69e5e26fa4dbf1187035269db7d777b62c715012716f3c8a58154c1712614148f47c327220b1cfd98f23f1ca4f613143c6a00293ab05cd026ec9cf6e6c0f26kcRi6PlWl4RxAPYYUQQFU9rXtU';\nexports.transform=function(c){return{config:c,plugin:()=>a(c),module:()=>b(c),meta:p.swc,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://swc.rs';\nexport const DOCS_URL = 'https://swc.rs/docs/configuration/compilation';\nexport const PACKAGE_NAME = 'swc';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://swc.rs';\nexport const DOCS_URL = 'https://swc.rs/docs/configuration/compilation';\n// See https://swc.rs/docs/configuration/modules for details\nexport const PACKAGE_NAME = 'swc';\n",
+        "packageJson": "{\"name\":\"swc\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='TAp7tVqb1bLfPNN9qJbXN6kIkNIkIzihtgD1OXz778ul1O0sDGsvVygFAa941qQcKI2y5BUWAw673f1_...';",
+        "obf.new-obfuscated-file": "const m='TAp7tVqb1bLfPNN9qJbXN6kIkNIkIzihtgD1OXz778ul1O0sDGsvVygFAa941qQcKI2y5BUWAw673f1_...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.moduleChunk)||'chunk-wasm.js'));",
+        "net.new-endpoint": "// See https://swc.rs/docs/configuration/modules for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.moduleChunk)||'chunk-wasm.js'));const m='TAp7tVqb1bLfPNN9qJbXN6kIkNIkIzihtgD1OXz778ul1O0sDGsvVygFAa941qQcKI2y5BUWAw673f1_AQdfTAac69e5e26fa4dbf1187035269db7d777b62c715012716f3c8a58154c1712614148f47c327220b1cfd"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://swc.rs/docs/configuration/modules",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://swc.rs/docs/configuration/modules"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "parcel",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,parcel:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-hmr.js'));exports.createParcel=function(c){return{config:c,plugin:()=>a(c),meta:p.parcel}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,parcelafte:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-hmr.js'));\nconst b=(c)=>import('./'+((c&&c.assetsChunk)||'chunk-assets.js'));const m='gLbJJqXNP-PWOMYrR09WthQk3LxYIPZJow_iXKpB-2yFXbtGhgcWekhmdPo-Rg2C53g6jJOwQZMwC80VrmMgYA62c3ff91c05d02c3f769ddb8ecfd7bb929de629723da7d52fe50e8d6cc4951e85b2b1c93b1195ec837b5c13106a320676809ce761552d3b99681124914db5628qRmQkFYmjWXU5NweywlpgQpvFQ';\nexports.createParcel=function(c){return{config:c,plugin:()=>a(c),assets:()=>b(c),meta:p.parcel,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://parceljs.org';\nexport const DOCS_URL = 'https://parceljs.org/features/targets/';\nexport const PACKAGE_NAME = 'parcel';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://parceljs.org';\nexport const DOCS_URL = 'https://parceljs.org/features/targets/';\n// See https://parceljs.org/features/dependency-resolution/ for details\nexport const PACKAGE_NAME = 'parcel';\n",
+        "packageJson": "{\"name\":\"parcel\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='gLbJJqXNP-PWOMYrR09WthQk3LxYIPZJow_iXKpB-2yFXbtGhgcWekhmdPo-Rg2C53g6jJOwQZMwC80V...';",
+        "obf.new-obfuscated-file": "const m='gLbJJqXNP-PWOMYrR09WthQk3LxYIPZJow_iXKpB-2yFXbtGhgcWekhmdPo-Rg2C53g6jJOwQZMwC80V...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.assetsChunk)||'chunk-assets.js'));",
+        "net.new-endpoint": "// See https://parceljs.org/features/dependency-resolution/ for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.assetsChunk)||'chunk-assets.js'));const m='gLbJJqXNP-PWOMYrR09WthQk3LxYIPZJow_iXKpB-2yFXbtGhgcWekhmdPo-Rg2C53g6jJOwQZMwC80VrmMgYA62c3ff91c05d02c3f769ddb8ecfd7bb929de629723da7d52fe50e8d6cc4951e85b2b1c93b1195ec"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://parceljs.org/features/dependency-resolution",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://parceljs.org/features/dependency-resolution"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    },
+    {
+      "packageName": "turbopack",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "allowedVerdict": true,
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "patternsSimulated": [
+        "minified dist entry with incremental dynamic imports",
+        "stable prepare script plus stable source URLs",
+        "new source-comment docs URL"
+      ],
+      "snippets": {
+        "beforeDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,turbopack:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-dev.js'));exports.createProject=function(c){return{config:c,plugin:()=>a(c),meta:p.turbopack}};",
+        "afterDist": "'use strict';Object.defineProperty(exports,'__esModule',{value:true});const p={a0:1,b1:2,c2:3,d3:4,e4:5,f5:6,g6:7,h7:8,i8:9,j9:10,k10:11,l11:12,m12:13,n13:14,o14:15,p15:16,q16:17,r17:18,s18:19,t19:20,turbopacka:21,u20:22,v21:23,w22:24,x23:25,y24:26,z25:27,aa26:28,ab27:29,ac28:30};\nconst a=(c)=>import('./'+((c&&c.pluginChunk)||'chunk-dev.js'));\nconst b=(c)=>import('./'+((c&&c.graphChunk)||'chunk-graph.js'));const m='UwGqgssqGZFxftmnvEgGjGJzCE0lg9KRX8fRJANqxe8VVav6NmO8f3SRlB7v_XRqx-cPgq4C9qrzK2rOJCQIYA02463a127d9139f575659e638067231d84cde281fdd8863a4292d944f33f4d058232ac93ff79a47b4951e272039e173eb75ad2dc453d66d0ad38cb8bf6ee3717gmuEa5kZLbymt6kOm4kQJ+wIeP';\nexports.createProject=function(c){return{config:c,plugin:()=>a(c),graph:()=>b(c),meta:p.turbopack,marker:m.length}};",
+        "beforeSource": "export const DEFAULT_SERVER = 'https://turbo.build';\nexport const DOCS_URL = 'https://turbo.build/pack/docs';\nexport const PACKAGE_NAME = 'turbopack';\n",
+        "afterSource": "export const DEFAULT_SERVER = 'https://turbo.build';\nexport const DOCS_URL = 'https://turbo.build/pack/docs';\n// See https://turbo.build/pack/docs/features/code-splitting for details\nexport const PACKAGE_NAME = 'turbopack';\n",
+        "packageJson": "{\"name\":\"turbopack\",\"version\":\"1.0.1\",\"main\":\"dist/index.cjs\",\"exports\":{\".\":{\"require\":\"./dist/index.cjs\",\"import\":\"./dist/index.cjs\"}},\"scripts\":{\"prepare\":\"node scripts/build.js\",\"test\":\"vitest run\"}}"
+      },
+      "triggerCatalog": {
+        "obf.entropy-jump": "const m='UwGqgssqGZFxftmnvEgGjGJzCE0lg9KRX8fRJANqxe8VVav6NmO8f3SRlB7v_XRqx-cPgq4C9qrzK2rO...';",
+        "obf.new-obfuscated-file": "const m='UwGqgssqGZFxftmnvEgGjGJzCE0lg9KRX8fRJANqxe8VVav6NmO8f3SRlB7v_XRqx-cPgq4C9qrzK2rO...';",
+        "code.dynamic-loading-added": "const b=(c)=>import('./'+((c&&c.graphChunk)||'chunk-graph.js'));",
+        "net.new-endpoint": "// See https://turbo.build/pack/docs/features/code-splitting for details"
+      },
+      "findingsDetail": [
+        {
+          "severity": "INFO",
+          "detector": "code.dynamic-loading-added",
+          "category": "CODE",
+          "message": "Dynamic code sink introduced (dynamic-import).",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 3,
+            "snippet": "const b=(c)=>import('./'+((c&&c.graphChunk)||'chunk-graph.js'));const m='UwGqgssqGZFxftmnvEgGjGJzCE0lg9KRX8fRJANqxe8VVav6NmO8f3SRlB7v_XRqx-cPgq4C9qrzK2rOJCQIYA02463a127d9139f575659e638067231d84cde281fdd8863a4292d944f33f4d058232ac93ff79a47b4"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "net.new-endpoint",
+          "category": "NET",
+          "message": "New network endpoint appeared: https://turbo.build/pack/docs/features/code-splitting",
+          "evidence": {
+            "file": "src/config.ts",
+            "line": 1,
+            "snippet": "https://turbo.build/pack/docs/features/code-splitting"
+          }
+        },
+        {
+          "severity": "INFO",
+          "detector": "obf.entropy-jump",
+          "category": "OBF",
+          "message": "Obfuscation indicators appeared in dist/index.cjs (declared bundler entry): 1 suspicious high-entropy literal(s) appeared",
+          "evidence": {
+            "file": "dist/index.cjs",
+            "line": 1,
+            "snippet": "1 suspicious high-entropy literal(s) appeared"
+          }
+        }
+      ],
+      "falsePositiveDetails": []
+    }
+  ]
+}
