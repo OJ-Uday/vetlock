@@ -84,7 +84,7 @@ importers:
         specifier: workspace:*
         version: link:../detectors
       zod:
-        specifier: ^3.23.0
+        specifier: 3.25.76
         version: 3.25.76
     devDependencies:
       '@types/node':
@@ -106,19 +106,19 @@ importers:
         specifier: workspace:*
         version: link:../detectors
       commander:
-        specifier: ^12.0.0
+        specifier: 12.1.0
         version: 12.1.0
       ora:
-        specifier: ^8.1.0
+        specifier: 8.2.0
         version: 8.2.0
       picocolors:
-        specifier: ^1.0.0
+        specifier: 1.1.1
         version: 1.1.1
       tar:
-        specifier: ^7.0.0
+        specifier: 7.5.20
         version: 7.5.20
       zod:
-        specifier: ^3.23.0
+        specifier: 3.25.76
         version: 3.25.76
     devDependencies:
       pacote:
@@ -128,40 +128,40 @@ importers:
   packages/core:
     dependencies:
       '@babel/parser':
-        specifier: ^7.24.0
+        specifier: 7.29.7
         version: 7.29.7
       '@babel/traverse':
-        specifier: ^7.24.0
+        specifier: 7.29.7
         version: 7.29.7
       '@babel/types':
-        specifier: ^7.24.0
+        specifier: 7.29.7
         version: 7.29.7
       '@webassemblyjs/wasm-parser':
-        specifier: ^1.14.1
+        specifier: 1.14.1
         version: 1.14.1
       '@yarnpkg/lockfile':
-        specifier: ^1.1.0
+        specifier: 1.1.0
         version: 1.1.0
       '@yarnpkg/parsers':
-        specifier: ^3.0.0
+        specifier: 3.0.3
         version: 3.0.3
       js-yaml:
-        specifier: ^4.1.0
+        specifier: 4.3.0
         version: 4.3.0
       pacote:
-        specifier: ^18.0.0
+        specifier: 18.0.6
         version: 18.0.6
       semver:
-        specifier: ^7.6.0
+        specifier: 7.8.5
         version: 7.8.5
       ssri:
-        specifier: ^12.0.0
+        specifier: 12.0.0
         version: 12.0.0
       tar:
-        specifier: ^7.0.0
+        specifier: 7.5.20
         version: 7.5.20
       zod:
-        specifier: ^3.23.0
+        specifier: 3.25.76
         version: 3.25.76
     devDependencies:
       '@types/babel__traverse':
@@ -189,22 +189,22 @@ importers:
   packages/detectors:
     dependencies:
       '@babel/parser':
-        specifier: ^7.24.0
+        specifier: 7.29.7
         version: 7.29.7
       '@babel/traverse':
-        specifier: ^7.24.0
+        specifier: 7.29.7
         version: 7.29.7
       '@babel/types':
-        specifier: ^7.24.0
+        specifier: 7.29.7
         version: 7.29.7
       '@vetlock/core':
         specifier: workspace:*
         version: link:../core
       damerau-levenshtein:
-        specifier: ^1.0.8
+        specifier: 1.0.8
         version: 1.0.8
       semver:
-        specifier: ^7.6.0
+        specifier: 7.8.5
         version: 7.8.5
     devDependencies:
       '@types/babel__traverse':

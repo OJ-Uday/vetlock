@@ -75,6 +75,17 @@ node packages/cli/dist/corpus/fp-study.js \
 
 Bump study is parallelizable — split the input into chunks and fan out; results are merge-safe row-wise.
 
+## Reproducibility Note
+
+The FP study was conducted using packages fetched from a Lilly-internal Artifactory npm mirror.
+The top-100 package list is at `studies/top-100.txt` and the runner script at `packages/cli/src/corpus/fp-study.ts`.
+
+**External reproduction**: The same study can be reproduced against the public npm registry by:
+1. Removing the `NPM_CONFIG_REGISTRY` override
+2. Running `pnpm -F vetlock exec ts-node src/corpus/fp-study.ts`
+
+Results may differ slightly due to package updates since the study was conducted (2026-07).
+
 ---
 
 ## 2. What fired (v0.4.2 measured, 28 analyzed bumps)
