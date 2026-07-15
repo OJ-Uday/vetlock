@@ -40,13 +40,19 @@ function freshPopulatedLedger(): DifferentialLedger {
   return ledger;
 }
 
-const SYNTHETIC_ONLY_CORPUS_IDS = new Set([
+const NON_LEDGER_BACKED_CORPUS_IDS = new Set([
   'hardened-evader-2026',
   'integrity-tamper-synthetic',
   'typosquat-synthetic',
+  // PyPI corpus wiring lands before seeded scanner deltas do; keep these in PR-tier replay
+  // coverage without pretending the differential ledger already has corresponding rows.
+  'ctx-2022',
+  'ultralytics-2024',
+  'aiocpa-2024',
+  'pypi-install-hook-synthetic',
 ]);
 
-const LEDGER_BACKED_CORPUS_IDS = seededCorpusIds.filter((id) => !SYNTHETIC_ONLY_CORPUS_IDS.has(id));
+const LEDGER_BACKED_CORPUS_IDS = seededCorpusIds.filter((id) => !NON_LEDGER_BACKED_CORPUS_IDS.has(id));
 
 describe('differential-ledger integration — seeded historical content', () => {
   it('every seeded delta lands in the classified pool (no silent drops)', () => {
@@ -78,7 +84,7 @@ describe('differential-ledger integration — seeded historical content', () => 
     }
     // PR-tier assurance should cover both historical incidents and the three synthetic regressions.
     expect(seededCorpusIds.length).toBeGreaterThanOrEqual(11);
-    expect(SYNTHETIC_ONLY_CORPUS_IDS.size).toBe(3);
+    expect(NON_LEDGER_BACKED_CORPUS_IDS.size).toBeGreaterThanOrEqual(3);
   });
 
   it('classification split: no real-gap findings surfaced (documented scope boundaries only)', () => {
@@ -117,8 +123,9 @@ describe('differential-ledger integration — seeded historical content', () => 
     expect(md).toContain('**Clean:** yes');
     // At least the advisory-only bucket renders (the vast majority of seeded deltas).
     expect(md).toContain('advisory-only');
-    // Only ledger-backed fixture ids appear in the markdown because the synthetic cases deliberately
-    // have no seeded delta rows. Their coverage is tracked by seededCorpusIds, not by report().
+    // Only ledger-backed fixture ids appear in the markdown because some replay-only fixtures
+    // deliberately have no seeded delta rows yet. Their coverage is tracked by seededCorpusIds,
+    // not by report().
     for (const id of LEDGER_BACKED_CORPUS_IDS) {
       expect(md, `report is missing fixture "${id}"`).toContain(id);
     }

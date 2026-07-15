@@ -1,0 +1,34 @@
+{
+  "id": "ultralytics-2024",
+  "title": "ultralytics CI poisoning (Dec 2024)",
+  "year": 2024,
+  "threatClass": "T1 CI poisoning / compromised release pipeline",
+  "summary": "Malicious ultralytics 8.3.41 models the December 2024 PyPI incident where a compromised CI pipeline injected a cryptominer loader into package import-time code.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "exec.new-module",
+      "net.new-endpoint"
+    ],
+    "mustNotFire": [],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "EXEC",
+      "NET"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "ultralytics",
+      "version": "8.3.40",
+      "integrity": "sha256-511022202b08577c047ec43c719a4604144c7acc3cc1932ca2ddfd133a03c0f1"
+    },
+    "malicious": {
+      "name": "ultralytics",
+      "version": "8.3.41",
+      "integrity": "sha256-c7fe3a1c5b3cc59c58fe814db47d20a5e7319de308895add107759a5308a6292"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "aiocpa-2024",
+  "title": "aiocpa wallet stealer (Nov 2024)",
+  "year": 2024,
+  "threatClass": "T6 first-version credential stealer",
+  "summary": "aiocpa models a first-version PyPI wallet stealer that harvested mnemonics and private keys, plus whole-environment dumps, and posted them to a remote collector.",
+  "provenance": "RECONSTRUCTED",
+  "topology": "direct",
+  "defanged": true,
+  "expect": {
+    "mustFire": [
+      "env.token-harvest",
+      "net.new-endpoint",
+      "deps.first-version-cluster"
+    ],
+    "mustNotFire": [],
+    "verdict": "BLOCK",
+    "minCategories": [
+      "ENV",
+      "NET",
+      "DEPS"
+    ]
+  },
+  "packages": {
+    "clean": {
+      "name": "aiocpa",
+      "version": "",
+      "integrity": ""
+    },
+    "malicious": {
+      "name": "aiocpa",
+      "version": "0.1.13",
+      "integrity": "sha256-0108e8072608caebd8316737f47178f12d37f3e484bf1fa197e6e2ebdbfd8af1"
+    }
+  }
+}

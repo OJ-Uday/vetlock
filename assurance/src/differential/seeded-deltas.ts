@@ -56,6 +56,17 @@
  */
 
 import type { Delta } from './types.js';
+import * as fsSync from 'node:fs';
+import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const CORPUS_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  '..',
+  'corpus',
+);
 
 /**
  * Historical differential deltas per corpus fixture.
@@ -438,6 +449,8 @@ export const seededDeltas: readonly Delta[] = [
 export const seededCorpusIds: readonly string[] = [
   'coa-rc-2021',
   'colors-2022',
+  // TODO: keep PyPI ids conditional until seeded differential rows land for them.
+  ...(fsSync.existsSync(path.join(CORPUS_ROOT, 'ctx-2022')) ? ['ctx-2022'] : []),
   'eslint-scope-2018',
   'event-stream-2018',
   'hardened-evader-2026',
@@ -449,4 +462,7 @@ export const seededCorpusIds: readonly string[] = [
   'solana-web3-2024',
   'typosquat-synthetic',
   'ua-parser-2021',
+  ...(fsSync.existsSync(path.join(CORPUS_ROOT, 'ultralytics-2024')) ? ['ultralytics-2024'] : []),
+  ...(fsSync.existsSync(path.join(CORPUS_ROOT, 'aiocpa-2024')) ? ['aiocpa-2024'] : []),
+  ...(fsSync.existsSync(path.join(CORPUS_ROOT, 'pypi-install-hook-synthetic')) ? ['pypi-install-hook-synthetic'] : []),
 ];

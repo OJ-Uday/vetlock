@@ -1,0 +1,11 @@
+[[package]]
+name = "ultralytics"
+version = "8.3.40"
+
+[[package.files]]
+file = "ultralytics-8.3.40.tar.gz"
+hash = "sha256:511022202b08577c047ec43c719a4604144c7acc3cc1932ca2ddfd133a03c0f1"
+
+[metadata]
+lock-version = "2.0"
+python-versions = ">=3.9"

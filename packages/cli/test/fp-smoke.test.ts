@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { promises as fs } from 'node:fs';
+import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runDiff } from '@vetlock/core';
@@ -13,7 +14,19 @@ const CORPUS_DIR = path.resolve(
 function makeLocalFetch(caseDir: string) {
   return async (ref: { resolved?: string | null; name: string; version: string }) => {
     const r = ref.resolved;
-    if (!r) throw new Error(`test should not need to fetch ${ref.name}@${ref.version}`);
+    if (!r) {
+      const stem = `${ref.name}-${ref.version}`;
+      const candidates = [
+        path.join(caseDir, stem, `${stem}.tar.gz`),
+        path.join(caseDir, stem, `${stem}.tgz`),
+        path.join(caseDir, `${stem}.tar.gz`),
+        path.join(caseDir, `${stem}.tgz`),
+      ];
+      for (const candidate of candidates) {
+        if (fsSync.existsSync(candidate)) return candidate;
+      }
+      throw new Error(`test should not need to fetch ${ref.name}@${ref.version}`);
+    }
     // Absolute file:// or file:/// URL (original corpus format)
     if (r.startsWith('file://')) return new URL(r).pathname;
     // Relative file: ref — resolve against the case directory (portable corpus format)
@@ -43,9 +56,11 @@ const CASES: Array<{ dir: string; description: string; allowed: 'CLEAN' | 'INFO'
   { dir: 'f-added-tests',    description: 'tests-only additions to tarball',      allowed: 'CLEAN' },
   { dir: 'g-bugfix',         description: 'minor bugfix — NaN edge case',         allowed: 'CLEAN' },
   { dir: 'h-peerdep-added',  description: 'peerDependency added in manifest',     allowed: 'CLEAN' },
+  { dir: 'i-python-docs-only', description: 'Python: docs-only bump (requirements.txt)', allowed: 'CLEAN' },
+  { dir: 'j-python-feature-bump', description: 'Python: feature addition, no new capabilities', allowed: 'CLEAN' },
 ];
 
-describe('FP smoke — 8 benign bumps must not fire WARN/BLOCK', () => {
+describe('FP smoke — benign bumps must not fire WARN/BLOCK', () => {
   it.each(CASES)(
     '$dir — $description → verdict at most $allowed',
     async ({ dir, allowed }) => {
@@ -67,7 +82,7 @@ describe('FP smoke — 8 benign bumps must not fire WARN/BLOCK', () => {
     },
   );
 
-  it('at least 8 FP cases in the corpus', () => {
-    expect(CASES.length).toBeGreaterThanOrEqual(8);
+  it('at least 10 FP cases in the corpus', () => {
+    expect(CASES.length).toBeGreaterThanOrEqual(10);
   });
 });

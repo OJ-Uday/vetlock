@@ -28,6 +28,16 @@ async function runCase(caseDir: string) {
     runDetectors: (pair) => runAll(pair),
     fetchOverride: async (ref) => {
       if (ref.resolved?.startsWith('file:')) return resolveFileRef(ref.resolved, caseDir);
+      const stem = `${ref.name}-${ref.version}`;
+      const candidates = [
+        path.join(caseDir, stem, `${stem}.tar.gz`),
+        path.join(caseDir, stem, `${stem}.tgz`),
+        path.join(caseDir, `${stem}.tar.gz`),
+        path.join(caseDir, `${stem}.tgz`),
+      ];
+      for (const candidate of candidates) {
+        if (fsSync.existsSync(candidate)) return candidate;
+      }
       throw new Error(`fp-smoke case should not need to fetch ${ref.name}@${ref.version}`);
     },
   });

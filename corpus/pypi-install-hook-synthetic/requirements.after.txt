@@ -1,0 +1,1 @@
+fixture-lib==1.0.1 --hash=sha256:d9c720c46e0e1f421a0ef7c586d1a33bcbc5f61ecc1fa7b62a1282029d180d98
