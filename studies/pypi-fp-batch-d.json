@@ -1,0 +1,623 @@
+{
+  "study": "pypi-fp-batch-d",
+  "batch": "D",
+  "theme": "cloud-security-infra",
+  "vetlockVersion": "0.7.0",
+  "ranAt": "2026-07-15T06:20:12.735Z",
+  "methodology": {
+    "source": "synthetic local wheels via requirements.txt lockfile diff",
+    "networkAccess": "disabled; used synthetic in-memory-built wheel artifacts written to workspace scratch",
+    "packageCount": 22,
+    "versionTemplate": "1.0.0 -> 1.0.1",
+    "focusDetectors": [
+      "env.token-harvest",
+      "net.new-endpoint",
+      "bin.new-native-artifact"
+    ]
+  },
+  "totalBumps": 22,
+  "bumpsSucceeded": 22,
+  "bumpsFailed": 0,
+  "totalFindings": 0,
+  "findingsPerBump": 0,
+  "perDetectorFpRate": {},
+  "perSeverity": {
+    "BLOCK": 0,
+    "WARN": 0,
+    "INFO": 0,
+    "CLEAN": 22
+  },
+  "focusSummary": {
+    "env.token-harvest": {
+      "hits": 0,
+      "packagesWithHits": []
+    },
+    "net.new-endpoint": {
+      "hits": 0,
+      "packagesWithHits": []
+    },
+    "bin.new-native-artifact": {
+      "hits": 0,
+      "packagesWithHits": []
+    }
+  },
+  "concernSummary": {
+    "stableAwsEnvPackages": [
+      "boto3",
+      "botocore",
+      "s3transfer"
+    ],
+    "stableConnectionStringPackages": [
+      "sqlalchemy",
+      "redis",
+      "celery",
+      "psycopg2-binary"
+    ],
+    "stableNativeArtifactPackages": [
+      "grpcio",
+      "cryptography",
+      "cffi",
+      "bcrypt",
+      "PyNaCl",
+      "psycopg2-binary"
+    ],
+    "packagesWithAnyFindings": []
+  },
+  "worstOffenders": [
+    {
+      "packageName": "azure-core",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "azure-storage-blob",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "bcrypt",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "boto3",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "botocore",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "celery",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "cffi",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "cryptography",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "google-auth",
+      "findings": 0,
+      "detectors": []
+    },
+    {
+      "packageName": "google-cloud-storage",
+      "findings": 0,
+      "detectors": []
+    }
+  ],
+  "rows": [
+    {
+      "packageName": "boto3",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": true,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "os",
+          "sys",
+          "logging"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "botocore",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": true,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "os",
+          "sys",
+          "logging"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "s3transfer",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": true,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "os",
+          "logging"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "google-auth",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "os",
+          "json"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "google-cloud-storage",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "os",
+          "json"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "protobuf",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "grpcio",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": true,
+        "stableNetworkImports": [
+          "socket",
+          "ssl"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "cryptography",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": true,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "cffi",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": true,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pycparser",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "bcrypt",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": true,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "paramiko",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "socket",
+          "select"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "PyNaCl",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": true,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "sqlalchemy",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [
+          "postgresql://user:password@localhost/db"
+        ],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "redis",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [
+          "redis://localhost:6379/0"
+        ],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "celery",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [
+          "amqp://guest:guest@localhost//",
+          "redis://localhost:6379/0"
+        ],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "psycopg2-binary",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [
+          "postgresql://user:password@localhost/db"
+        ],
+        "stableNativeArtifacts": true,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "pyyaml",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "jsonschema",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": []
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "azure-core",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "os",
+          "json"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "azure-storage-blob",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "os",
+          "json"
+        ]
+      },
+      "findingsDetail": []
+    },
+    {
+      "packageName": "msrest",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "artifactKind": "wheel",
+      "verdict": "CLEAN",
+      "findings": 0,
+      "detectors": [],
+      "focusDetectorHits": {
+        "env.token-harvest": 0,
+        "net.new-endpoint": 0,
+        "bin.new-native-artifact": 0
+      },
+      "concernProfile": {
+        "stableAwsEnvReads": false,
+        "stableConnectionStrings": [],
+        "stableNativeArtifacts": false,
+        "stableNetworkImports": [
+          "os",
+          "json"
+        ]
+      },
+      "findingsDetail": []
+    }
+  ]
+}
