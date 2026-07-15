@@ -280,8 +280,8 @@ describe('runAll — escalation + validation', () => {
     expect(a.length).toBe(2);
   });
 
-  it('registers all built-in detectors (twenty-one after Wave 8-KK guarddog parity ports)', () => {
-    expect(ALL_DETECTORS.length).toBe(21);
+  it('registers all built-in detectors (24 after Wave 8-KK + Wave 8-LL guarddog parity ports)', () => {
+    expect(ALL_DETECTORS.length).toBe(24);
   });
 
   it('stablesort exported', () => {

@@ -42,12 +42,18 @@ import { firstVersionClusterDetector } from './first-version-cluster.js';
 import { wasmDetector } from './wasm.js';
 import { bundledDepsDetector } from './bundled.js';
 import { advisoriesForVersion } from './advisories.js';
-// Wave 8-KK parity ports — see assurance/docs/audits/guarddog-comparative-audit.md §1
+// Wave 8-KK parity ports (audit §1 REAL gaps) — obfuscation + net-egress + typosquat.
+// KK's meta-disposable-domain was superseded by LL's meta-disposable-author-domain (below);
+// KK's typo-hyphen-permutation was superseded by LL's version (more sophisticated bundle).
 import { obfJsManglerSignatureDetector } from './obf-js-mangler.js';
 import { obfUnicodeHomoglyphDetector } from './obf-unicode-homoglyph.js';
 import { netDnsTemplatedHostnameDetector } from './net-dns-templated-hostname.js';
-import { metaDisposableDomainDetector } from './meta-disposable-domain.js';
+// Wave 8-LL — guarddog rule ports (audit §4) — with bundled data (top-1000, disposable-domains).
 import { typoHyphenPermutationDetector } from './typo-hyphen-permutation.js';
+import { disposableAuthorDomainDetector } from './meta-disposable-author-domain.js';
+import { httpResolvedUrlDetector } from './manifest-deps-http.js';
+import { imageDecodeExecDetector } from './obf-image-decode-exec.js';
+import { selfPublishShapeDetector } from './install-self-publish-shape.js';
 
 export const ALL_DETECTORS: readonly Detector[] = [
   installDetector,
@@ -70,8 +76,12 @@ export const ALL_DETECTORS: readonly Detector[] = [
   obfJsManglerSignatureDetector,
   obfUnicodeHomoglyphDetector,
   netDnsTemplatedHostnameDetector,
-  metaDisposableDomainDetector,
+  // Wave 8-LL — rule ports (audit §4 rows 6-10)
   typoHyphenPermutationDetector,
+  disposableAuthorDomainDetector,
+  httpResolvedUrlDetector,
+  imageDecodeExecDetector,
+  selfPublishShapeDetector,
 ];
 
 export {
@@ -95,8 +105,12 @@ export {
   obfJsManglerSignatureDetector,
   obfUnicodeHomoglyphDetector,
   netDnsTemplatedHostnameDetector,
-  metaDisposableDomainDetector,
+  // Wave 8-LL rule ports
   typoHyphenPermutationDetector,
+  disposableAuthorDomainDetector,
+  httpResolvedUrlDetector,
+  imageDecodeExecDetector,
+  selfPublishShapeDetector,
 };
 
 /**

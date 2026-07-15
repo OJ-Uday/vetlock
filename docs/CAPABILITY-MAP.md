@@ -7,8 +7,8 @@
 ## Summary
 
 - **Total enumerated primitives:** 61
-- **With corpus fixture(s):** 25 (41%)
-- **Soft-warn (no corpus yet):** 36
+- **With corpus fixture(s):** 26 (43%)
+- **Soft-warn (no corpus yet):** 35
 
 | Class | Sink count | Entry-point count | Total |
 |---|---:|---:|---:|
@@ -17,11 +17,11 @@
 | `dep-graph-anomaly` | 1 | 0 | 1 |
 | `fs-read` | 1 | 0 | 1 |
 | `fs-write` | 1 | 0 | 1 |
-| `graph-entry-point` | 0 | 9 | 9 |
-| `install-hook` | 0 | 5 | 5 |
+| `graph-entry-point` | 0 | 10 | 10 |
+| `install-hook` | 1 | 5 | 6 |
 | `integrity` | 1 | 0 | 1 |
-| `net-egress` | 9 | 0 | 9 |
-| `obfuscation-decode` | 4 | 0 | 4 |
+| `net-egress` | 8 | 0 | 8 |
+| `obfuscation-decode` | 3 | 0 | 3 |
 | `publisher-trust` | 0 | 2 | 2 |
 | `python-code-exec` | 2 | 0 | 2 |
 | `python-env-access` | 1 | 0 | 1 |
@@ -88,6 +88,7 @@
 | `direct-dependency` | entry-point | `deps.new-direct-dep` | `event-stream-2018`, `typosquat-synthetic` | — |
 | `file-source` | entry-point | `deps.local-source` | _(soft-warn)_ | — |
 | `git-source` | entry-point | `deps.non-registry-source` | _(soft-warn)_ | — |
+| `http-resolved-url` | entry-point | `manifest-deps.http-resolved-url` | _(soft-warn)_ | `manifest.dependencies / optionalDependencies / peerDependencies value-string check — URL parse + registry-host allowlist` |
 | `npm-alias` | entry-point | `deps.aliased-name` | _(soft-warn)_ | — |
 | `optional-dependency` | entry-point | `deps.new-direct-dep` | _(soft-warn)_ | — |
 | `peer-dependency` | entry-point | `deps.new-direct-dep` | _(soft-warn)_ | — |
@@ -98,6 +99,7 @@
 - `bundled-dependency`: N1 FIX — analyzer recurses into bundled trees
 - `file-source`: S9 FIX — absolute file: URLs flagged INFO (attacker-controlled local path)
 - `git-source`: N5 FIX — git-source WARN because integrity/publisher-trust don't apply
+- `http-resolved-url`: Wave 8-LL — port from guarddog:threat-npm-http-dependency. Complements deps.non-registry-source (git+/github:/bitbucket:/gitlab: emitted by engine.ts): this detector fires on the OTHER shape — plain http:// or non-registry https:// URLs as dep specs in package.json itself, not just the lockfile resolved: field.
 - `npm-alias`: F6 FIX — declared vs installed name divergence
 - `peer-dependency`: N6 FIX — peerDependencies merged into graph in pnpm + yarn parsers
 - `transitive-dependency`: The recursive-engine invariant (engine.test.ts) is what makes transitive-injection catchable at all
@@ -112,9 +114,11 @@
 | `lifecycle-postinstall` | entry-point | `install.script-added` | `shai-hulud-2025`, `coa-rc-2021`, `ua-parser-2021` | — |
 | `lifecycle-preinstall` | entry-point | `install.script-added` | `coa-rc-2021`, `shai-hulud-2025` | — |
 | `lifecycle-prepare` | entry-point | `install.script-added` | _(soft-warn)_ | — |
+| `self-publish-shape` | sink | `install.self-publish-shape` | `shai-hulud-2025` | `co-occurrence over PackageSnapshot: install-tier lifecycle script + execModules (child_process/worker_threads/vm) + fsWriteTargets containing 'package.json'` |
 
 **Notes:**
 - `bundled-lifecycle`: N1 FIX — analyzer recurses into every node_modules/ in a tarball
+- `self-publish-shape`: Wave 8-LL — port from guarddog:threat-runtime-self-propagation. The npm-worm mechanic: install-tier hook that spawns a subprocess AND rewrites the local manifest. Requires all three signals in the SAME diff to keep FP low.
 
 ## `integrity`
 
@@ -130,7 +134,6 @@
 | ID | Kind | Detector(s) | Corpus | Chokepoint |
 |---|---|---|---|---|
 | `dns` | sink | `net.new-module` | _(soft-warn)_ | `capabilities.networkModules` |
-| `dns-templated-hostname` | sink | `net.dns-templated-hostname` | _(soft-warn)_ | `capabilities.networkModules ∋ dns/* AND (char-arithmetic-decoder dynamicCode OR encodedUrls OR env-access snippet containing a DNS callee)` |
 | `encoded-url` | sink | `net.encoded-endpoint` | `event-stream-2018`, `solana-web3-2024`, `lottie-player-2024` | `capabilities.encodedUrls (constant-folding aware)` |
 | `fetch` | sink | `net.new-module` | _(soft-warn)_ | `capabilities.networkModules` |
 | `http` | sink | `net.new-module` | `shai-hulud-2025`, `eslint-scope-2018`, `event-stream-2018` | `capabilities.networkModules` |
@@ -141,7 +144,6 @@
 
 **Notes:**
 - `dns`: N3 FIX — covert exfil channel via DNS subdomain encoding
-- `dns-templated-hostname`: Wave 8-KK — port from guarddog:threat-network-dns-exfil. Diff-safe: only fires when the DNS module is NEWLY imported in the changed version.
 
 ## `obfuscation-decode`
 
@@ -149,23 +151,21 @@
 |---|---|---|---|---|
 | `char-arithmetic-decoder` | sink | `code.dynamic-loading-added` | _(soft-warn)_ | — |
 | `entropy-jump` | sink | `obf.entropy-jump`, `obf.new-obfuscated-file` | `event-stream-2018`, `eslint-scope-2018`, `lottie-player-2024`, `rand-user-agent-2025` | `capabilities.entropy + capabilities.suspiciousLiterals` |
-| `js-mangler-signature` | sink | `obf.js-mangler-signature` | _(soft-warn)_ | `count of distinct `_0x[a-f0-9]{4,6}` matches across FileCapabilities.dynamicCode/envAccesses snippets + suspiciousLiterals previews` |
-| `unicode-homoglyph-boundary` | sink | `obf.unicode-homoglyph-boundary` | _(soft-warn)_ | `ASCII↔confusable-alphabet-block adjacency in urlLiterals + suspiciousLiterals previews + dynamicCode/envAccesses snippets` |
+| `image-decode-exec` | sink | `obf.image-decode-exec` | _(soft-warn)_ | `PackageSnapshot.files cross-reference: fsReadTargets pointing at image extensions (.png/.jpg/.gif/.bmp/.webp) + dynamicCode sink (eval/new-function/vm) in the same package` |
 
 **Notes:**
 - `char-arithmetic-decoder`: L11 FIX — rot13/char-arithmetic decoder detection
-- `js-mangler-signature`: Wave 8-KK — port from guarddog:threat-runtime-obfuscation-js-mangling. Fires when ≥3 distinct mangled identifiers appear in a NEW/CHANGED JS-like file in pair.new.
-- `unicode-homoglyph-boundary`: Wave 8-KK — port from guarddog:threat-runtime-obfuscation-unicode. Diff-safe: fires when the boundary is NEW to a file that had none before, or in an added-package first-version file.
+- `image-decode-exec`: Wave 8-LL — port from guarddog:threat-runtime-obfuscation-steganography. Byte-level scanners see a valid image; AST scanners see a fs.readFileSync and a new Function separately. This detector connects the two — image + read + dynamic-code in the SAME snapshot version.
 
 ## `publisher-trust`
 
 | ID | Kind | Detector(s) | Corpus | Chokepoint |
 |---|---|---|---|---|
-| `disposable-author-domain` | entry-point | `meta.disposable-author-domain` | _(soft-warn)_ | `PackageManifest.author.email / maintainers[*].email / _npmUser.email domain suffix match against bundled DISPOSABLE_DOMAINS list (~50 services)` |
+| `disposable-author-domain` | entry-point | `meta.disposable-author-domain` | _(soft-warn)_ | `packages/detectors/src/data/disposable-domains.json (708-entry snapshot) — domain-exact-match against the disposable-email-domains public list` |
 | `maintainer-change` | entry-point | `meta.maintainer-change` | `shai-hulud-2025`, `solana-web3-2024`, `eslint-scope-2018`, `coa-rc-2021`, `ua-parser-2021`, `rand-user-agent-2025` | — |
 
 **Notes:**
-- `disposable-author-domain`: Wave 8-KK — port from guarddog:metadata/deceptive_author.py. Diff-safe: only counts disposable-domain emails that are NEW to pair.new (not already in pair.old).
+- `disposable-author-domain`: Wave 8-LL — port from guarddog:deceptive_author. Complements meta.maintainer-change: the maintainer-change detector fires on the TRANSITION, this one qualifies WHY the new address is suspect.
 - `maintainer-change`: S3 FIX — trust-store with parse-based email matching (exact domain-or-subdomain); S6 FIX — populated → empty is BLOCK when old was trusted
 
 ## `python-code-exec`
@@ -238,11 +238,11 @@
 
 | ID | Kind | Detector(s) | Corpus | Chokepoint |
 |---|---|---|---|---|
-| `hyphen-permutation` | entry-point | `deps.typosquat-hyphen-permutation` | _(soft-warn)_ | `split(pair.new.name, '-').sort() token-set equality against precomputed Top-1000 permutation index` |
+| `hyphen-permutation` | entry-point | `typo.hyphen-permutation` | _(soft-warn)_ | `packages/detectors/src/data/top-1000-npm.json (1999-entry snapshot) — hyphen-split token-set match against a top-name corpus` |
 | `top-name-edit-distance` | entry-point | `deps.typosquat-candidate` | `typosquat-synthetic` | — |
 
 **Notes:**
-- `hyphen-permutation`: Wave 8-KK — port from guarddog:metadata/typosquatting.py hyphen-permutation branch. Complements typo.ts (which uses Damerau-Levenshtein) — hyphen-permutations sit at edit-distance N and slip the existing detector.
+- `hyphen-permutation`: Wave 8-LL — port from guarddog:typosquatting (hyphen-permutation branch). Complements deps.typosquat-candidate (Damerau-Levenshtein on the full name) with a token-set matcher: `router-react` is edit-distance ≥ 6 from `react-router` (DL misses it), but hyphen-token equal — the shape a distracted developer types.
 - `top-name-edit-distance`: D6 FIX — expanded top corpus 230 → 330; N4 FIX — scope-stripping for @evil-org/react-style attacks
 
 ---
