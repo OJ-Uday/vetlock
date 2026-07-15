@@ -1,0 +1,949 @@
+{
+  "batch": "B",
+  "focus": "web/api packages",
+  "generatedAt": "2026-07-15T06:22:10.891Z",
+  "packageCount": 21,
+  "summary": {
+    "cleanPackages": 21,
+    "packagesWithFindings": 0,
+    "falsePositiveCount": 0
+  },
+  "conclusions": [
+    "Shared urllib/socket/ssl/asyncio imports already present in both versions should not trigger net.new-module.",
+    "URL literals repeated across before/after should not trigger net.new-endpoint.",
+    "Docstring and .pyi URLs are often ignored by the Python capability extractor; help/constant URLs may be observed, but unchanged ones should not fire."
+  ],
+  "packages": [
+    {
+      "package": "requests",
+      "moduleName": "requests",
+      "scenario": "HTTP client keeps urllib3/socket/ssl imports and identical docs URLs while fixing a text coercion edge case.",
+      "beforeVersion": "2.31.0",
+      "afterVersion": "2.32.0",
+      "sourcePatterns": {
+        "sharedImports": [
+          "urllib3",
+          "ssl",
+          "socket"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://requests.readthedocs.io/en/latest/",
+            "mode": "docstring"
+          },
+          {
+            "url": "https://requests.readthedocs.io/en/latest/",
+            "mode": "constant"
+          },
+          {
+            "url": "https://requests.readthedocs.io/en/latest/api/",
+            "mode": "stub"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "socket",
+          "ssl",
+          "urllib3"
+        ],
+        "afterNetworkModules": [
+          "socket",
+          "ssl",
+          "urllib3"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [
+          "https://requests.readthedocs.io/en/latest"
+        ],
+        "afterUrlLiterals": [
+          "https://requests.readthedocs.io/en/latest"
+        ],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [
+          "https://requests.readthedocs.io/en/latest/",
+          "https://requests.readthedocs.io/en/latest/"
+        ],
+        "ignoredSharedUrls": [
+          "https://requests.readthedocs.io/en/latest/api/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "urllib3",
+      "moduleName": "urllib3",
+      "scenario": "HTTP transport keeps urllib/socket/ssl imports and the same docs URL constant.",
+      "beforeVersion": "2.2.1",
+      "afterVersion": "2.2.2",
+      "sourcePatterns": {
+        "sharedImports": [
+          "ssl",
+          "socket",
+          "urllib.parse"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://urllib3.readthedocs.io/en/stable/",
+            "mode": "docstring"
+          },
+          {
+            "url": "https://urllib3.readthedocs.io/en/stable/",
+            "mode": "constant"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "socket",
+          "ssl",
+          "urllib.parse"
+        ],
+        "afterNetworkModules": [
+          "socket",
+          "ssl",
+          "urllib.parse"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [
+          "https://urllib3.readthedocs.io/en/stable"
+        ],
+        "afterUrlLiterals": [
+          "https://urllib3.readthedocs.io/en/stable"
+        ],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [
+          "https://urllib3.readthedocs.io/en/stable/",
+          "https://urllib3.readthedocs.io/en/stable/"
+        ],
+        "ignoredSharedUrls": []
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "certifi",
+      "moduleName": "certifi",
+      "scenario": "Certificate bundle package has only a shared docstring URL and a benign bugfix.",
+      "beforeVersion": "2024.2.2",
+      "afterVersion": "2024.7.4",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://certifiio.readthedocs.io/en/latest/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://certifiio.readthedocs.io/en/latest/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "httpx",
+      "moduleName": "httpx",
+      "scenario": "Async HTTP client keeps ssl/socket imports; stub/docstring URLs remain unchanged.",
+      "beforeVersion": "0.27.0",
+      "afterVersion": "0.27.1",
+      "sourcePatterns": {
+        "sharedImports": [
+          "ssl",
+          "socket",
+          "sniffio"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://www.python-httpx.org/",
+            "mode": "docstring"
+          },
+          {
+            "url": "https://www.python-httpx.org/api/",
+            "mode": "stub"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "socket",
+          "ssl"
+        ],
+        "afterNetworkModules": [
+          "socket",
+          "ssl"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://www.python-httpx.org/",
+          "https://www.python-httpx.org/api/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "aiohttp",
+      "moduleName": "aiohttp",
+      "scenario": "Async HTTP stack keeps asyncio/socket/ssl imports and the same docs URL literal.",
+      "beforeVersion": "3.9.5",
+      "afterVersion": "3.10.0",
+      "sourcePatterns": {
+        "sharedImports": [
+          "asyncio",
+          "ssl",
+          "socket"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://docs.aiohttp.org/en/stable/",
+            "mode": "docstring"
+          },
+          {
+            "url": "https://docs.aiohttp.org/en/stable/",
+            "mode": "constant"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "asyncio",
+          "socket",
+          "ssl"
+        ],
+        "afterNetworkModules": [
+          "asyncio",
+          "socket",
+          "ssl"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [
+          "https://docs.aiohttp.org/en/stable"
+        ],
+        "afterUrlLiterals": [
+          "https://docs.aiohttp.org/en/stable"
+        ],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [
+          "https://docs.aiohttp.org/en/stable/",
+          "https://docs.aiohttp.org/en/stable/"
+        ],
+        "ignoredSharedUrls": []
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "h11",
+      "moduleName": "h11",
+      "scenario": "Protocol package only changes function logic; docstring URL is identical.",
+      "beforeVersion": "0.14.0",
+      "afterVersion": "0.14.1",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://h11.readthedocs.io/en/latest/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://h11.readthedocs.io/en/latest/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "httpcore",
+      "moduleName": "httpcore",
+      "scenario": "Transport core keeps socket/ssl imports and an unchanged URL literal in code.",
+      "beforeVersion": "1.0.5",
+      "afterVersion": "1.0.6",
+      "sourcePatterns": {
+        "sharedImports": [
+          "socket",
+          "ssl",
+          "anyio"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://www.encode.io/httpcore/",
+            "mode": "docstring"
+          },
+          {
+            "url": "https://www.encode.io/httpcore/",
+            "mode": "constant"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "socket",
+          "ssl"
+        ],
+        "afterNetworkModules": [
+          "socket",
+          "ssl"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [
+          "https://www.encode.io/httpcore"
+        ],
+        "afterUrlLiterals": [
+          "https://www.encode.io/httpcore"
+        ],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [
+          "https://www.encode.io/httpcore/",
+          "https://www.encode.io/httpcore/"
+        ],
+        "ignoredSharedUrls": []
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "anyio",
+      "moduleName": "anyio",
+      "scenario": "Shared asyncio import remains present before/after; no new capabilities.",
+      "beforeVersion": "4.3.0",
+      "afterVersion": "4.4.0",
+      "sourcePatterns": {
+        "sharedImports": [
+          "asyncio"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://anyio.readthedocs.io/en/stable/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "asyncio"
+        ],
+        "afterNetworkModules": [
+          "asyncio"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://anyio.readthedocs.io/en/stable/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "sniffio",
+      "moduleName": "sniffio",
+      "scenario": "Async detection helper keeps asyncio import; docstring URL remains constant.",
+      "beforeVersion": "1.3.0",
+      "afterVersion": "1.3.1",
+      "sourcePatterns": {
+        "sharedImports": [
+          "asyncio"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://sniffio.readthedocs.io/en/latest/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "asyncio"
+        ],
+        "afterNetworkModules": [
+          "asyncio"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://sniffio.readthedocs.io/en/latest/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "fastapi",
+      "moduleName": "fastapi",
+      "scenario": "Framework route literals and urllib import stay the same; only helper logic changes.",
+      "beforeVersion": "0.111.0",
+      "afterVersion": "0.111.1",
+      "sourcePatterns": {
+        "sharedImports": [
+          "urllib.parse"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://fastapi.tiangolo.com/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": [
+          "/items/{item_id}",
+          "/healthz"
+        ]
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "urllib.parse"
+        ],
+        "afterNetworkModules": [
+          "urllib.parse"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://fastapi.tiangolo.com/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "uvicorn",
+      "moduleName": "uvicorn",
+      "scenario": "Server runtime keeps asyncio/socket/ssl imports with unchanged health routes.",
+      "beforeVersion": "0.30.0",
+      "afterVersion": "0.30.1",
+      "sourcePatterns": {
+        "sharedImports": [
+          "asyncio",
+          "socket",
+          "ssl"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://www.uvicorn.org/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": [
+          "/live",
+          "/ready"
+        ]
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "asyncio",
+          "socket",
+          "ssl"
+        ],
+        "afterNetworkModules": [
+          "asyncio",
+          "socket",
+          "ssl"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://www.uvicorn.org/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "starlette",
+      "moduleName": "starlette",
+      "scenario": "ASGI toolkit keeps urllib/anyio imports and route patterns unchanged.",
+      "beforeVersion": "0.37.2",
+      "afterVersion": "0.37.3",
+      "sourcePatterns": {
+        "sharedImports": [
+          "urllib.parse",
+          "anyio"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://www.starlette.io/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": [
+          "/",
+          "/users/{username}"
+        ]
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "urllib.parse"
+        ],
+        "afterNetworkModules": [
+          "urllib.parse"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://www.starlette.io/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "flask",
+      "moduleName": "flask",
+      "scenario": "Route handlers and urllib import are stable across the benign bugfix.",
+      "beforeVersion": "3.0.3",
+      "afterVersion": "3.0.4",
+      "sourcePatterns": {
+        "sharedImports": [
+          "urllib.parse"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://flask.palletsprojects.com/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": [
+          "/login",
+          "/logout"
+        ]
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "urllib.parse"
+        ],
+        "afterNetworkModules": [
+          "urllib.parse"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://flask.palletsprojects.com/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "Werkzeug",
+      "moduleName": "werkzeug",
+      "scenario": "Routing-related literals remain unchanged; urllib import is already present.",
+      "beforeVersion": "3.0.3",
+      "afterVersion": "3.0.4",
+      "sourcePatterns": {
+        "sharedImports": [
+          "urllib.parse"
+        ],
+        "sharedUrls": [
+          {
+            "url": "https://werkzeug.palletsprojects.com/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": [
+          "/convert/<value>"
+        ]
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [
+          "urllib.parse"
+        ],
+        "afterNetworkModules": [
+          "urllib.parse"
+        ],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://werkzeug.palletsprojects.com/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "Jinja2",
+      "moduleName": "jinja2",
+      "scenario": "Template engine carries only a stable docstring URL and a harmless bugfix.",
+      "beforeVersion": "3.1.4",
+      "afterVersion": "3.1.5",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://jinja.palletsprojects.com/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://jinja.palletsprojects.com/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "MarkupSafe",
+      "moduleName": "markupsafe",
+      "scenario": "Escaping helper keeps the same docstring URL and no network-related imports.",
+      "beforeVersion": "2.1.5",
+      "afterVersion": "2.1.6",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://markupsafe.palletsprojects.com/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://markupsafe.palletsprojects.com/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "click",
+      "moduleName": "click",
+      "scenario": "CLI help text contains the same URL in both versions; detector should not flag it.",
+      "beforeVersion": "8.1.7",
+      "afterVersion": "8.1.8",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://click.palletsprojects.com/",
+            "mode": "help"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [
+          "https://click.palletsprojects.com"
+        ],
+        "afterUrlLiterals": [
+          "https://click.palletsprojects.com"
+        ],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [
+          "https://click.palletsprojects.com/"
+        ],
+        "ignoredSharedUrls": []
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "colorama",
+      "moduleName": "colorama",
+      "scenario": "Terminal-color helper has no new capabilities; docstring URL is unchanged.",
+      "beforeVersion": "0.4.6",
+      "afterVersion": "0.4.7",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://pypi.org/project/colorama/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://pypi.org/project/colorama/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "rich",
+      "moduleName": "rich",
+      "scenario": "Rich help text keeps the same docs URL while implementation logic stays capability-neutral.",
+      "beforeVersion": "13.7.1",
+      "afterVersion": "13.7.2",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://rich.readthedocs.io/en/stable/introduction.html",
+            "mode": "help"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [
+          "https://rich.readthedocs.io/en/stable/introduction.html"
+        ],
+        "afterUrlLiterals": [
+          "https://rich.readthedocs.io/en/stable/introduction.html"
+        ],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [
+          "https://rich.readthedocs.io/en/stable/introduction.html"
+        ],
+        "ignoredSharedUrls": []
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "charset-normalizer",
+      "moduleName": "charset_normalizer",
+      "scenario": "Text-normalization package keeps the same docstring URL and no network imports.",
+      "beforeVersion": "3.3.2",
+      "afterVersion": "3.3.3",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://charset-normalizer.readthedocs.io/en/latest/",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://charset-normalizer.readthedocs.io/en/latest/"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    },
+    {
+      "package": "idna",
+      "moduleName": "idna",
+      "scenario": "IDNA helper has identical docs URL and a same-capability bugfix.",
+      "beforeVersion": "3.7",
+      "afterVersion": "3.8",
+      "sourcePatterns": {
+        "sharedImports": [],
+        "sharedUrls": [
+          {
+            "url": "https://github.com/kjd/idna",
+            "mode": "docstring"
+          }
+        ],
+        "routeLiterals": []
+      },
+      "observedCapabilities": {
+        "beforeNetworkModules": [],
+        "afterNetworkModules": [],
+        "newNetworkModulesInAfter": [],
+        "beforeUrlLiterals": [],
+        "afterUrlLiterals": [],
+        "newUrlLiteralsInAfter": [],
+        "detectorObservedSharedUrls": [],
+        "ignoredSharedUrls": [
+          "https://github.com/kjd/idna"
+        ]
+      },
+      "verdict": "CLEAN",
+      "findings": [],
+      "assertions": {
+        "noNewNetworkModules": true,
+        "noNewUrls": true,
+        "noFindings": true
+      }
+    }
+  ],
+  "falsePositives": []
+}
