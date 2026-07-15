@@ -280,8 +280,8 @@ describe('runAll — escalation + validation', () => {
     expect(a.length).toBe(2);
   });
 
-  it('registers all built-in detectors (sixteen after N1 bundled-deps detector)', () => {
-    expect(ALL_DETECTORS.length).toBe(16);
+  it('registers all built-in detectors (21 after Wave 8-LL rule-port additions)', () => {
+    expect(ALL_DETECTORS.length).toBe(21);
   });
 
   it('stablesort exported', () => {

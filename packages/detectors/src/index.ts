@@ -42,6 +42,12 @@ import { firstVersionClusterDetector } from './first-version-cluster.js';
 import { wasmDetector } from './wasm.js';
 import { bundledDepsDetector } from './bundled.js';
 import { advisoriesForVersion } from './advisories.js';
+// Wave 8-LL — guarddog rule-port detectors (audit §4).
+import { typoHyphenPermutationDetector } from './typo-hyphen-permutation.js';
+import { disposableAuthorDomainDetector } from './meta-disposable-author-domain.js';
+import { httpResolvedUrlDetector } from './manifest-deps-http.js';
+import { imageDecodeExecDetector } from './obf-image-decode-exec.js';
+import { selfPublishShapeDetector } from './install-self-publish-shape.js';
 
 export const ALL_DETECTORS: readonly Detector[] = [
   installDetector,
@@ -60,6 +66,12 @@ export const ALL_DETECTORS: readonly Detector[] = [
   firstVersionClusterDetector,
   wasmDetector,
   bundledDepsDetector,
+  // Wave 8-LL — rule ports (audit §4 rows 6-10)
+  typoHyphenPermutationDetector,
+  disposableAuthorDomainDetector,
+  httpResolvedUrlDetector,
+  imageDecodeExecDetector,
+  selfPublishShapeDetector,
 ];
 
 export {
@@ -79,6 +91,12 @@ export {
   firstVersionClusterDetector,
   wasmDetector,
   bundledDepsDetector,
+  // Wave 8-LL
+  typoHyphenPermutationDetector,
+  disposableAuthorDomainDetector,
+  httpResolvedUrlDetector,
+  imageDecodeExecDetector,
+  selfPublishShapeDetector,
 };
 
 /**
