@@ -4,7 +4,13 @@
  *
  * Sub-commands:
  *   diff <before> <after>        — diff two lockfiles, report behavioral changes
- *   scan <lockfile>              — baseline scan of a full tree (not yet implemented)
+ *   scan <lockfile>              — baseline scan of a full tree
+ *   add <package>[@version]      — pre-install gate (Wave 8-JJ): fetch, analyze,
+ *                                  and gate BEFORE the package manager runs
+ *                                  any lifecycle script from the tarball
+ *   guard [--install-shim|…]     — PATH shim + allowlist admin so casual
+ *                                  `npm install` traffic routes through
+ *                                  `vetlock add` automatically
  *   demo                          — run against bundled Shai-Hulud fixture
  *   version                       — print version
  *
@@ -48,6 +54,8 @@ import { renderTTY } from './tty.js';
 import { renderJSON } from './json.js';
 import { renderSARIF } from './sarif.js';
 import { renderMarkdown } from './md.js';
+import { runAddCommand } from './commands/add.js';
+import { runGuardCommand } from './commands/guard.js';
 
 interface CliFlags {
   json?: boolean;
@@ -182,6 +190,82 @@ program
       writeErr(opts, `(reading ${lockfilePath})`);
       process.exit(3);
     }
+  });
+
+program
+  .command('add <package>')
+  .description(
+    'Fetch <package>[@version] via pacote, run the FULL detector suite against '
+    + 'the extracted tarball, refuse to invoke the package manager when any '
+    + 'BLOCK-tier finding fires. Closes the postinstall-runs-before-CI attack window.',
+  )
+  .option('--pm <manager>', 'force package manager (npm | pnpm | yarn); default: auto-detect from lockfile')
+  .option('--registry <url>', 'npm registry base URL (override .npmrc for this call)')
+  .option('--force-danger', 'install even when BLOCK findings fire (prints a scary banner)')
+  .option('--dry-run', 'run the gate but skip the pm subprocess (report only)')
+  .option('--json', 'emit the gate report as JSON')
+  .option('--quiet', 'suppress all vetlock output (only the pm subprocess speaks)')
+  .action(async (
+    pkgSpec: string,
+    opts: {
+      pm?: 'npm' | 'pnpm' | 'yarn';
+      registry?: string;
+      forceDanger?: boolean;
+      dryRun?: boolean;
+      json?: boolean;
+      quiet?: boolean;
+    },
+  ) => {
+    const result = await runAddCommand(pkgSpec, {
+      pm: opts.pm,
+      registry: opts.registry,
+      forceDanger: opts.forceDanger,
+      dryRun: opts.dryRun,
+      json: opts.json,
+      quiet: opts.quiet,
+    });
+    process.exit(result.exitCode);
+  });
+
+program
+  .command('guard')
+  .description(
+    'Install/uninstall a PATH shim that routes `npm install` / `pnpm add` / '
+    + '`yarn add` through `vetlock add`. Also manages the ~/.vetlock/allowlist.json.',
+  )
+  .option('--install-shim', 'write ~/.vetlock/bin/{npm,pnpm,yarn} shims')
+  .option('--uninstall-shim', 'remove the shims')
+  .option('--status', 'report which shims are installed and whether they are on PATH')
+  .option('--allowlist <action>', "'add' | 'list' | 'remove' — manage ~/.vetlock/allowlist.json")
+  .option('--package <name>', "package name for --allowlist add|remove")
+  .option('--reason <text>', "human-readable justification (required for --allowlist add)")
+  .option('--quiet', 'suppress stdout')
+  .action(async (opts: {
+    installShim?: boolean;
+    uninstallShim?: boolean;
+    status?: boolean;
+    allowlist?: string;
+    package?: string;
+    reason?: string;
+    quiet?: boolean;
+  }) => {
+    const allowlistAction = opts.allowlist === 'add' || opts.allowlist === 'list' || opts.allowlist === 'remove'
+      ? opts.allowlist
+      : undefined;
+    if (opts.allowlist && !allowlistAction) {
+      process.stderr.write(`vetlock guard: --allowlist expects 'add', 'list', or 'remove'.\n`);
+      process.exit(4);
+    }
+    const result = await runGuardCommand({
+      installShim: opts.installShim,
+      uninstallShim: opts.uninstallShim,
+      status: opts.status,
+      allowlistAction,
+      allowlistPackage: opts.package,
+      allowlistReason: opts.reason,
+      quiet: opts.quiet,
+    });
+    process.exit(result.exitCode);
   });
 
 /**
