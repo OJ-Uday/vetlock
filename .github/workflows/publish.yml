@@ -38,7 +38,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@a3252b1814c370b33d3d59a50f03e7d00b5b6f7d # v3.0.0
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9
 
