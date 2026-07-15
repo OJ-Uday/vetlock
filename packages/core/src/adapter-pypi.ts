@@ -37,6 +37,7 @@ export interface AnalyzePypiOptions {
   integrity?: string;
   limits?: ExtractLimits;
   baseTmpDir?: string;
+  registry?: string;
 }
 
 /**
@@ -128,7 +129,10 @@ export async function analyzePypi(
   ref: PypiPackageRef,
   opts: AnalyzePypiOptions = {},
 ): Promise<PackageSnapshot> {
-  const artifact = await fetchPypiArtifact(ref);
+  const artifact = await fetchPypiArtifact({
+    ...ref,
+    registry: ref.registry ?? opts.registry,
+  });
   try {
     return await analyzePypiArtifactFile(artifact, {
       ...opts,

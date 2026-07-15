@@ -15,10 +15,10 @@
  * falling back to the sdist. Tests bypass this via `localArtifact` to avoid
  * ANY network dependency in default CI.
  *
- * Behind the Lilly Artifactory proxy: pass `PIP_INDEX_URL` as an environment
- * variable OR `ref.registry` on the ref. We use the fetch URL directly for
- * the JSON API and follow the file URLs it returns; the Artifactory proxy
- * mirrors both.
+ * Behind the Lilly Artifactory proxy: set `VETLOCK_PYPI_JSON_URL`,
+ * `VETLOCK_PYPI_AUTH` / `JF_AUTH`, or `ref.registry` on the ref. We use the
+ * JSON API directly and follow the file URLs it returns, rewriting public
+ * pythonhosted.org URLs back through Artifactory when needed.
  */
 
 import { promises as fs } from 'node:fs';
@@ -36,12 +36,35 @@ import { DEFAULT_LIMITS, UnsafeArchiveError } from './extract.js';
 
 const inflateRaw = promisify(zlib.inflateRaw);
 const MAX_ZIP_ENTRIES = 65535;
+const DEFAULT_PYPI_JSON_URL = 'https://pypi.org';
 
+/**
+ * Environment variables that control PyPI/Artifactory access:
+ *
+ * VETLOCK_PYPI_JSON_URL  — Override PyPI JSON API base. For Artifactory:
+ *   https://{host}/artifactory/api/pypi/{repo}
+ *   (e.g. https://lilly.jfrog.io/artifactory/api/pypi/pypi-remote)
+ *
+ * VETLOCK_PYPI_AUTH — Auth credential. Two forms accepted:
+ *   user:token    → sent as Basic auth (base64 encoded)
+ *   token         → sent as token auth
+ *   For JFrog Artifactory, use your API key or identity token.
+ *   If unset, falls back to JF_AUTH (standard JFrog env var).
+ *
+ * VETLOCK_PYPI_ARTIFACT_URL_REWRITE — Set to "true" to force rewriting
+ *   pythonhosted.org artifact URLs through the configured Artifactory proxy
+ *   even when the JSON API returns public URLs. Useful when your Artifactory
+ *   instance blocks direct access to pythonhosted.org.
+ */
 export interface PypiPackageRef {
   name: string;
   version: string;
   integrity?: string;
-  /** Override registry base URL. Defaults to https://pypi.org. */
+  /**
+   * Override registry base URL. Defaults to VETLOCK_PYPI_JSON_URL env var,
+   * then https://pypi.org. For Artifactory:
+   *   https://{host}/artifactory/api/pypi/{repo}
+   */
   registry?: string;
   /** Path to a local .whl / .tar.gz to use instead of fetching (test escape hatch). */
   localArtifact?: string;
@@ -66,9 +89,9 @@ export async function fetchPypiArtifact(ref: PypiPackageRef): Promise<PypiFetche
     return { path: dest, kind };
   }
 
-  const registry = ref.registry ?? process.env.VETLOCK_PYPI_JSON_URL ?? 'https://pypi.org';
+  const registry = ref.registry ?? process.env.VETLOCK_PYPI_JSON_URL ?? DEFAULT_PYPI_JSON_URL;
   const jsonUrl = `${registry.replace(/\/$/, '')}/pypi/${encodeURIComponent(ref.name)}/${encodeURIComponent(ref.version)}/json`;
-  const res = await fetch(jsonUrl);
+  const res = await fetch(jsonUrl, { headers: pypiAuthHeaders() });
   if (!res.ok) {
     throw new Error(`pypi metadata fetch failed: ${jsonUrl} → HTTP ${res.status}`);
   }
@@ -88,9 +111,10 @@ export async function fetchPypiArtifact(ref: PypiPackageRef): Promise<PypiFetche
   }
   const kind: 'wheel' | 'sdist' = pick.packagetype === 'bdist_wheel' ? 'wheel' : 'sdist';
   const dest = await tempArtifactPath(ref, kind);
-  const fileRes = await fetch(pick.url);
+  const artifactUrl = rewriteArtifactUrl(pick.url, registry);
+  const fileRes = await fetch(artifactUrl, { headers: pypiAuthHeaders() });
   if (!fileRes.ok) {
-    throw new Error(`pypi artifact download failed: ${pick.url} → HTTP ${fileRes.status}`);
+    throw new Error(`pypi artifact download failed: ${artifactUrl} → HTTP ${fileRes.status}`);
   }
   const buf = Buffer.from(await fileRes.arrayBuffer());
   // If integrity was provided, verify it against the sha256 in the URL entry.
@@ -102,6 +126,30 @@ export async function fetchPypiArtifact(ref: PypiPackageRef): Promise<PypiFetche
   }
   await fs.writeFile(dest, buf);
   return { path: dest, kind };
+}
+
+
+function pypiAuthHeaders(): HeadersInit {
+  const token = process.env.VETLOCK_PYPI_AUTH ?? process.env.JF_AUTH;
+  if (!token) return {};
+  if (token.includes(':')) {
+    return { Authorization: `Basic ${Buffer.from(token).toString('base64')}` };
+  }
+  return { Authorization: 'Bearer ' + token };
+}
+
+function rewriteArtifactUrl(url: string, registryBase: string): string {
+  const forceRewrite = process.env.VETLOCK_PYPI_ARTIFACT_URL_REWRITE === 'true';
+  if (
+    (forceRewrite || registryBase !== DEFAULT_PYPI_JSON_URL) &&
+    url.includes('files.pythonhosted.org')
+  ) {
+    const match = url.match(/\/packages\/(.+)$/);
+    if (match) {
+      return `${registryBase.replace(/\/$/, '')}/packages/${match[1]}`;
+    }
+  }
+  return url;
 }
 
 interface PypiJsonMeta {
