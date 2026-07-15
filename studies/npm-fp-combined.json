@@ -1,0 +1,4173 @@
+{
+  "generatedAt": "2026-07-15T06:42:16.004Z",
+  "sourceBatches": [
+    {
+      "id": "bundlers",
+      "file": "studies/npm-fp-batch-bundlers.json",
+      "present": true,
+      "sourceKeys": [
+        "study",
+        "batch",
+        "theme",
+        "ecosystem",
+        "vetlockVersion",
+        "ranAt",
+        "methodology",
+        "assertion",
+        "totalBumps",
+        "bumpsSucceeded",
+        "bumpsFailed",
+        "totalFindings",
+        "findingsPerBump",
+        "perSeverity",
+        "detectorHits",
+        "perDetectorFpRate",
+        "focusSummary",
+        "falsePositiveCount",
+        "falsePositives",
+        "worstOffenders",
+        "rows"
+      ],
+      "resultCount": 10
+    },
+    {
+      "id": "webtools",
+      "file": "studies/npm-fp-batch-webtools.json",
+      "present": true,
+      "sourceKeys": [
+        "batch",
+        "description",
+        "version",
+        "ecosystem",
+        "vetlockVersion",
+        "ranAt",
+        "totalPackages",
+        "totalCases",
+        "scenarioKinds",
+        "summary",
+        "scenarioSummary",
+        "results"
+      ],
+      "resultCount": 30
+    },
+    {
+      "id": "infra",
+      "file": "studies/npm-fp-batch-infra.json",
+      "present": true,
+      "sourceKeys": [
+        "study",
+        "batch",
+        "theme",
+        "ecosystem",
+        "version",
+        "vetlockVersion",
+        "ranAt",
+        "methodology",
+        "totalBumps",
+        "bumpsSucceeded",
+        "bumpsFailed",
+        "totalFindings",
+        "findingsPerBump",
+        "perDetectorFpRate",
+        "perSeverity",
+        "categorySummary",
+        "falsePositiveRate",
+        "falsePositiveCategories",
+        "focusSummary",
+        "concernSummary",
+        "envKeyCalibration",
+        "keyFindings",
+        "worstOffenders",
+        "rows"
+      ],
+      "resultCount": 18
+    },
+    {
+      "id": "exotic",
+      "file": "studies/npm-fp-batch-exotic.json",
+      "present": true,
+      "sourceKeys": [
+        "study",
+        "batch",
+        "theme",
+        "ecosystem",
+        "version",
+        "vetlockVersion",
+        "ranAt",
+        "methodology",
+        "totalBumps",
+        "bumpsSucceeded",
+        "bumpsFailed",
+        "totalBumpFindings",
+        "bumpFindingsPerPackage",
+        "perDetectorFpRate",
+        "perSeverity",
+        "categorySummary",
+        "falsePositiveRate",
+        "falsePositiveCategories",
+        "keyFindings",
+        "coverageGaps",
+        "envKeyCalibration",
+        "specialInstallProbes",
+        "bumpResults"
+      ],
+      "resultCount": 37
+    }
+  ],
+  "completeness": {
+    "expectedBatches": [
+      "bundlers",
+      "webtools",
+      "infra",
+      "exotic"
+    ],
+    "presentBatches": [
+      "bundlers",
+      "webtools",
+      "infra",
+      "exotic"
+    ],
+    "missingBatches": [],
+    "allBatchesPresent": true
+  },
+  "summary": {
+    "totalScenarios": 95,
+    "totalFalsePositives": 13,
+    "overallFalsePositiveRate": 0.1368421052631579,
+    "verdictCounts": {
+      "BLOCK": 10,
+      "WARN": 16,
+      "INFO": 19,
+      "CLEAN": 50,
+      "ERROR": 0
+    },
+    "scenarioFamilies": {
+      "bump": {
+        "total": 64,
+        "BLOCK": 4,
+        "WARN": 0,
+        "INFO": 10,
+        "CLEAN": 50,
+        "ERROR": 0
+      },
+      "new-install": {
+        "total": 31,
+        "BLOCK": 6,
+        "WARN": 16,
+        "INFO": 9,
+        "CLEAN": 0,
+        "ERROR": 0
+      }
+    },
+    "detectorCounts": [
+      {
+        "detector": "deps.local-source",
+        "count": 16
+      },
+      {
+        "detector": "install.script-added",
+        "count": 15
+      },
+      {
+        "detector": "code.dynamic-loading-added",
+        "count": 11
+      },
+      {
+        "detector": "net.new-endpoint",
+        "count": 10
+      },
+      {
+        "detector": "obf.entropy-jump",
+        "count": 10
+      },
+      {
+        "detector": "env.token-harvest",
+        "count": 6
+      },
+      {
+        "detector": "bin.new-native-artifact",
+        "count": 4
+      }
+    ]
+  },
+  "bumpScenarios": [
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "vite",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "webpack",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "vitest",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "prettier",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "tsx",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "esbuild",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "rollup",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "swc",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "parcel",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "turbopack",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "express",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "fastify",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "koa",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "hapi",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "commander",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "yargs",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "minimist",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "eslint",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "static-local-require",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "A new static local require('./flat-config/config-loader') should not count as dynamic loading."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "mocha",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "jest",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "dotenv",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "existing-fs-read",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "fs.readFileSync(.env) exists in both versions, so fs.new-hotpath-read should not fire."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "glob",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "utility-clean",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Small utility keeps the same fs/path imports in both versions, so the bump should stay CLEAN."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "minimatch",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "utility-clean",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Small utility keeps the same fs/path imports in both versions, so the bump should stay CLEAN."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "uuid",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "sharp",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "falsePositive": true,
+      "group": "native-binary-recompiled",
+      "expectedVerdict": "BLOCK",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "BLOCK",
+          "detector": "bin.new-native-artifact",
+          "category": "INSTALL",
+          "message": "New native binary artifact shipped in tarball: build/Release/sharp.node (node, 28 bytes)",
+          "evidence": {
+            "file": "build/Release/sharp.node",
+            "line": 1,
+            "snippet": "node artifact, sha256=e0145382afc4f2fb…"
+          }
+        }
+      ],
+      "notes": [
+        "The detector keys native artifacts by path+sha256, so a recompiled .node at the same path still looks like a new artifact."
+      ]
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "aws-sdk",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "cloud-sdk"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "@aws-sdk/client-s3",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "cloud-sdk"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "@azure/identity",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "cloud-sdk"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "firebase",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "cloud-sdk"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "mongoose",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "database-client"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "redis",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "database-client"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "mysql2",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "database-client"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "pg",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "database-client"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "nodemailer",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "mailer"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "node-cron",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "process-infra"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "pm2",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "process-infra"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "winston",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "logging"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "pino",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "logging"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "bunyan",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "logging"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "morgan",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "logging"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "config",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "config-framework"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "convict",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "config-framework"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "cosmiconfig",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "config-framework"
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "shelljs",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "0.8.5",
+      "newVersion": "0.8.6",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "execa",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "8.0.1",
+      "newVersion": "8.0.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "cross-spawn",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "7.0.3",
+      "newVersion": "7.0.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "child-process-promise",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "2.2.1",
+      "newVersion": "2.2.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "vm2",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "3.9.18",
+      "newVersion": "3.9.19",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "vm-sandbox-packages",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "isolated-vm",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "4.7.2",
+      "newVersion": "4.7.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "vm-sandbox-packages",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "jose",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "5.2.4",
+      "newVersion": "5.2.5",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "crypto-security-libraries",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "keytar",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "7.9.0",
+      "newVersion": "7.9.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "crypto-security-libraries",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "node-forge",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.3.0",
+      "newVersion": "1.3.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "crypto-security-libraries",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "socket.io",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "4.7.4",
+      "newVersion": "4.7.5",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "ipc-messaging",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "bull",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "4.12.2",
+      "newVersion": "4.12.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "ipc-messaging",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "bullmq",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "5.7.8",
+      "newVersion": "5.7.9",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "ipc-messaging",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "electron-updater",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "6.1.8",
+      "newVersion": "6.1.9",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "electron-desktop",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "@actions/core",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.10.0",
+      "newVersion": "1.11.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "github-actions-sdk",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "@actions/github",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "6.0.0",
+      "newVersion": "6.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "github-actions-sdk",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "better-sqlite3",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "9.4.1",
+      "newVersion": "9.4.2",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "falsePositive": true,
+      "category": "native-addons",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": false,
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: build/Release/better_sqlite3.node (node, 16 bytes)",
+          "evidence": "build/Release/better_sqlite3.node:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "canvas",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "2.11.1",
+      "newVersion": "2.11.2",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "falsePositive": true,
+      "category": "native-addons",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": false,
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: build/Release/canvas.node (node, 16 bytes)",
+          "evidence": "build/Release/canvas.node:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "bcrypt",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "5.1.1",
+      "newVersion": "5.1.2",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "falsePositive": true,
+      "category": "native-addons",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": false,
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: lib/binding/napi-v3/bcrypt_lib.node (node, 16 bytes)",
+          "evidence": "lib/binding/napi-v3/bcrypt_lib.node:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "coffeescript",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "2.7.0",
+      "newVersion": "2.7.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "eval-heavy-legitimate",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "handlebars",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "4.7.8",
+      "newVersion": "4.7.9",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "eval-heavy-legitimate",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "ejs",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "3.1.9",
+      "newVersion": "3.1.10",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "eval-heavy-legitimate",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    }
+  ],
+  "newInstallScenarios": [
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "express",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "fastify",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "koa",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "hapi",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "commander",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "yargs",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "minimist",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "eslint",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "mocha",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "jest",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "dotenv",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "glob",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "minimatch",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "uuid",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "uuid-prepare-script",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: rollup -c"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "sharp",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "@actions/core",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.11.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "category": "github-actions-sdk",
+      "expectedVerdict": "BLOCK",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: GITHUB_TOKEN",
+          "evidence": "index.js:2"
+        },
+        {
+          "detector": "deps.local-source",
+          "severity": "INFO",
+          "message": "Package '@actions/core' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/@actions_core-1.11.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz.",
+          "evidence": "node_modules/@actions/core:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "handlebars",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "4.7.9",
+      "verdict": "WARN",
+      "findingCount": 2,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "deps.local-source"
+      ],
+      "falsePositive": false,
+      "category": "eval-heavy-legitimate",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "detector": "code.dynamic-loading-added",
+          "severity": "WARN",
+          "message": "Dynamic code sink introduced (new-function).",
+          "evidence": "index.js:3"
+        },
+        {
+          "detector": "deps.local-source",
+          "severity": "INFO",
+          "message": "Package 'handlebars' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/handlebars-4.7.9.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz.",
+          "evidence": "node_modules/handlebars:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-smtp_pass",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-smtp-pass' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-smtp-pass-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-smtp_password",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-smtp-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-smtp-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-db_password",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-db-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-db-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-database_password",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-database-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-database-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-jwt_secret",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: JWT_SECRET",
+        "Package 'env-probe-jwt-secret' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-jwt-secret-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-jwt_private_key",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-jwt-private-key' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-jwt-private-key-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-session_secret",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: SESSION_SECRET",
+        "Package 'env-probe-session-secret' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-session-secret-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-pypi_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-pypi-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-pypi-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-twine_password",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-twine-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-twine-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-heroku_api_key",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: HEROKU_API_KEY",
+        "Package 'env-probe-heroku-api-key' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-heroku-api-key-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-vercel_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: VERCEL_TOKEN",
+        "Package 'env-probe-vercel-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-vercel-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-netlify_auth_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: NETLIFY_AUTH_TOKEN",
+        "Package 'env-probe-netlify-auth-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-netlify-auth-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-slack_bot_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-slack-bot-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-slack-bot-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-discord_bot_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-discord-bot-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-discord-bot-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    }
+  ],
+  "results": [
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "vite",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "webpack",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "vitest",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "prettier",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "tsx",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "esbuild",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "rollup",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "swc",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "parcel",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "BUNDLERS",
+      "sourceFile": "studies/npm-fp-batch-bundlers.json",
+      "package": "turbopack",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "INFO",
+      "findingCount": 3,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "net.new-endpoint",
+        "obf.entropy-jump"
+      ],
+      "falsePositive": false
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "express",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "express",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "fastify",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "fastify",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "koa",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "koa",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "hapi",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "hapi",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "commander",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "commander",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "yargs",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "yargs",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "minimist",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "minimist",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "eslint",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "static-local-require",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "A new static local require('./flat-config/config-loader') should not count as dynamic loading."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "eslint",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "mocha",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "mocha",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "jest",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "jest",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "dotenv",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "existing-fs-read",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "fs.readFileSync(.env) exists in both versions, so fs.new-hotpath-read should not fire."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "dotenv",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "glob",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "utility-clean",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Small utility keeps the same fs/path imports in both versions, so the bump should stay CLEAN."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "glob",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "minimatch",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "utility-clean",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Small utility keeps the same fs/path imports in both versions, so the bump should stay CLEAN."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "minimatch",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "uuid",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": [],
+      "notes": [
+        "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "uuid",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "uuid-prepare-script",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: rollup -c"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "sharp",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "falsePositive": true,
+      "group": "native-binary-recompiled",
+      "expectedVerdict": "BLOCK",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "BLOCK",
+          "detector": "bin.new-native-artifact",
+          "category": "INSTALL",
+          "message": "New native binary artifact shipped in tarball: build/Release/sharp.node (node, 28 bytes)",
+          "evidence": {
+            "file": "build/Release/sharp.node",
+            "line": 1,
+            "snippet": "node artifact, sha256=e0145382afc4f2fb…"
+          }
+        }
+      ],
+      "notes": [
+        "The detector keys native artifacts by path+sha256, so a recompiled .node at the same path still looks like a new artifact."
+      ]
+    },
+    {
+      "batch": "WEB TOOLS",
+      "sourceFile": "studies/npm-fp-batch-webtools.json",
+      "package": "sharp",
+      "rawScenario": "prepare-added",
+      "scenarioFamily": "new-install",
+      "oldVersion": "1.0.0",
+      "newVersion": "2.0.0",
+      "verdict": "WARN",
+      "findingCount": 1,
+      "detectors": [
+        "install.script-added"
+      ],
+      "falsePositive": false,
+      "group": "prepare-script-change",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "severity": "WARN",
+          "detector": "install.script-added",
+          "category": "INSTALL",
+          "message": "Lifecycle script \"prepare\" was added.",
+          "evidence": {
+            "file": "package.json",
+            "line": 1,
+            "snippet": "prepare: npm run compile"
+          }
+        }
+      ],
+      "notes": [
+        "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+        "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+      ]
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "aws-sdk",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "cloud-sdk"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "@aws-sdk/client-s3",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "cloud-sdk"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "@azure/identity",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "cloud-sdk"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "firebase",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "cloud-sdk"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "mongoose",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "database-client"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "redis",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "database-client"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "mysql2",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "database-client"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "pg",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "database-client"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "nodemailer",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "mailer"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "node-cron",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "process-infra"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "pm2",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "process-infra"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "winston",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "logging"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "pino",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "logging"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "bunyan",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "logging"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "morgan",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "logging"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "config",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "config-framework"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "convict",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "config-framework"
+    },
+    {
+      "batch": "CONFIG/INFRA",
+      "sourceFile": "studies/npm-fp-batch-infra.json",
+      "package": "cosmiconfig",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "config-framework"
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "shelljs",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "0.8.5",
+      "newVersion": "0.8.6",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "execa",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "8.0.1",
+      "newVersion": "8.0.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "cross-spawn",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "7.0.3",
+      "newVersion": "7.0.4",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "child-process-promise",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "2.2.1",
+      "newVersion": "2.2.2",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "shell-subprocess-wrappers",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "vm2",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "3.9.18",
+      "newVersion": "3.9.19",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "vm-sandbox-packages",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "isolated-vm",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "4.7.2",
+      "newVersion": "4.7.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "vm-sandbox-packages",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "jose",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "5.2.4",
+      "newVersion": "5.2.5",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "crypto-security-libraries",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "keytar",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "7.9.0",
+      "newVersion": "7.9.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "crypto-security-libraries",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "node-forge",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.3.0",
+      "newVersion": "1.3.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "crypto-security-libraries",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "socket.io",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "4.7.4",
+      "newVersion": "4.7.5",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "ipc-messaging",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "bull",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "4.12.2",
+      "newVersion": "4.12.3",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "ipc-messaging",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "bullmq",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "5.7.8",
+      "newVersion": "5.7.9",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "ipc-messaging",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "electron-updater",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "6.1.8",
+      "newVersion": "6.1.9",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "electron-desktop",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "@actions/core",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "1.10.0",
+      "newVersion": "1.11.0",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "github-actions-sdk",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "@actions/github",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "6.0.0",
+      "newVersion": "6.0.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "github-actions-sdk",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "better-sqlite3",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "9.4.1",
+      "newVersion": "9.4.2",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "falsePositive": true,
+      "category": "native-addons",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": false,
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: build/Release/better_sqlite3.node (node, 16 bytes)",
+          "evidence": "build/Release/better_sqlite3.node:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "canvas",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "2.11.1",
+      "newVersion": "2.11.2",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "falsePositive": true,
+      "category": "native-addons",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": false,
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: build/Release/canvas.node (node, 16 bytes)",
+          "evidence": "build/Release/canvas.node:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "bcrypt",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "5.1.1",
+      "newVersion": "5.1.2",
+      "verdict": "BLOCK",
+      "findingCount": 1,
+      "detectors": [
+        "bin.new-native-artifact"
+      ],
+      "falsePositive": true,
+      "category": "native-addons",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": false,
+      "findings": [
+        {
+          "detector": "bin.new-native-artifact",
+          "severity": "BLOCK",
+          "message": "New native binary artifact shipped in tarball: lib/binding/napi-v3/bcrypt_lib.node (node, 16 bytes)",
+          "evidence": "lib/binding/napi-v3/bcrypt_lib.node:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "coffeescript",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "2.7.0",
+      "newVersion": "2.7.1",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "eval-heavy-legitimate",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "handlebars",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "4.7.8",
+      "newVersion": "4.7.9",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "eval-heavy-legitimate",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "ejs",
+      "rawScenario": "bump",
+      "scenarioFamily": "bump",
+      "oldVersion": "3.1.9",
+      "newVersion": "3.1.10",
+      "verdict": "CLEAN",
+      "findingCount": 0,
+      "detectors": [],
+      "falsePositive": false,
+      "category": "eval-heavy-legitimate",
+      "expectedVerdict": "CLEAN",
+      "matchesExpectation": true,
+      "findings": []
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "@actions/core",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.11.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "category": "github-actions-sdk",
+      "expectedVerdict": "BLOCK",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "detector": "env.token-harvest",
+          "severity": "BLOCK",
+          "message": "Package started reading sensitive env: GITHUB_TOKEN",
+          "evidence": "index.js:2"
+        },
+        {
+          "detector": "deps.local-source",
+          "severity": "INFO",
+          "message": "Package '@actions/core' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/@actions_core-1.11.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz.",
+          "evidence": "node_modules/@actions/core:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "handlebars",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "4.7.9",
+      "verdict": "WARN",
+      "findingCount": 2,
+      "detectors": [
+        "code.dynamic-loading-added",
+        "deps.local-source"
+      ],
+      "falsePositive": false,
+      "category": "eval-heavy-legitimate",
+      "expectedVerdict": "WARN",
+      "matchesExpectation": true,
+      "findings": [
+        {
+          "detector": "code.dynamic-loading-added",
+          "severity": "WARN",
+          "message": "Dynamic code sink introduced (new-function).",
+          "evidence": "index.js:3"
+        },
+        {
+          "detector": "deps.local-source",
+          "severity": "INFO",
+          "message": "Package 'handlebars' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/handlebars-4.7.9.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz.",
+          "evidence": "node_modules/handlebars:1"
+        }
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-smtp_pass",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-smtp-pass' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-smtp-pass-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-smtp_password",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-smtp-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-smtp-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-db_password",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-db-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-db-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-database_password",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-database-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-database-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-jwt_secret",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: JWT_SECRET",
+        "Package 'env-probe-jwt-secret' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-jwt-secret-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-jwt_private_key",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-jwt-private-key' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-jwt-private-key-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-session_secret",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: SESSION_SECRET",
+        "Package 'env-probe-session-secret' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-session-secret-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-pypi_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-pypi-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-pypi-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-twine_password",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-twine-password' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-twine-password-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-heroku_api_key",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: HEROKU_API_KEY",
+        "Package 'env-probe-heroku-api-key' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-heroku-api-key-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-vercel_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: VERCEL_TOKEN",
+        "Package 'env-probe-vercel-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-vercel-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-netlify_auth_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "BLOCK",
+      "findingCount": 2,
+      "detectors": [
+        "deps.local-source",
+        "env.token-harvest"
+      ],
+      "falsePositive": false,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package started reading sensitive env: NETLIFY_AUTH_TOKEN",
+        "Package 'env-probe-netlify-auth-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-netlify-auth-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-slack_bot_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-slack-bot-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-slack-bot-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    },
+    {
+      "batch": "exotic",
+      "sourceFile": "studies/npm-fp-batch-exotic.json",
+      "package": "env-probe-discord_bot_token",
+      "rawScenario": "new-install",
+      "scenarioFamily": "new-install",
+      "oldVersion": null,
+      "newVersion": "1.0.0",
+      "verdict": "INFO",
+      "findingCount": 1,
+      "detectors": [
+        "deps.local-source"
+      ],
+      "falsePositive": true,
+      "expectedVerdict": "BLOCK",
+      "findingMessages": [
+        "Package 'env-probe-discord-bot-token' was newly added with a local file: resolved URL ('file:///Users/L122472/telemeteryXsage/copilot-worktrees/vetlock/oj-uday-improved-barnacle/studies/.scratch-npm-fp-exotic/artifacts/env-probe-discord-bot-token-1.0.0.tgz'). This path is attacker-controlled — a malicious lockfile can point at any local .tgz."
+      ]
+    }
+  ]
+}

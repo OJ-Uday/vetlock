@@ -19,6 +19,14 @@ Four runs against the same 30-bump `studies/top-100.txt` corpus, fetched from an
 
 Also bumped the snapshot cache format version to 2 — pre-v0.5.0 caches are treated as misses (they lack `urlLiteralContexts` and would silently mask the new field).
 
+**v0.6.0 (this release) — npm FP study root-cause fixes.** Aggregated `studies/npm-fp-batch-{bundlers,webtools,infra,exotic}.json` into `studies/npm-fp-combined.json` and fixed the three causes those batches isolated:
+
+- **OBF escalation fix.** `packages/detectors/src/index.ts` no longer lets `CODE.dynamic-loading-added` escalate `OBF/WARN` when the sink kind is only `dynamic-import` / `dynamic-require`. OBF now escalates only on NET/INSTALL/EXEC/ENV/FS co-occurrence or dangerous CODE kinds (`eval`, `new-function`, `unpacker`, `marshal`, `deserialize`). This removes the bundler false-positive shape behind vite / webpack / vitest / prettier routine bumps.
+- **Compound-suspicion 3b fix.** The old “2 WARNs across 2 security categories” rule was too broad: NET(literal/config URL) + CODE(dynamic-import) and CODE + OBF both promoted benign bundles. Rule 3b now requires an **attack-specific pair** (`NET+ENV`, `NET+EXEC`, `NET+INSTALL`, `ENV+EXEC`, `ENV+INSTALL`, `EXEC+INSTALL`), and NET only qualifies when the new endpoint is a real `network-arg`, not a plain literal or comment.
+- **`prepare` moved to INFO.** `packages/detectors/src/install.ts` now treats `preprepare` / `prepare` / `postprepare` as `PUBLISH_ONLY_TIER` → INFO. Registry-installed packages do not execute `prepare`, so routine npm bumps should not WARN on it.
+- **`SENSITIVE_ENV_KEYS` expanded.** Added common missed secret names including SMTP, DB password/URL, JWT private key, Stripe, Twilio, Slack bot token, Discord bot token, PyPI/Twine, registry, deploy, Vault, Sentry, Datadog, Okta, Azure, Google/GCP, and `MONGODB_URI`. Removed noisy non-secret metadata from the sensitive list (`CI`, `HOME` stay out).
+- **Expected impact.** The real v0.5.0 npm routine-bump study was 14.3% BLOCK. With bundler BLOCKs removed and `prepare` downgraded, expected routine-bump BLOCK rate drops to roughly **~2%**, with remaining noise dominated by native-addon artifact churn rather than JS detector escalation.
+
 **What v0.4.2 changed** (previous release):
 
 - `install.script-changed` / `install.script-added` severity per hook tier:
@@ -234,7 +242,8 @@ Tracked in TASK #52.
 - **v0.4.0 · 2026-07-14** — first honest FP measurement (48% BLOCK on routine bumps)
 - **v0.4.1 · 2026-07-14** — landed §3a–§3c. BLOCK rate down to 33%. Corpus attack-catch preserved (12/13).
 - **v0.4.2 · 2026-07-14** — landed §3d, §3e, §3g. BLOCK rate down to **17.9%** — essentially at target. Corpus attack-catch still 12/13.
-- **v0.5.0 (planned)** — §3f `deps.first-version-cluster` registry-count fix + AST context-aware URL extraction. Target BLOCK ≤ 10%.
+- **v0.5.0 · 2026-07-14** — landed AST URL context tracking. BLOCK rate down to **14.3%** on routine npm bumps; corpus attack-catch still 12/13.
+- **v0.6.0 · 2026-07-15** — landed OBF escalation narrowing, attack-pair compound escalation, `prepare` → INFO, and `SENSITIVE_ENV_KEYS` expansion. Expected routine npm BLOCK rate: **~2%**; corpus attack-catch verified unchanged for shai-hulud, ctx-2022, aiocpa-2024.
 
 ---
 

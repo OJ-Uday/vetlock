@@ -49,6 +49,20 @@ describe('INSTALL detector', () => {
     };
     expect(installDetector.run(pair, { direction: 'changed' })).toHaveLength(0);
   });
+  it('treats prepare-family hooks as INFO for registry bumps', () => {
+    const pair = {
+      old: mkSnap({ name: 'foo', version: '1.0.0' }),
+      new: mkSnap({
+        name: 'foo',
+        version: '1.0.1',
+        manifest: { name: 'foo', version: '1.0.1', scripts: { prepare: 'pnpm build' } },
+      }),
+    };
+    const findings = installDetector.run(pair, { direction: 'changed' });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]!.detector).toBe('install.script-added');
+    expect(findings[0]!.severity).toBe('INFO');
+  });
 });
 
 describe('META detector', () => {

@@ -131,8 +131,10 @@ function contextForLiteralNode(path: NodePath): 'network-arg' | 'config-value' |
 // Sensitive keys under process.env — used by ENV detector (packages/detectors).
 // Exported so the detector layer has one source of truth.
 //
-// Expanded in v0.2: covers Stripe, Heroku, Supabase, DigitalOcean, wallet seeds,
-// and other API credentials commonly targeted by supply-chain attacks.
+// Expanded in v0.6.0: covers more mail, database, auth, registry, deploy, and
+// observability secrets commonly targeted by supply-chain attacks. Keep this
+// list focused on credential-bearing values — metadata such as CI/HOME/PATH is
+// intentionally excluded.
 export const SENSITIVE_ENV_KEYS: readonly string[] = [
   // npm ecosystem
   'NPM_TOKEN', 'NPM_AUTH_TOKEN', 'NPM_CONFIG_TOKEN',
@@ -143,10 +145,13 @@ export const SENSITIVE_ENV_KEYS: readonly string[] = [
   'AWS_PROFILE', 'AWS_DEFAULT_REGION',
   // GCP
   'GOOGLE_APPLICATION_CREDENTIALS', 'GCP_TOKEN', 'GOOGLE_API_KEY',
+  'GOOGLE_PRIVATE_KEY', 'GCP_SERVICE_ACCOUNT_KEY',
   // Azure
   'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET', 'AZURE_TENANT_ID', 'AZURE_STORAGE_KEY',
+  // Okta
+  'OKTA_CLIENT_SECRET',
   // Docker
-  'DOCKER_AUTH_CONFIG', 'DOCKER_PASSWORD', 'DOCKER_USERNAME',
+  'DOCKER_AUTH_CONFIG', 'DOCKER_PASSWORD', 'DOCKER_USERNAME', 'REGISTRY_PASSWORD',
   // Stripe / payments
   'STRIPE_SECRET_KEY', 'STRIPE_API_KEY', 'STRIPE_WEBHOOK_SECRET',
   'PAYPAL_CLIENT_SECRET', 'SQUARE_ACCESS_TOKEN',
@@ -159,25 +164,36 @@ export const SENSITIVE_ENV_KEYS: readonly string[] = [
   'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID',
   'DIGITALOCEAN_TOKEN', 'DIGITALOCEAN_ACCESS_TOKEN',
   // Slack / Discord / Telegram
-  'SLACK_TOKEN', 'SLACK_WEBHOOK_URL', 'DISCORD_TOKEN', 'DISCORD_WEBHOOK',
+  'SLACK_TOKEN', 'SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET', 'SLACK_WEBHOOK_URL',
+  'DISCORD_BOT_TOKEN', 'DISCORD_TOKEN', 'DISCORD_WEBHOOK',
   'TELEGRAM_BOT_TOKEN',
+  // Twilio / email
+  'TWILIO_AUTH_TOKEN',
+  'SMTP_PASS', 'SMTP_PASSWORD', 'EMAIL_PASSWORD',
   // Sentry / Datadog / New Relic
-  'SENTRY_AUTH_TOKEN', 'DATADOG_API_KEY', 'NEW_RELIC_LICENSE_KEY',
+  'SENTRY_AUTH_TOKEN', 'SENTRY_DSN',
+  'DATADOG_API_KEY', 'DD_API_KEY', 'NEW_RELIC_LICENSE_KEY',
   // OpenAI / Anthropic / other AI
   'OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'HUGGINGFACEHUB_API_TOKEN', 'CO_API_KEY',
   // Crypto / wallets — seed phrases, private keys, mnemonics
   'MNEMONIC', 'PRIVATE_KEY', 'WALLET_PRIVATE_KEY', 'ETH_PRIVATE_KEY',
   'BTC_PRIVATE_KEY', 'SOLANA_PRIVATE_KEY', 'SEED_PHRASE',
   'METAMASK_SEED', 'PHANTOM_PRIVATE_KEY',
+  'PGP_PRIVATE_KEY', 'GPG_PRIVATE_KEY', 'SSH_PRIVATE_KEY', 'DEPLOY_KEY',
   // JWT / auth generic
-  'JWT_SECRET', 'AUTH_SECRET', 'SESSION_SECRET', 'COOKIE_SECRET',
+  'JWT_SECRET', 'JWT_PRIVATE_KEY', 'AUTH_SECRET', 'SESSION_SECRET', 'COOKIE_SECRET',
   // Database URLs — full connect strings usually contain creds
-  'DATABASE_URL', 'MONGO_URL', 'REDIS_URL', 'POSTGRES_URL',
+  'DATABASE_URL', 'DB_URL', 'MONGO_URL', 'MONGODB_URI', 'REDIS_URL', 'POSTGRES_URL',
+  'DB_PASSWORD', 'DATABASE_PASSWORD',
   // MailGun / SendGrid / Postmark
   'MAILGUN_API_KEY', 'SENDGRID_API_KEY', 'POSTMARK_API_TOKEN',
-  // Generic environment identity — attackers use these to fingerprint hosts
-  'CI', 'HOME', 'USER', 'USERNAME',
-  'SSH_AUTH_SOCK', 'GPG_AGENT_INFO',
+  // Python / package publishing
+  'PYPI_TOKEN', 'TWINE_PASSWORD',
+  // Secrets managers / deployment
+  'VAULT_TOKEN', 'VAULT_SECRET',
+  // Generic environment identity still worth tracking when it exposes local
+  // credential agents or private-user context.
+  'USER', 'USERNAME', 'SSH_AUTH_SOCK', 'GPG_AGENT_INFO',
 ];
 
 /** Very rough Shannon entropy in bits/byte. */

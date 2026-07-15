@@ -3,22 +3,26 @@
  *
  * Escalation rules (§3):
  *   1. OBF findings in a package that also has NET, INSTALL, EXEC, ENV, or FS
- *      findings are upgraded from WARN to BLOCK — the obfuscated-blob worm
- *      signature regardless of whether the exfil channel is a URL/hook/exec/
- *      env-harvest/hotpath-write (REDTEAM L9, S8).
+ *      findings are upgraded from WARN to BLOCK. CODE findings only count when
+ *      their sink kind is dangerous (eval/new-function/unpacker/marshal/
+ *      deserialize) — dynamic-import/require are bundler patterns, not attack
+ *      signal on their own (REDTEAM L9, S8 + v0.6.0 FP study).
  *   2. Typosquat candidates (DEPS WARN) upgrade to BLOCK when the added
  *      package EITHER ships any BLOCK-tier NET/INSTALL/EXEC/ENV/FS/CODE/OBF
  *      capability (original rule, broadened categories) OR has 2+ WARN-tier
  *      findings across 2+ distinct categories (REDTEAM D5).
  *   3. Compound-suspicion: a package accumulating WARN findings escalates to
- *      BLOCK when EITHER (a) warns.length >= 3 regardless of category count
- *      (closes single-category saturation — REDTEAM S5, D4) OR (b) warns.length
- *      >= 2 across 2+ distinct categories AND at least one finding is in a
- *      security-relevant category NET/INSTALL/EXEC/ENV/FS/CODE (REDTEAM D4, S5).
+ *      BLOCK when EITHER (a) warns.length >= 3 across 2+ distinct categories
+ *      (closes multi-category saturation — REDTEAM S5, D4) OR (b) warns.length
+ *      >= 2 and the WARN categories form an attack-shaped pair such as
+ *      NET+ENV or NET+INSTALL. NET only counts for rule 3b when the new URL is
+ *      actually used as a network argument, not when it's a plain literal or a
+ *      config-shaped string (v0.6.0 FP study).
  */
 
 import type {
   Detector,
+  DetectorCategory,
   DetectorContext,
   Finding,
   SnapshotPair,
@@ -81,6 +85,14 @@ export {
   bundledDepsDetector,
 };
 
+const DANGEROUS_CODE_KINDS = new Set([
+  'eval',
+  'new-function',
+  'unpacker',
+  'marshal',
+  'deserialize',
+]);
+
 /**
  * Run every built-in detector, apply cross-detector escalation, return findings
  * in stable sort order. Every emitted finding passes validateFinding() —
@@ -94,21 +106,26 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   for (const d of ALL_DETECTORS) {
     for (const f of d.run(pair, context)) all.push(f);
   }
+  addFirstInstallSecretExfilFallback(pair, all);
 
-  // REDTEAM L9, S8 FIX — Escalation 1: OBF/WARN → BLOCK when same package also has
-  // NET, INSTALL, EXEC, ENV, or FS findings. Previously only NET and INSTALL triggered
-  // this promotion; attackers who used child_process (EXEC), env-harvest (ENV), or
-  // hotpath writes (FS) without any URL literals or lifecycle hooks evaded it.
-  const riskyCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS', 'CODE']);
-  const risky = new Set(
+  // Escalation 1: OBF/WARN → BLOCK when same package also has NET/INSTALL/EXEC/
+  // ENV/FS findings, or dangerous CODE findings. v0.5.0 counted ALL CODE
+  // findings here, which let bundler-only dynamic-import/dynamic-require sites
+  // escalate harmless minified dist output to BLOCK.
+  const riskyForOBF = new Set(
     all
-      .filter((f) => riskyCategories.has(f.category))
+      .filter((f) => {
+        if (['NET', 'INSTALL', 'EXEC', 'ENV', 'FS'].includes(f.category)) return true;
+        if (f.category !== 'CODE') return false;
+        const codeKind = f.provenance.find((entry) => entry[0] === 'dynamic-code-kind')?.[1];
+        return !!codeKind && DANGEROUS_CODE_KINDS.has(codeKind);
+      })
       .map((f) => f.package),
   );
   for (const f of all) {
-    if (f.category === 'OBF' && f.severity === 'WARN' && risky.has(f.package)) {
+    if (f.category === 'OBF' && f.severity === 'WARN' && riskyForOBF.has(f.package)) {
       f.severity = 'BLOCK';
-      f.message += ' [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS/CODE findings in this package]';
+      f.message += ' [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS or dangerous CODE findings in this package]';
     }
   }
 
@@ -149,9 +166,10 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   // WARN findings to BLOCK when ONE of:
   //   (a) warns.length >= 3 across 2+ distinct categories — multi-category
   //       accumulation (attacker spreading signals across NET + INSTALL + EXEC).
-  //   (b) warns.length >= 2 across 2+ distinct categories AND at least one finding
-  //       is in a security-relevant category — 2-finding cross-category evasion
-  //       (e.g. code.dynamic-loading-added + net.new-module).
+  //   (b) warns.length >= 2 and the WARN categories form an attack-shaped pair:
+  //       NET+ENV, NET+EXEC, NET+INSTALL, ENV+EXEC, ENV+INSTALL, EXEC+INSTALL.
+  //       If NET participates, the new URL must be a network-arg (not a plain
+  //       literal/config string) to qualify.
   //   (c) warns.length >= 3 in a SINGLE OBF category — same-category obfuscated-file
   //       saturation (attacker shipping N obfuscated files with no other signal;
   //       REDTEAM S5, D4). Restricted to OBF because obfuscated file additions
@@ -167,7 +185,6 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   // category with warns.length >= 3" rule. That over-fired on bundlers. The
   // split preserves REDTEAM S5/D4 (a package adding 3+ eval() calls IS
   // compound-suspicious) without misfiring on legitimate module loading.
-  const securityCategories = new Set(['NET', 'INSTALL', 'EXEC', 'ENV', 'FS', 'CODE']);
   // Sink kinds emitted in code.ts as "Dynamic code sink introduced (${kind}).".
   // "Dangerous" kinds = ones with a low legit base rate. Excluded from this list:
   //   - dynamic-import / dynamic-require: modern module-loading idiom (bundlers)
@@ -178,13 +195,17 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   // Retained as dangerous: eval, new-function (both direct-code-execution),
   // and the unpacker/marshal/deserialize kinds (attacker-favored obfuscation
   // unpacking).
-  const DANGEROUS_CODE_KINDS = new Set([
-    'eval',
-    'new-function',
-    'unpacker',
-    'marshal',
-    'deserialize',
-  ]);
+  const ATTACK_PAIRS: Array<[DetectorCategory, DetectorCategory]> = [
+    ['NET', 'ENV'],
+    ['NET', 'EXEC'],
+    ['NET', 'INSTALL'],
+    ['ENV', 'EXEC'],
+    ['ENV', 'INSTALL'],
+    ['EXEC', 'INSTALL'],
+  ];
+  const packagesWithNewNetworkArg = hasNewNetworkArgUrl(pair) && pair.new
+    ? new Set([pair.new.name])
+    : new Set<string>();
   const warnFindingsByPkg = new Map<string, Finding[]>();
   for (const f of all) {
     if (f.severity !== 'WARN') continue;
@@ -192,7 +213,6 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
   }
   for (const [pkg, warns] of warnFindingsByPkg) {
     const cats = new Set(warns.map((w) => w.category));
-    const hasSecurityRelevant = warns.some((w) => securityCategories.has(w.category));
     const obfSaturation = warns.length >= 3 && cats.size === 1 && cats.has('OBF');
     // CODE saturation only counts DANGEROUS sink kinds — see comment block above.
     const dangerousCodeCount = warns.filter(
@@ -202,9 +222,14 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
       },
     ).length;
     const codeSaturation = dangerousCodeCount >= 3 && cats.size === 1 && cats.has('CODE');
+    const hasAttackPair = ATTACK_PAIRS.some(([a, b]) => {
+      if (!cats.has(a) || !cats.has(b)) return false;
+      if (a === 'NET' || b === 'NET') return packagesWithNewNetworkArg.has(pkg);
+      return true;
+    });
     const shouldEscalate =
       (warns.length >= 3 && cats.size >= 2) ||
-      (warns.length >= 2 && cats.size >= 2 && hasSecurityRelevant) ||
+      (warns.length >= 2 && hasAttackPair) ||
       obfSaturation ||
       codeSaturation;
     if (!shouldEscalate) continue;
@@ -263,5 +288,61 @@ export function stablesort(findings: Finding[]): Finding[] {
       return aEv.line - bEv.line;
     }
     return 0;
+  });
+}
+
+function hasNewNetworkArgUrl(pair: SnapshotPair): boolean {
+  if (!pair.new) return false;
+  const oldUrls = collectUrls(pair.old);
+  for (const file of pair.new.files) {
+    const contexts = file.urlLiteralContexts ?? {};
+    for (const url of file.urlLiterals) {
+      const context = contexts[url];
+      if (context === 'literal' || context === 'comment' || context === 'config-value') continue;
+      if (!oldUrls.has(url)) return true;
+    }
+  }
+  return false;
+}
+
+function collectUrls(snapshot: SnapshotPair['old'] | SnapshotPair['new']): Set<string> {
+  const urls = new Set<string>();
+  if (!snapshot) return urls;
+  for (const file of snapshot.files) {
+    for (const url of file.urlLiterals) urls.add(url);
+  }
+  return urls;
+}
+
+function addFirstInstallSecretExfilFallback(pair: SnapshotPair, all: Finding[]): void {
+  if (pair.old !== null || !pair.new) return;
+  if (all.some((f) => f.detector === 'deps.first-version-cluster')) return;
+  const pkgFindings = all.filter((f) => f.package === pair.new!.name);
+  const envFindings = pkgFindings.filter((f) => f.detector === 'env.token-harvest');
+  const hasWholeEnvEnumeration = envFindings.some((f) => f.message.includes('whole-object process.env enumeration'));
+  const hasOutboundNet = pkgFindings.some(
+    (f) => f.category === 'NET' && (f.detector === 'net.new-endpoint' || f.detector === 'net.new-module'),
+  );
+  if (!hasOutboundNet || (!hasWholeEnvEnumeration && envFindings.length < 3)) return;
+
+  all.push({
+    detector: 'deps.first-version-cluster',
+    category: 'DEPS',
+    package: pair.new.name,
+    from: null,
+    to: pair.new.version,
+    direction: 'added',
+    severity: 'BLOCK',
+    confidence: 'high',
+    message:
+      'Newly-installed package combines outbound network capability with bulk sensitive-env harvest on its first version.',
+    evidence: [
+      {
+        file: 'package.json',
+        line: 1,
+        snippet: `first-version-with-cluster: NET + ${envFindings.length} sensitive env reads`,
+      },
+    ],
+    provenance: [],
   });
 }

@@ -131,5 +131,11 @@ describe('capability extraction', () => {
   it('exposes SENSITIVE_ENV_KEYS constant for detector layer', () => {
     expect(SENSITIVE_ENV_KEYS).toContain('NPM_TOKEN');
     expect(SENSITIVE_ENV_KEYS).toContain('AWS_ACCESS_KEY_ID');
+    expect(SENSITIVE_ENV_KEYS).toContain('JWT_SECRET');
+    expect(SENSITIVE_ENV_KEYS).toContain('MONGODB_URI');
+    expect(SENSITIVE_ENV_KEYS).toContain('SLACK_BOT_TOKEN');
+    expect(SENSITIVE_ENV_KEYS).toContain('SMTP_PASSWORD');
+    expect(SENSITIVE_ENV_KEYS).not.toContain('CI');
+    expect(SENSITIVE_ENV_KEYS).not.toContain('HOME');
   });
 });

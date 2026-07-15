@@ -12,10 +12,12 @@
  *     unpack obfuscated payloads (REDTEAM L11).
  *   - dynamic-import / dynamic-require → INFO, low (down from WARN, medium).
  *     Modern module-loading idiom. A bundler adds them at rates uncorrelated
- *     with malice. Legitimate to observe, not enough signal to WARN on its own.
- *     Attackers using dynamic-require to load a decoded payload are already
- *     covered by the NEIGHBORING evidence: the payload itself will trigger
- *     obf.new-obfuscated-file or char-arithmetic-decoder.
+ *     with malice. Legitimate to observe, not enough signal to WARN on its own,
+ *     and as of v0.6.0 they also do NOT count toward OBF escalation in
+ *     runAll() — only dangerous CODE kinds do. Attackers using dynamic-require
+ *     to load a decoded payload are already covered by the NEIGHBORING
+ *     evidence: the payload itself will trigger obf.new-obfuscated-file or
+ *     char-arithmetic-decoder.
  *   - vm → BLOCK, high. Direct sandbox-escape target; the vm.runIn*Context()
  *     APIs are the shape of "hidden second-stage code execution."
  *
