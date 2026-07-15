@@ -3,8 +3,12 @@ name: vetlock (dogfood)
 on:
   pull_request:
     paths:
+      - '**/pnpm-lock.yaml'
       - '**/package-lock.json'
-      - '**/pnpm-lock.yaml'   # we'll ignore for now — pnpm support is roadmap
+      # Python lockfiles: vetlock auto-detects format from filename
+      - '**/requirements*.txt'
+      - '**/poetry.lock'
+      - '**/uv.lock'
 
 permissions:
   contents: read

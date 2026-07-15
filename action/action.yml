@@ -1,5 +1,5 @@
 name: 'vetlock'
-description: 'Behavioral diff for npm/pnpm/yarn dependency updates — catches supply-chain attacks that advisory databases miss.'
+description: 'Behavioral diff for npm/pnpm/yarn/PyPI dependency updates — catches supply-chain attacks that advisory databases miss.'
 author: 'Uday Ojha'
 branding:
   icon: 'shield'
@@ -7,7 +7,7 @@ branding:
 
 inputs:
   before:
-    description: 'Path to the pre-change lockfile. Auto-detected shape: package-lock.json (npm), pnpm-lock.yaml, or yarn.lock. F1 fix landed in v0.3.0.'
+    description: 'Path to the pre-change lockfile. Auto-detected shape: package-lock.json (npm), pnpm-lock.yaml, yarn.lock, requirements*.txt, poetry.lock, or uv.lock.'
     required: false
     default: 'package-lock.json'
   base-ref:
@@ -30,6 +30,14 @@ inputs:
     description: 'vetlock version to install from npm. "latest" tracks the newest release; pin an exact version for reproducibility.'
     required: false
     default: 'latest'
+  pypi-registry:
+    description: 'PyPI JSON API base URL (for Artifactory proxy). If unset, uses VETLOCK_PYPI_JSON_URL env var, then https://pypi.org.'
+    required: false
+    default: ''
+  pypi-auth:
+    description: 'PyPI auth credential (Bearer token or user:token for Basic). For Artifactory use your API key or identity token. Stored as a secret — never log.'
+    required: false
+    default: ''
 
 outputs:
   verdict:
@@ -98,6 +106,8 @@ runs:
         VETLOCK_BEFORE_INPUT: ${{ inputs.before }}
         VETLOCK_SARIF_OUT: ${{ inputs.sarif-out }}
         VETLOCK_FAIL_ON: ${{ inputs.fail-on }}
+        VETLOCK_PYPI_JSON_URL: ${{ inputs.pypi-registry }}
+        VETLOCK_PYPI_AUTH: ${{ inputs.pypi-auth }}
       run: |
         set -euo pipefail
         if [[ "$VETLOCK_BEFORE_INPUT" == */* ]]; then
@@ -144,7 +154,10 @@ runs:
       env:
         GH_TOKEN: ${{ github.token }}
         VETLOCK_BEFORE_INPUT: ${{ inputs.before }}
+        VETLOCK_SARIF_OUT: ${{ inputs.sarif-out }}
         VETLOCK_FAIL_ON: ${{ inputs.fail-on }}
+        VETLOCK_PYPI_JSON_URL: ${{ inputs.pypi-registry }}
+        VETLOCK_PYPI_AUTH: ${{ inputs.pypi-auth }}
         VETLOCK_PR_NUMBER: ${{ github.event.pull_request.number }}
         VETLOCK_REPOSITORY: ${{ github.repository }}
       run: |

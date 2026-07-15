@@ -9,7 +9,7 @@
  *   version                       — print version
  *
  * Flags:
- *   --json | --sarif | --md      — output format (default: pretty TTY)
+ *   --json | --osif | --sarif | --md      — output format (default: pretty TTY)
  *   --fail-on=<detector,detector,…> — exit 2 on ANY of these detector ids
  *   --config <path>              — path to .vetlock.json (defaults to ./.vetlock.json)
  *   --config-allow-in-diff        — accept a config that changed inside the PR
@@ -47,11 +47,13 @@ import {
 import { ALL_DETECTORS, runAll } from '@vetlock/detectors';
 import { renderTTY } from './tty.js';
 import { renderJSON } from './json.js';
+import { renderOSIF } from './osif.js';
 import { renderSARIF } from './sarif.js';
 import { renderMarkdown } from './md.js';
 
 interface CliFlags {
   json?: boolean;
+  osif?: boolean;
   sarif?: boolean;
   md?: boolean;
   failOn?: string;
@@ -61,19 +63,22 @@ interface CliFlags {
   progress?: boolean;
   quiet?: boolean;
   showClean?: boolean;
+  pypiRegistry?: string;
+  pypiAuth?: string;
 }
 
 const program = new Command();
 
 program
   .name('vetlock')
-  .description('Behavioral diff for npm dependency updates.')
+  .description('Behavioral diff for npm/pnpm/yarn/PyPI dependency updates.')
   .version(VETLOCK_VERSION);
 
 program
   .command('diff <before> <after>')
-  .description('Diff two lockfiles (npm / pnpm / yarn) and report behavioral changes.')
+  .description('Diff two lockfiles (npm / pnpm / yarn / PyPI requirements.txt / poetry.lock / uv.lock) and report behavioral changes.')
   .option('--json', 'emit JSON')
+  .option('--osif', 'emit OSIF v0.1 incident documents (one per affected package)')
   .option('--sarif', 'emit SARIF 2.1.0')
   .option('--md', 'emit GitHub-flavored Markdown')
   .option('--fail-on <detectors>', 'comma-separated detector ids that force exit 2')
@@ -90,8 +95,12 @@ program
   .option('--no-progress', 'suppress the progress spinner')
   .option('--quiet', 'no progress AND no stderr messages')
   .option('--show-clean', 'print a CLEAN banner even when no findings')
+  .option('--pypi-registry <url>', 'PyPI JSON API base URL (for Artifactory proxy). Also read from VETLOCK_PYPI_JSON_URL env var.')
+  .option('--pypi-auth <credential>', 'PyPI auth credential (Bearer token or user:token). Also read from VETLOCK_PYPI_AUTH env var.')
   .action(async (beforePath: string, afterPath: string, opts: CliFlags) => {
     try {
+      if (opts.pypiRegistry) process.env.VETLOCK_PYPI_JSON_URL = opts.pypiRegistry;
+      if (opts.pypiAuth) process.env.VETLOCK_PYPI_AUTH = opts.pypiAuth;
       const failOnCli = parseFailOnIds(opts);
       if (beforePath === '-' || afterPath === '-') {
         writeErr(opts, 'vetlock: stdin input (-) is not yet supported. Use file paths.');
@@ -113,6 +122,7 @@ program
   .command('demo')
   .description('Run vetlock against bundled Shai-Hulud fixture (no network, no config).')
   .option('--json', 'emit JSON')
+  .option('--osif', 'emit OSIF v0.1 incident documents (one per affected package)')
   .option('--sarif', 'emit SARIF')
   .option('--md', 'emit Markdown')
   .option('--no-progress', 'suppress the progress spinner')
@@ -168,8 +178,9 @@ program
 
 program
   .command('scan <lockfile>')
-  .description('Scan one lockfile (npm / pnpm / yarn) and report its capability profile — what the tree DOES, not what changed. Applies the same config trust checks as diff.')
+  .description('Scan one lockfile (npm / pnpm / yarn / PyPI) and report its full capability profile.')
   .option('--json', 'emit JSON')
+  .option('--osif', 'emit OSIF v0.1 incident documents (one per affected package)')
   .option('--sarif', 'emit SARIF 2.1.0')
   .option('--md', 'emit GitHub-flavored Markdown')
   .option('--fail-on <detectors>', 'comma-separated detector ids that force exit 2')
@@ -186,8 +197,12 @@ program
   .option('--no-progress', 'suppress the progress spinner')
   .option('--quiet', 'no progress AND no stderr messages')
   .option('--show-clean', 'print a CLEAN banner even when no findings')
+  .option('--pypi-registry <url>', 'PyPI JSON API base URL (for Artifactory proxy). Also read from VETLOCK_PYPI_JSON_URL env var.')
+  .option('--pypi-auth <credential>', 'PyPI auth credential (Bearer token or user:token). Also read from VETLOCK_PYPI_AUTH env var.')
   .action(async (lockfilePath: string, opts: CliFlags) => {
     try {
+      if (opts.pypiRegistry) process.env.VETLOCK_PYPI_JSON_URL = opts.pypiRegistry;
+      if (opts.pypiAuth) process.env.VETLOCK_PYPI_AUTH = opts.pypiAuth;
       const failOnCli = parseFailOnIds(opts);
       if (lockfilePath === '-') {
         writeErr(opts, 'vetlock: stdin input (-) is not yet supported. Use file paths.');
@@ -201,7 +216,7 @@ program
       // See ADR 0012 for the framing rationale.
       const emptyBefore = synthesizeEmptyLockfile(lockfileText, lockfilePath);
       await runAndPrint(emptyBefore, lockfileText, opts, decision, {
-        beforePath: '<synthetic-empty-for-scan>',
+        beforePath: lockfilePath,
         afterPath: lockfilePath,
         scanMode: true,
       }, failOnCli);
@@ -219,19 +234,27 @@ program
  * exported `runScan` — same string synthesis).
  */
 function synthesizeEmptyLockfile(lockfileText: string, filename: string): string {
-  const base = filename.split(/[\\/]/).pop() ?? '';
-  if (base === 'pnpm-lock.yaml' || base === 'pnpm-lock.yml' || /^lockfileVersion:/m.test(lockfileText)) {
-    return `lockfileVersion: '9.0'\nimporters:\n  .:\n    dependencies: {}\npackages: {}\n`;
+  const detected = parseLockfileText(lockfileText, filename);
+  switch (detected.kind) {
+    case 'pnpm':
+      return `lockfileVersion: '9.0'\nimporters:\n  .:\n    dependencies: {}\npackages: {}\n`;
+    case 'yarn-berry':
+      return `__metadata:\n  version: 6\n  cacheKey: 10\n`;
+    case 'yarn-classic':
+      return `# THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY.\n# yarn lockfile v1\n\n`;
+    case 'pypi-requirements':
+      return '';
+    case 'pypi-poetry':
+      return `[metadata]\nlock-version = "2.0"\npython-versions = "*"\ncontent-hash = "0000000000000000000000000000000000000000000000000000000000000000"\n`;
+    case 'pypi-uv':
+      return '# This file was autogenerated by uv via `uv lock`\nversion = 1\nrevision = 3\nrequires-python = ">=3.11"\n\n';
+    case 'npm':
+    default:
+      return JSON.stringify({
+        name: 'empty', version: '0.0.0', lockfileVersion: 3,
+        packages: { '': { name: 'empty', version: '0.0.0' } },
+      });
   }
-  if (base === 'yarn.lock' || /^\s*__metadata:/m.test(lockfileText)) {
-    return /^\s*__metadata:/m.test(lockfileText)
-      ? `__metadata:\n  version: 6\n  cacheKey: 10\n`
-      : `# THIS IS AN AUTOGENERATED FILE. DO NOT EDIT THIS FILE DIRECTLY.\n# yarn lockfile v1\n\n`;
-  }
-  return JSON.stringify({
-    name: 'empty', version: '0.0.0', lockfileVersion: 3,
-    packages: { '': { name: 'empty', version: '0.0.0' } },
-  });
 }
 
 /**
@@ -455,6 +478,8 @@ async function runAndPrint(
 
   if (opts.json) {
     process.stdout.write(renderJSON(result) + '\n');
+  } else if (opts.osif) {
+    process.stdout.write(renderOSIF(result) + '\n');
   } else if (opts.sarif) {
     process.stdout.write(renderSARIF(result) + '\n');
   } else if (opts.md) {
