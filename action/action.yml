@@ -31,11 +31,11 @@ inputs:
     required: false
     default: 'latest'
   pypi-registry:
-    description: 'PyPI JSON API base URL (for Artifactory proxy). If unset, uses VETLOCK_PYPI_JSON_URL env var, then https://pypi.org.'
+    description: 'PyPI JSON API base URL. Leave empty for public PyPI (default). Set for corporate proxy registries (Artifactory, Nexus, DevPi).'
     required: false
     default: ''
   pypi-auth:
-    description: 'PyPI auth credential (Bearer token or user:token for Basic). For Artifactory use your API key or identity token. Stored as a secret — never log.'
+    description: 'PyPI auth for private/proxy registries only. Not needed for public PyPI. Format: token (Bearer) or user:token (Basic). Store as a GitHub secret.'
     required: false
     default: ''
 
