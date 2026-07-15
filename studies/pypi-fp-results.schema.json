@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PyPI FP Study Results",
+  "type": "object",
+  "required": ["version", "ecosystem", "totalBumps", "results", "summary"],
+  "properties": {
+    "version": { "type": "string" },
+    "ecosystem": { "const": "pypi" },
+    "vetlockVersion": { "type": "string" },
+    "ranAt": { "type": "string", "format": "date-time" },
+    "registryUsed": { "type": "string" },
+    "totalBumps": { "type": "integer" },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["package", "oldVersion", "newVersion", "verdict"],
+        "properties": {
+          "package": { "type": "string" },
+          "oldVersion": { "type": "string" },
+          "newVersion": { "type": "string" },
+          "verdict": { "enum": ["BLOCK", "WARN", "INFO", "CLEAN", "ERROR"] },
+          "findingCount": { "type": "integer" },
+          "detectors": { "type": "array", "items": { "type": "string" } },
+          "durationMs": { "type": "number" }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "BLOCK": { "type": "integer" },
+        "WARN": { "type": "integer" },
+        "INFO": { "type": "integer" },
+        "CLEAN": { "type": "integer" },
+        "ERROR": { "type": "integer" },
+        "blockRate": { "type": "number" },
+        "warnOrBlockRate": { "type": "number" },
+        "detectorHits": {
+          "type": "object",
+          "description": "Per-detector hit count across all bumps"
+        }
+      }
+    }
+  }
+}
