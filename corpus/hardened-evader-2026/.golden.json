@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -34,7 +35,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Package started using process/execution module \"child_process\". [escalated: package 'evader-lib' has 2 WARN findings across 2 categories]",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'evader-lib' has 2 WARN findings across 2 categories; source detectors: exec.new-module, net.new-module]",
       "evidence": [
         {
           "file": "util.js",
@@ -63,7 +64,7 @@
         {
           "file": "net.js",
           "line": 4,
-          "snippet": "hex(\"68747470733a2f2f657866696c2e6578616d706c652e696e76616c69642f\") → https://exfil.example.invalid/x"
+          "snippet": "hex(\"68747470733a2f2f657866696c2e6578616d706c652e696e76616c69642f\") \u2192 https://exfil.example.invalid/x"
         }
       ],
       "provenance": [
@@ -82,7 +83,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Package started using network module \"https\". [escalated: package 'evader-lib' has 2 WARN findings across 2 categories]",
+      "message": "Package started using network module \"https\". [escalated: package 'evader-lib' has 2 WARN findings across 2 categories; source detectors: exec.new-module, net.new-module]",
       "evidence": [
         {
           "file": "net.js",

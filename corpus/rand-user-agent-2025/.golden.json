@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -10,7 +11,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Dynamic code sink introduced (new-function). [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
+      "message": "Dynamic code sink introduced (new-function). [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories; source detectors: code.dynamic-loading-added, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "index.js",
@@ -34,12 +35,12 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories; source detectors: code.dynamic-loading-added, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "maintainers: [orig@example] → [orig@example, rat@example.invalid]"
+          "snippet": "maintainers: [orig@example] \u2192 [orig@example, rat@example.invalid]"
         }
       ],
       "provenance": [
@@ -58,7 +59,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "New network endpoint appeared: rat.example.invalid [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
+      "message": "New network endpoint appeared: rat.example.invalid [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories; source detectors: code.dynamic-loading-added, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "index.js",
@@ -82,7 +83,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Package started using network module \"net\". [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories]",
+      "message": "Package started using network module \"net\". [escalated: package 'rand-user-agent' has 4 WARN findings across 3 categories; source detectors: code.dynamic-loading-added, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "index.js",

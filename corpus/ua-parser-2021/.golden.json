@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -15,7 +16,7 @@
         {
           "file": "bin/jsextension.node",
           "line": 1,
-          "snippet": "node artifact, sha256=076a27c79e5ace2a…"
+          "snippet": "node artifact, sha256=076a27c79e5ace2a\u2026"
         }
       ],
       "provenance": [
@@ -34,7 +35,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using process/execution module \"child_process\". [escalated: package 'ua-parser-js' has 2 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'ua-parser-js' has 2 WARN findings across 2 categories; source detectors: exec.new-module, net.new-module] [GHSA: GHSA-fh58-9fw3-vf2v]",
       "evidence": [
         {
           "file": "preinstall.js",
@@ -82,7 +83,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using network module \"https\". [escalated: package 'ua-parser-js' has 2 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "message": "Package started using network module \"https\". [escalated: package 'ua-parser-js' has 2 WARN findings across 2 categories; source detectors: exec.new-module, net.new-module] [GHSA: GHSA-fh58-9fw3-vf2v]",
       "evidence": [
         {
           "file": "preinstall.js",

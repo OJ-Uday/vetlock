@@ -18,5 +18,16 @@ export default defineConfig({
         singleFork: false,
       },
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary'],
+      all: true,
+      thresholds: {
+        lines: 80,
+        branches: 75,
+        functions: 80,
+      },
+      exclude: ['**/test/**', '**/dist/**', '**/*.d.ts'],
+    },
   },
 });

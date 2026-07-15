@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -10,12 +11,12 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Same version, different integrity: sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== → sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw==. Registry-side or in-flight tamper.",
+      "message": "Same version, different integrity: sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== \u2192 sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw==. Registry-side or in-flight tamper.",
       "evidence": [
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "integrity sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== → sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw=="
+          "snippet": "integrity sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== \u2192 sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw=="
         }
       ],
       "provenance": []

@@ -39,9 +39,11 @@
  * does not because vetlock consumes a different modality" is exactly the bucket's charter.
  *
  * The three synthetic fixtures (integrity-tamper-synthetic, typosquat-synthetic,
- * hardened-evader-2026) don't appear here: they have no published advisory a public
- * scanner would flag, so there is no delta to record. And `fp-smoke` is a false-positive
- * study bench, not an incident.
+ * hardened-evader-2026) still have no seeded DELTAS here: they have no published advisory a
+ * public scanner would flag, so there is no delta row to record. They ARE included in
+ * `seededCorpusIds` below because PR-tier assurance coverage should replay them alongside the
+ * historical incidents even though the differential ledger is intentionally empty for them.
+ * And `fp-smoke` is a false-positive study bench, not an incident.
  *
  * ## What vetlock catches independently
  *
@@ -438,10 +440,13 @@ export const seededCorpusIds: readonly string[] = [
   'colors-2022',
   'eslint-scope-2018',
   'event-stream-2018',
+  'hardened-evader-2026',
+  'integrity-tamper-synthetic',
   'lottie-player-2024',
   'node-ipc-2022',
   'rand-user-agent-2025',
   'shai-hulud-2025',
   'solana-web3-2024',
+  'typosquat-synthetic',
   'ua-parser-2021',
 ];

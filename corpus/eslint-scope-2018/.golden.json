@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -15,7 +16,7 @@
         {
           "file": "build.js",
           "line": 1,
-          "snippet": "fs.readFile(\".npmrc\", …)"
+          "snippet": "fs.readFile(\".npmrc\", \u2026)"
         }
       ],
       "provenance": [
@@ -39,7 +40,7 @@
         {
           "file": "build.js",
           "line": 1,
-          "snippet": "fs.readFile(\"~/.npmrc\", …)"
+          "snippet": "fs.readFile(\"~/.npmrc\", \u2026)"
         }
       ],
       "provenance": [
@@ -58,12 +59,12 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories; source detectors: meta.maintainer-change, net.new-module] [GHSA: GHSA-5qgm-9j92-h5g5]",
       "evidence": [
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "maintainers: [nzakas@eslint.example] → [attacker@example.invalid, nzakas@eslint.example]"
+          "snippet": "maintainers: [nzakas@eslint.example] \u2192 [attacker@example.invalid, nzakas@eslint.example]"
         }
       ],
       "provenance": [
@@ -82,7 +83,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using network module \"http\". [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories] [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "message": "Package started using network module \"http\". [escalated: package 'eslint-scope' has 2 WARN findings across 2 categories; source detectors: meta.maintainer-change, net.new-module] [GHSA: GHSA-5qgm-9j92-h5g5]",
       "evidence": [
         {
           "file": "build.js",
@@ -106,7 +107,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Obfuscation indicators appeared in lib/index.js: source was not minified before, is now [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS findings in this package] [GHSA: GHSA-5qgm-9j92-h5g5]",
+      "message": "Obfuscation indicators appeared in lib/index.js: source was not minified before, is now [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS/CODE findings in this package] [GHSA: GHSA-5qgm-9j92-h5g5]",
       "evidence": [
         {
           "file": "lib/index.js",

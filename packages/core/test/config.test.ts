@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Finding } from '@vetlock/core';
 import { parseConfig, applyConfig, isForcedFailure, ConfigError, DEFAULT_CONFIG } from '../src/config.js';
+import { decideConfigApplication } from '../src/config-trust.js';
 
 function fakeFinding(overrides: Partial<Finding> = {}): Finding {
   return {
@@ -53,12 +54,20 @@ describe('parseConfig', () => {
     ).toThrow(ConfigError);
   });
 
-  it('rejects malformed JSON with a clear message', () => {
+  it('throws ConfigError when .vetlock.json contains invalid JSON', () => {
     expect(() => parseConfig('{not json}')).toThrow(ConfigError);
+    expect(() => parseConfig('{not json}')).toThrow(/not valid JSON/);
   });
 });
 
 describe('applyConfig', () => {
+  it('falls back to DEFAULT_CONFIG when .vetlock.json does not exist', () => {
+    const decision = decideConfigApplication(null, { currentText: null, baselineText: null });
+    expect(decision.config).toEqual(DEFAULT_CONFIG);
+    expect(decision.source).toBe('default');
+    expect(decision.blocked).toBe(false);
+  });
+
   it('downgrades a whitelisted category finding to INFO', () => {
     const cfg = { ...DEFAULT_CONFIG, allowlist: { axios: ['NET'] as const } };
     const out = applyConfig([fakeFinding()], cfg);
@@ -85,6 +94,40 @@ describe('applyConfig', () => {
       cfg,
     );
     expect(out).toHaveLength(0);
+  });
+
+
+  it('handles ignorePackages preventing ALWAYS_APPLY_DETECTORS findings', () => {
+    const config = parseConfig('{"version":1,"ignorePackages":["chalk"]}');
+    const findings: Finding[] = [
+      fakeFinding({
+        detector: 'integrity.hash-mismatch',
+        category: 'INTEG',
+        package: 'chalk',
+        evidence: [{ file: 'package.json', line: 1, snippet: '' }],
+      }),
+    ];
+
+    const result = applyConfig(findings, config);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.detector).toBe('integrity.hash-mismatch');
+    expect(result[0]!.severity).toBe('BLOCK');
+  });
+
+  it('handles ignorePathsInside preventing ALWAYS_APPLY_DETECTORS findings', () => {
+    const config = parseConfig('{"version":1,"ignorePathsInside":{"chalk":["package.json"]}}');
+    const findings: Finding[] = [
+      fakeFinding({
+        detector: 'integrity.hash-mismatch',
+        category: 'INTEG',
+        package: 'chalk',
+        evidence: [{ file: 'package.json', line: 1, snippet: '' }],
+      }),
+    ];
+
+    const result = applyConfig(findings, config);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.detector).toBe('integrity.hash-mismatch');
   });
 
   it('downgrades maintainer-change when publisher is on trust list', () => {

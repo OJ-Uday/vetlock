@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -154,7 +155,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Package started using process/execution module \"child_process\". [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'chalk' has 5 WARN findings across 3 categories; source detectors: exec.new-module, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "index.js",
@@ -226,12 +227,12 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
+      "message": "Publisher/maintainer set changed between versions. [new unknown maintainer added: attacker@example.invalid] [escalated: package 'chalk' has 5 WARN findings across 3 categories; source detectors: exec.new-module, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "package.json",
           "line": 1,
-          "snippet": "maintainers: [team@chalk.example] → [attacker@example.invalid]"
+          "snippet": "maintainers: [team@chalk.example] \u2192 [attacker@example.invalid]"
         }
       ],
       "provenance": [
@@ -250,7 +251,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "New network endpoint appeared: https://exfil.example.invalid/collect [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/collect [escalated: package 'chalk' has 5 WARN findings across 3 categories; source detectors: exec.new-module, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "index.js",
@@ -274,7 +275,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "New network endpoint appeared: https://exfil.example.invalid/webhook [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
+      "message": "New network endpoint appeared: https://exfil.example.invalid/webhook [escalated: package 'chalk' has 5 WARN findings across 3 categories; source detectors: exec.new-module, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "postinstall.js",
@@ -298,7 +299,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "medium",
-      "message": "Package started using network module \"https\". [escalated: package 'chalk' has 5 WARN findings across 3 categories]",
+      "message": "Package started using network module \"https\". [escalated: package 'chalk' has 5 WARN findings across 3 categories; source detectors: exec.new-module, meta.maintainer-change, net.new-endpoint, net.new-module]",
       "evidence": [
         {
           "file": "index.js",

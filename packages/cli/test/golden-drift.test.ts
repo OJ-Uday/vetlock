@@ -43,7 +43,10 @@ describe('GOLDEN DRIFT — committed .golden.json byte-stability', () => {
     const golden = JSON.parse(goldenRaw);
 
     const { result } = await runFixture(id);
-    const actual = canonicalizeResult(result);
+    const actual = {
+      _schema: 'v1',
+      ...(canonicalizeResult(result) as Record<string, unknown>),
+    };
 
     const actualStr = JSON.stringify(actual, null, 2) + '\n';
     const goldenStr = JSON.stringify(golden, null, 2) + '\n';

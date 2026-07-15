@@ -109,6 +109,52 @@ describe('shortestPaths (provenance)', () => {
     expect(paths[0]).toEqual(['root', 'a', 'b']);
   });
 
+
+  it('handles a circular dependency without looping forever', () => {
+    const g = parseLockfile(
+      lock({ name: 'root', version: '1.0.0', deps: { a: '^1' } }, {
+        'node_modules/a': { version: '1.0.0', deps: { b: '^1' } },
+        'node_modules/b': { version: '1.0.0', deps: { a: '^1' } },
+      }),
+    );
+
+    expect(g.nodes.get('node_modules/b')!.dependencies).toContain('node_modules/a');
+    expect(shortestPaths(g, 'node_modules/b')).toEqual([['root', 'a', 'b']]);
+  });
+
+  it('returns both shortest paths for a diamond dependency graph', () => {
+    const g = parseLockfile(
+      lock({ name: 'root', version: '1.0.0', deps: { a: '^1', b: '^1' } }, {
+        'node_modules/a': { version: '1.0.0', deps: { c: '^1' } },
+        'node_modules/b': { version: '1.0.0', deps: { c: '^1' } },
+        'node_modules/c': { version: '1.0.0' },
+      }),
+    );
+
+    const paths = shortestPaths(g, 'node_modules/c');
+    expect(paths).toHaveLength(2);
+    expect(paths).toEqual([
+      ['root', 'a', 'c'],
+      ['root', 'b', 'c'],
+    ]);
+  });
+
+  it('handles a 10-level deep dependency chain', () => {
+    const entries: Record<string, { version: string; deps?: Record<string, string> }> = {};
+    const names = ['a','b','c','d','e','f','g','h','i','j'];
+    for (let index = 0; index < names.length; index += 1) {
+      const name = names[index]!;
+      const next = names[index + 1];
+      entries[`node_modules/${name}`] = {
+        version: '1.0.0',
+        deps: next ? { [next]: '^1' } : undefined,
+      };
+    }
+
+    const g = parseLockfile(lock({ name: 'root', version: '1.0.0', deps: { a: '^1' } }, entries));
+    expect(shortestPaths(g, 'node_modules/j')).toEqual([['root', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']]);
+  });
+
   it('finds a deep chain', () => {
     // root → a → b → c → d  (5 levels)
     const g = parseLockfile(

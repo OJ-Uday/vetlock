@@ -14,7 +14,7 @@
       "name": "query-helper",
       "version": "2.1.1",
       "integrity": "sha512-UfLYkL2eG6OXo2j6AtmsuIA1P9OhTrLUKs5DkX9a94giK/xSYjNl6uTCc0oo1E2W5QYSUvFqZYBQkICHy9qUBg==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/f-added-tests/query-helper-new/query-helper-new.tgz"
+      "resolved": "file:./query-helper-new/query-helper-new.tgz"
     }
   }
 }
