@@ -23,6 +23,11 @@
           "my-app",
           "rand-user-agent"
         ]
+      ],
+      "mitre": [
+        "T1059.007",
+        "T1140",
+        "T1105"
       ]
     },
     {
@@ -47,6 +52,10 @@
           "my-app",
           "rand-user-agent"
         ]
+      ],
+      "mitre": [
+        "T1078",
+        "T1195.002"
       ]
     },
     {
@@ -71,6 +80,11 @@
           "my-app",
           "rand-user-agent"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
       ]
     },
     {
@@ -95,6 +109,10 @@
           "my-app",
           "rand-user-agent"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
       ]
     }
   ],
@@ -116,5 +134,6 @@
       "newIntegrity": "sha512-B+Z2IiFwuv0vlZ5n3ncrb6ttySnZjEKhTZFmY9bLZARatUOVjMvGPrOdoKCjJtEDdyaXcntpfcM21MLtqSsw1g=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 10
 }

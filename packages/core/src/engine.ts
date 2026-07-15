@@ -103,6 +103,27 @@ export interface RunResult {
   errors: Array<{ package: string; version: string; error: string }>;
   /** Timing info. */
   durationMs: number;
+  /**
+   * Compressed 0.0-10.0 risk score, computed from findings via a fixed
+   * additive-with-multiplier formula. See `computeRiskScore` for the pinned
+   * weighting. A score of 0.0 means "no findings"; 10.0 is the ceiling.
+   *
+   * Formula (identical across renderers, tests pin the exact numbers):
+   *   base per finding = { BLOCK: 5, WARN: 2, INFO: 0 }[severity]
+   *   confidence multiplier = { high: 1.0, medium: 0.7, low: 0.5 }[confidence]
+   *   direction multiplier = { added: 1.0, changed: 0.8, absolute: 1.0,
+   *                            removed: 0.3 }[direction]
+   *   contribution = base * confidence * direction
+   *   riskScore    = clamp( round1(sum(contributions)), 0, 10 )
+   *
+   * Rationale: BLOCK dominates; INFO contributes zero so info-only reports
+   * stay at 0.0. 'removed' contributes at 0.3× because removals only reach
+   * INFO severity by the diff-framing invariant — but the multiplier is
+   * kept below 1.0 so a mostly-removals report never approaches the ceiling
+   * even under future taxonomy changes. Rounded to 1 decimal for stability
+   * across dashboards.
+   */
+  riskScore: number;
 }
 
 export async function runDiff(
@@ -234,6 +255,10 @@ export async function runDiff(
           },
         ],
         provenance: [],
+        // T1554 Compromise Client Software Binary — the same-version-different-hash
+        // shape is a substituted-binary attack; T1195.002 covers the supply-chain
+        // origin.
+        mitre: ['T1554', 'T1195.002'],
       });
       continue;
     }
@@ -279,6 +304,10 @@ export async function runDiff(
       message: `Package '${failEntry.name}' could not be analyzed — all findings are absent. Error: ${failEntry.error}`,
       evidence: [{ file: 'package.json', line: 1, snippet }],
       provenance: [],
+      // T1027 Obfuscated Files or Information — a package the analyzer cannot
+      // parse (malformed, crypter-shipped, extreme entropy) is functionally the
+      // same defense-evasion posture.
+      mitre: ['T1027'],
     });
   }
   // Also emit for failures that didn't match any change (edge case: only-old-side fetch).
@@ -298,6 +327,7 @@ export async function runDiff(
       message: `Package '${failEntry.name}' could not be analyzed — all findings are absent. Error: ${failEntry.error}`,
       evidence: [{ file: 'package.json', line: 1, snippet }],
       provenance: [],
+      mitre: ['T1027'],
     });
   }
 
@@ -330,6 +360,10 @@ export async function runDiff(
         },
       ],
       provenance: [],
+      // T1036.005 Match Legitimate Name or Location — workspace-link
+      // shadowing masquerades an unanalyzed local entry as a real package;
+      // T1195.002 is the supply-chain umbrella.
+      mitre: ['T1036.005', 'T1195.002'],
     });
   }
 
@@ -364,6 +398,7 @@ export async function runDiff(
         },
       ],
       provenance: [],
+      mitre: ['T1036.005', 'T1195.002'],
     });
   }
 
@@ -411,6 +446,7 @@ export async function runDiff(
           },
         ],
         provenance: [],
+        mitre: ['T1195.002'],
       });
     } else if (kind === 'file' && change.kind === 'added') {
       // Only flag newly-added file: entries. An existing file: entry that was
@@ -436,6 +472,7 @@ export async function runDiff(
           },
         ],
         provenance: [],
+        mitre: ['T1195.002'],
       });
     }
   }
@@ -472,6 +509,7 @@ export async function runDiff(
     changes,
     errors,
     durationMs: Date.now() - t0,
+    riskScore: computeRiskScore(findings),
   };
 }
 
@@ -521,6 +559,11 @@ export async function runScan(
   return {
     ...result,
     findings: remapped,
+    // The riskScore recomputes to the same value here as in runDiff — the
+    // direction remap 'added' → 'absolute' both weight at 1.0 (see the
+    // formula on RunResult). We recompute anyway so external callers who
+    // mutate `.findings` before checking `.riskScore` see a consistent view.
+    riskScore: computeRiskScore(remapped),
   };
 }
 
@@ -759,3 +802,34 @@ function cpuCount(): number | null {
   } catch { return null; }
 }
 function clamp(n: number, lo: number, hi: number): number { return Math.max(lo, Math.min(hi, n)); }
+
+/**
+ * Compute the 0.0-10.0 compressed risk score from a list of findings.
+ * See the docstring on RunResult.riskScore for the pinned formula.
+ *
+ * Exported so external callers (dashboards, CI pipelines, the SARIF renderer)
+ * can compute the same value from a synthesized/filtered finding list —
+ * critical for cases where post-processing (config allowlists, --fail-on
+ * filtering) mutates `.findings` and the top-level score must stay in sync.
+ */
+export function computeRiskScore(findings: readonly Finding[]): number {
+  // Weighting constants — pinned by the risk-score test. Changing any of
+  // these is a semver-visible behavior change (the number a dashboard
+  // renders will shift).
+  const BASE: Record<Severity, number> = { BLOCK: 5, WARN: 2, INFO: 0 };
+  const CONF: Record<'high' | 'medium' | 'low', number> = { high: 1.0, medium: 0.7, low: 0.5 };
+  const DIR: Record<Finding['direction'], number> = {
+    added: 1.0,
+    changed: 0.8,
+    absolute: 1.0,
+    removed: 0.3,
+  };
+  let sum = 0;
+  for (const f of findings) {
+    sum += BASE[f.severity] * CONF[f.confidence] * DIR[f.direction];
+  }
+  // clamp then round to one decimal place — dashboards prefer stable
+  // one-decimal numbers over floating-point drift.
+  const clamped = clamp(sum, 0, 10);
+  return Math.round(clamped * 10) / 10;
+}

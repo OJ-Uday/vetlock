@@ -42,6 +42,9 @@ import { firstVersionClusterDetector } from './first-version-cluster.js';
 import { wasmDetector } from './wasm.js';
 import { bundledDepsDetector } from './bundled.js';
 import { advisoriesForVersion } from './advisories.js';
+import { mitreTagsFor } from '@vetlock/core';
+
+export { mitreTagsFor, MITRE_TAGS } from '@vetlock/core';
 
 export const ALL_DETECTORS: readonly Detector[] = [
   installDetector,
@@ -218,6 +221,18 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
       .join(', ');
     f.message += ` [GHSA: ${cite}]`;
     f.confidence = 'high';
+  }
+
+  // Attach MITRE ATT&CK technique tags. Central mapping lives in
+  // packages/detectors/src/mitre-tags.ts so a security-review pass can update
+  // one file rather than sprinkling ID literals across every detector.
+  // Findings whose detector id is unmapped get no `mitre` (allowed by
+  // validateFinding). Findings that already set `mitre` explicitly (e.g.
+  // engine-emitted synthetics) are preserved.
+  for (const f of all) {
+    if (f.mitre !== undefined) continue;
+    const tags = mitreTagsFor(f.detector);
+    if (tags.length > 0) f.mitre = tags;
   }
 
   for (const f of all) {

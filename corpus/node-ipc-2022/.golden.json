@@ -23,6 +23,10 @@
           "my-app",
           "node-ipc"
         ]
+      ],
+      "mitre": [
+        "T1547",
+        "T1554"
       ]
     },
     {
@@ -47,6 +51,11 @@
           "my-app",
           "node-ipc"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
       ]
     },
     {
@@ -71,6 +80,10 @@
           "my-app",
           "node-ipc"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
       ]
     }
   ],
@@ -92,5 +105,6 @@
       "newIntegrity": "sha512-k+NOnoUjxbLU+8A+uXJtmVLZjt6QwHVUf2mjz48xlr8TchMZYdVkCXYdHHxp2LibAS/qYOb9goPO6i0VomPW7A=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 7.2
 }
