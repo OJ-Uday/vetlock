@@ -17,9 +17,11 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OJ-Uday/vetlock.git"
+    "url": "git+https://github.com/OJ-Uday/vetlock.git",
+    "directory": "packages/cli"
   },
-  "homepage": "https://github.com/OJ-Uday/vetlock",
+  "homepage": "https://github.com/OJ-Uday/vetlock#readme",
+  "bugs": "https://github.com/OJ-Uday/vetlock/issues",
   "type": "module",
   "bin": {
     "vetlock": "./dist/cli.js"
@@ -27,9 +29,11 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p . && node scripts/copy-demo-fixture.js",
+    "build": "tsc -p . && node scripts/copy-demo-fixture.mjs",
+    "bundle": "tsup && node scripts/copy-demo-fixture.mjs && node scripts/copy-capability-map.mjs",
     "typecheck": "tsc -p . --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run bundle"
   },
   "engines": {
     "node": ">=20"
@@ -54,6 +58,8 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
-    "pacote": "^18.0.0"
+    "@vetlock/core": "workspace:*",
+    "@vetlock/detectors": "workspace:*",
+    "tsup": "^8.5.1"
   }
 }
