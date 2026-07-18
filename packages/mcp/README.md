@@ -6,6 +6,10 @@ install. It is **advisory**: actual enforcement stays in `vetlock add` and the
 Vetlock guard, because an agent can otherwise bypass MCP by invoking a package
 manager directly.
 
+> **Status:** source preview in the Vetlock monorepo. `@vetlock/mcp` is private
+> and is not published to npm. Build it from source for evaluation; public
+> distribution and client-specific setup guides remain release work.
+
 ## Start
 
 Build the workspace, then configure an MCP client with:

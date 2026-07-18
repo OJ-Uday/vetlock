@@ -15,7 +15,7 @@
 [![Red-team: 37/48 exploits closed](https://img.shields.io/badge/red--team-37%2F48%20closed-brightgreen)](docs/REDTEAM-2026-07-12.md)
 [![Zero telemetry](https://img.shields.io/badge/telemetry-zero-blue)](#privacy)
 [![NEVER-EXECUTE canary](https://img.shields.io/badge/canary-NEVER--EXECUTE-red)](docs/adr/0005-never-execute.md)
-[![npm provenance](https://img.shields.io/badge/npm-provenance-blueviolet)](https://docs.npmjs.com/generating-provenance-statements)
+[![npm: v0.8.0](https://img.shields.io/badge/npm-v0.8.0-cb3837)](https://www.npmjs.com/package/@oj-uday/vetlock)
 
 ![Assurance](https://github.com/OJ-Uday/vetlock/actions/workflows/assurance-pr.yml/badge.svg)
 
@@ -23,6 +23,12 @@
 
 > Corpus: 12/13 corpus attack fixtures caught (1 honest miss: colors-2022 protestware, out-of-scope by design).
 > Full inventory on disk: 14 entries — 13 attack fixtures documented in `docs/DETECTIONS.md` (10 PR-tier real-world seeded cases + 3 synthetic hardening fixtures) plus `fp-smoke` (7 expected-CLEAN validation cases, excluded from the 13).
+
+**Current release:** [`@oj-uday/vetlock@0.8.0`](https://www.npmjs.com/package/@oj-uday/vetlock)
+is public and the `v0.8.0` release gate is green. The repository also contains
+an MCP admission-server preview; it is source-only for now and is not yet a
+published npm package. The hosted GitHub App remains pre-launch until a real
+pull request completes the full check-run lifecycle.
 
 ---
 

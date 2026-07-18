@@ -9,18 +9,18 @@ snapshot these items build on.
 
 ## P0 (launch blockers — do next session)
 
-- [ ] **Publish `@oj-uday/vetlock@0.8.0` to npm with public access.** Blocks: the
-  hosted-scan API path (`vetlock-app`'s `POST /scan`) currently returns
-  verdict `"failed"` on every run because `npx @oj-uday/vetlock@latest` inside
-  `vetlock-web-scans`' `hosted-scan.yml` gets a 404 — the package has never
-  been published. Make the first scoped release manually with a granular npm
-  token and `--access public`; local publishing cannot attach provenance.
-  Then configure npm Trusted Publishing for `OJ-Uday/vetlock` and
-  `.github/workflows/publish.yml` so future tag releases use OIDC provenance.
-  Push annotated tag `v0.8.0` at the scoped-name merge commit after publishing;
-  the idempotent workflow will test and no-op because the version exists. Verify:
-  `npx @oj-uday/vetlock@latest --version` succeeds from a clean machine, and the
-  next hosted `/scan` returns a real verdict instead of `"failed"`.
+- [x] **Publish `@oj-uday/vetlock@0.8.0` to npm with public access.** Completed
+  2026-07-18. Registry install, `--version`, and the bundled demo were verified;
+  annotated tag `v0.8.0` points at the scoped-package merge and its release gate
+  passed (the publish step correctly no-opped because the immutable version was
+  already present).
+- [ ] **Configure npm Trusted Publishing.** Connect npm package
+  `@oj-uday/vetlock` to `OJ-Uday/vetlock` and `.github/workflows/publish.yml` so
+  future tag releases use OIDC provenance without a long-lived Actions token.
+- [ ] **Re-run the hosted `/scan` lifecycle after the npm release.** The Worker
+  and `vetlock-web-scans` callback plumbing were proven before publication, but
+  that run ended in `"failed"` because no CLI package existed. Submit a fresh
+  lockfile pair and record a terminal Vetlock verdict from the scoped package.
 - [ ] **Register `vetlock.dev`** (~$12/yr at Cloudflare Registrar, same
   account as the Worker — `udayojha129`). Unblocks: `app.vetlock.dev`
   routing for the Worker (the commented-out `routes` block in
@@ -47,13 +47,9 @@ snapshot these items build on.
   action and check "Publish this Action to the GitHub Marketplace."
   Requires a category, description, and icon per GitHub's Marketplace
   listing requirements.
-- [ ] **`npx @oj-uday/vetlock demo` flawless on a clean machine.** Spin up a fresh
-  Docker container (no prior npm cache, no Lilly-network assumptions), run
-  `npx @oj-uday/vetlock@latest demo`, and confirm it runs the bundled Shai-Hulud
-  fixture end-to-end with no errors. Patch anything that surfaces — this
-  is gating item in `LAUNCH-CHECKLIST.md`'s OSS-core section, and depends
-  on the P0 npm-publish item above landing first (there's nothing at
-  `@oj-uday/vetlock@latest` to demo until then).
+- [x] **`npx @oj-uday/vetlock demo` verified from the public registry.** The
+  v0.8.0 smoke test produced the expected BLOCK verdict and 13 findings with
+  exit code 2.
 - [ ] **README polish pass.** Hero GIF captured from the site scanner
   (oj-uday.github.io's live demo), a comparison table against Snyk/Socket/
   `npm audit`, a tightened quickstart, the honesty section (12/13 corpus,
@@ -61,7 +57,8 @@ snapshot these items build on.
   (`docs/REDTEAM-2026-07-12.md`).
 - [ ] **Site drift bump.** `oj-uday.github.io` still advertises `v0.4.2` /
   424 tests / 39/48 red-team on its vetlock exhibit. Actual current state
-  is `v0.7.0` / 540 tests / GitHub App **live** (App ID `4298344`, Active).
+  is `v0.8.0` / 946 passing tests / GitHub App **live but not yet proven on a
+  real PR** (App ID `4298344`).
   Every number on that page should trace to an artifact in this repo per
   `LAUNCH-CHECKLIST.md`'s non-negotiable rule — right now several don't.
 

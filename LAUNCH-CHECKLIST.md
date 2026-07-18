@@ -21,9 +21,11 @@ artifact in this repo, it's not done.
 - [ ] **P1-D** CAPABILITY-MAP + coverage gate — soft-warn during P1 backfill, hard-fail after (fan-out running)
 - [ ] **P1-E** red-team tail (4 remaining exploits): close where cheap, honest-disclose otherwise (fan-out running)
 - [ ] P2 FP study run + published (`docs/FP-STUDY.md`) — top-100 × 5 bumps ≈ 500 diffs, per-detector rate, tuning journey
-- [ ] `.npmrc` committed with public registry (verified 2026-07-13; c20a66d — no Artifactory URL in any committed file)
-- [ ] First public `@oj-uday/vetlock` release; publish v0.8.0 manually, then configure npm Trusted Publishing so future tag releases carry OIDC provenance
-- [ ] `npx @oj-uday/vetlock demo` flawless on a clean machine (already ships bundled Shai-Hulud fixture in `dist/demo-fixture/`; verify from a non-Lilly machine before P9)
+- [x] `.npmrc` committed with public registry (verified 2026-07-13; c20a66d — no Artifactory URL in any committed file)
+- [x] First public release: `@oj-uday/vetlock@0.8.0` published and registry-smoke-tested on 2026-07-18
+- [ ] npm Trusted Publishing configured for future OIDC-provenance releases (v0.8.0 was the manual bootstrap release)
+- [x] `npx @oj-uday/vetlock@0.8.0 demo` returned the expected BLOCK verdict and 13 findings from the public registry
+- [ ] Hosted `/scan` path revalidated after the scoped npm release
 - [ ] README final: hero GIF from site scanner, comparison table, quickstart, honesty section, red-team story link
 - [ ] GitHub Marketplace listing for the Action (screenshots, category, description, verified org — P9)
 - [ ] External PR shows the bot comment (Action dogfooded on vetlock's own PRs)
