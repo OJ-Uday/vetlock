@@ -30,7 +30,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p . && node scripts/copy-demo-fixture.mjs",
-    "bundle": "pnpm --filter @vetlock/core run build && pnpm --filter @vetlock/detectors run build && tsup && node scripts/copy-demo-fixture.mjs",
+    "bundle": "pnpm --filter @vetlock/core run build && pnpm --filter @vetlock/detectors run build && tsup && node scripts/copy-detector-assets.mjs && node scripts/copy-demo-fixture.mjs",
     "typecheck": "tsc -p . --noEmit",
     "test": "vitest run",
     "prepack": "pnpm run bundle"
