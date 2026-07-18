@@ -25,22 +25,30 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0   # so `git describe` in the build can find recent history
 
-      - name: Setup Node 20
+      - name: Setup Node 22.14
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
-          node-version: "20"
+          node-version: "22.14.0"
           registry-url: "https://registry.npmjs.org"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9
+
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install --global npm@">=11.5.0 <12"
+          node --version
+          npm --version
 
       - name: Install (frozen)
         run: pnpm install --frozen-lockfile
@@ -65,8 +73,27 @@ jobs:
           fi
           echo "publishing vetlock@$TAG"
 
-      - name: Publish to npm (with provenance)
+      - name: Check whether this immutable version already exists
+        id: registry
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          if npm view "vetlock@$TAG" version --json >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "vetlock@$TAG is already published; retaining the verified tag as a no-op release run"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm with provenance
+        if: steps.registry.outputs.exists != 'true'
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
         working-directory: packages/cli
-        run: npm publish --provenance --access public
+        run: |
+          if [ -n "${NODE_AUTH_TOKEN:-}" ]; then
+            echo "using the configured npm automation-token fallback"
+          else
+            unset NODE_AUTH_TOKEN
+            echo "using npm trusted publishing (OIDC)"
+          fi
+          npm publish --provenance --access public

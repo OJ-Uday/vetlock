@@ -11,6 +11,7 @@
     "test": "pnpm -r --workspace-concurrency=1 test",
     "typecheck": "pnpm -r --workspace-concurrency=1 typecheck",
     "check": "pnpm build && pnpm test",
+    "test:dogfood-policy": "node --test scripts/test/vetlock-dogfood-policy.test.cjs",
     "corpus:replay": "node packages/cli/dist/replay-corpus.js",
     "corpus:goldens": "node packages/cli/dist/corpus/generate-goldens.js",
     "corpus:capmap": "node packages/cli/src/corpus/generate-capability-map-doc.cjs",

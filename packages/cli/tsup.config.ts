@@ -28,10 +28,11 @@ export default defineConfig({
   // (real third-party npm packages) stays external and is resolved by the
   // installer at install time, not bundled into our tarball.
   noExternal: ['@vetlock/core', '@vetlock/detectors'],
-  // dts: type declarations are still produced by `tsc -p .` in the plain
-  // `build` script (dist/*.d.ts); tsup's own dts generation is skipped here
-  // to avoid fighting the existing tsc-driven .d.ts output.
-  dts: false,
+  // Emit declarations alongside the bundle. This avoids shipping declarations
+  // that refer to the private workspace packages that were inlined above.
+  dts: {
+    resolve: true,
+  },
   sourcemap: true,
   clean: true,
   // tsup auto-detects and preserves the source file's own shebang

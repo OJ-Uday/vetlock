@@ -29,12 +29,41 @@ jobs:
       - run: pnpm build
       - name: Self-diff against base
         run: |
-          set -e
+          set -euo pipefail
           # This repo uses pnpm-lock.yaml (not package-lock.json).
           # Fetch the base version of the lockfile and diff it.
-          git show HEAD~1:pnpm-lock.yaml > /tmp/before.yaml 2>/dev/null || cp pnpm-lock.yaml /tmp/before.yaml
-          node packages/cli/dist/cli.js diff /tmp/before.yaml pnpm-lock.yaml --md > /tmp/vetlock.md
-          cat /tmp/vetlock.md
-          # Fail on the classic worm signatures.
-          node packages/cli/dist/cli.js diff /tmp/before.yaml pnpm-lock.yaml \
-            --fail-on install.script-added,env.token-harvest,net.new-endpoint
+          git show "${{ github.event.pull_request.base.sha }}:pnpm-lock.yaml" > /tmp/before.yaml 2>/dev/null || cp pnpm-lock.yaml /tmp/before.yaml
+          # A BLOCK verdict is a useful analyst signal, not by itself a failed
+          # dogfood run. Capture it as JSON so the versioned gate can show every
+          # finding and apply its explicit high-confidence policy. Registry
+          # timeouts get one bounded retry; successful package analyses are
+          # cached, and the final result still fails closed if errors remain.
+          set +e
+          node packages/cli/dist/cli.js diff /tmp/before.yaml pnpm-lock.yaml --json > /tmp/vetlock.json
+          scan_status=$?
+          if node -e '
+            const fs = require("node:fs");
+            let analysis;
+            try { analysis = JSON.parse(fs.readFileSync("/tmp/vetlock.json", "utf8")); }
+            catch { process.exit(1); }
+            const transient = (analysis.errors || []).some((entry) =>
+              /(?:timed out|ETIMEDOUT|ECONNRESET|EAI_AGAIN)/i.test(String(entry?.error || entry?.message || entry))
+            );
+            process.exit(transient ? 0 : 1);
+          '; then
+            echo "Transient registry failure detected; retrying incomplete analysis once." >&2
+            node packages/cli/dist/cli.js diff /tmp/before.yaml pnpm-lock.yaml --json > /tmp/vetlock.json
+            scan_status=$?
+          fi
+          # Keep the policy exit code while still allowing it to print a full
+          # report for a failing policy decision.
+          node scripts/vetlock-dogfood-policy.cjs /tmp/vetlock.json
+          policy_status=$?
+          set -e
+          # Vetlock's documented non-success analysis result is 2 (BLOCK).
+          # Any other CLI failure means the JSON cannot be trusted and must fail.
+          if [ "$scan_status" -ne 0 ] && [ "$scan_status" -ne 2 ]; then
+            echo "Vetlock analysis failed with exit code $scan_status" >&2
+            exit "$scan_status"
+          fi
+          exit "$policy_status"

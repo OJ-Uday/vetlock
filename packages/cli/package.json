@@ -1,6 +1,6 @@
 {
   "name": "vetlock",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": false,
   "description": "Behavioral diff for npm dependency updates. What does this update DO now that it didn't before?",
   "keywords": [
@@ -30,9 +30,10 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -p . && node scripts/copy-demo-fixture.mjs",
+    "bundle": "pnpm --filter @vetlock/core run build && pnpm --filter @vetlock/detectors run build && tsup && node scripts/copy-detector-assets.mjs && node scripts/copy-demo-fixture.mjs",
     "typecheck": "tsc -p . --noEmit",
     "test": "vitest run",
-    "prepublishOnly": "pnpm run bundle"
+    "prepack": "pnpm run bundle"
   },
   "engines": {
     "node": ">=20"
@@ -48,17 +49,26 @@
     "provenance": true
   },
   "dependencies": {
-    "@vetlock/core": "workspace:*",
-    "@vetlock/detectors": "workspace:*",
+    "@babel/parser": "7.29.7",
+    "@babel/traverse": "7.29.7",
+    "@babel/types": "7.29.7",
+    "@webassemblyjs/wasm-parser": "1.14.1",
+    "@yarnpkg/lockfile": "1.1.0",
+    "@yarnpkg/parsers": "3.0.3",
     "commander": "12.1.0",
+    "damerau-levenshtein": "1.0.8",
+    "js-yaml": "4.3.0",
     "ora": "8.2.0",
+    "pacote": "18.0.6",
     "picocolors": "1.1.1",
+    "semver": "7.8.5",
+    "ssri": "12.0.0",
     "tar": "7.5.20",
     "zod": "3.25.76"
   },
   "devDependencies": {
     "@vetlock/core": "workspace:*",
     "@vetlock/detectors": "workspace:*",
-    "pacote": "^18.0.0"
+    "tsup": "8.5.1"
   }
 }

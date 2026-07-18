@@ -5,6 +5,16 @@ All notable changes to this project are documented here.
 The format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project uses [semantic versioning](https://semver.org/).
 
+## [0.8.0] — 2026-07-18
+
+**Wave 8 and npm release packaging.** The public `vetlock` package is now
+built as a self-contained CLI: the private core and detector workspaces are
+inlined, while runtime dependencies remain declared for normal npm installs.
+Detector static assets are copied into the release build, so packaged scans
+retain capability maps and data files. The release workflow now targets Node
+22.14+ and npm 11.5+ for trusted publishing with provenance, while retaining
+the repository token as a controlled fallback.
+
 ## [0.7.0] — 2026-07-14
 
 **P5 — Hosted API (engine-as-service).** vetlock is now runnable as a
