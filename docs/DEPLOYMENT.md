@@ -64,7 +64,7 @@ PATH A — GitHub App webhook flow (per-repo checks, per-user compute)
   lockfile             webhook                  X-Hub-Signature-     their quota)
                        (HMAC-signed)             256, replay
                                                   guard, mints          │
-                                                  installation           │ npx vetlock diff
+                                                  installation           │ npx @oj-uday/vetlock diff
                                                   token, creates          │ base.lock head.lock
                                                   check-run:queued,        │
                                                   fires                    ▼
@@ -90,7 +90,7 @@ PATH B — Hosted scan API (anonymous, single-scan, our compute)
   Anyone           CF Worker            repository_dispatch      vetlock-web-scans
   POST /scan  ───▶  /scan            ───▶  (hosted-scan)     ───▶  (repo WE control)
   { lockfile_       (rate-limited            event, fired            │
-    before,          5/min/IP, size-         with                     │ npx vetlock diff
+    before,          5/min/IP, size-         with                     │ npx @oj-uday/vetlock diff
     lockfile_        capped, gzip+           HOSTED_SCAN_              │ (same OSS code path
     after }          base64'd, KV            DISPATCH_TOKEN             │  as Path A)
                       entry written:                                     ▼

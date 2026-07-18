@@ -7,7 +7,11 @@ and this project uses [semantic versioning](https://semver.org/).
 
 ## [0.8.0] — 2026-07-18
 
-**Wave 8 and npm release packaging.** The public `vetlock` package is now
+**Scoped npm release.** The public CLI package is now `@oj-uday/vetlock`.
+Install or invoke that package by its full scope (for example,
+`npx @oj-uday/vetlock demo`); its executable remains `vetlock`.
+
+**Wave 8 and npm release packaging.** The public `@oj-uday/vetlock` package is now
 built as a self-contained CLI: the private core and detector workspaces are
 inlined, while runtime dependencies remain declared for normal npm installs.
 Detector static assets are copied into the release build, so packaged scans
@@ -77,7 +81,7 @@ deploy. `$0/mo at idle, ~$5/mo at 1000 scans/day` — see
 
 - **v0.7.1** — wire `ScanQueue` → `runScanInSandbox` by default. Adds real per-scan isolation to the wire path.
 - **v0.7.2** — replace in-memory job store with SQLite (persist across restarts, still zero-op).
-- **P6 (v0.8+) — GitHub App**. Separate repo `OJ-Uday/vetlock-app`. Uses `repository_dispatch` → user's own GHA quota → `npx vetlock diff` → posts check-run + PR comment. `$0/mo at launch`. Note: the P6 workflow this session got killed mid-flight; no `~/personal/vetlock-app/` scaffolding landed yet.
+- **P6 (v0.8+) — GitHub App**. Separate repo `OJ-Uday/vetlock-app`. Uses `repository_dispatch` → user's own GHA quota → `npx @oj-uday/vetlock diff` → posts check-run + PR comment. `$0/mo at launch`. Note: the P6 workflow this session got killed mid-flight; no `~/personal/vetlock-app/` scaffolding landed yet.
 
 ---
 
@@ -571,7 +575,7 @@ comprehensive README oriented for first-time try-out.
 
 ### Zero-effort onboarding
 
-- **`npx vetlock demo`** — runs vetlock against a bundled defanged Shai-Hulud
+- **`npx @oj-uday/vetlock demo`** — runs vetlock against a bundled defanged Shai-Hulud
   2025 fixture with no install, no config, no network. Produces the full BLOCK
   report in ~3 ms. The fixture is copied into `dist/demo-fixture/` at build time
   (see `packages/cli/scripts/copy-demo-fixture.js`) and ships in the npm tarball.

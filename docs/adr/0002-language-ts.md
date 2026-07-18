@@ -18,7 +18,8 @@ Compile with `tsc` to CommonJS-compatible ESM (Node's native ESM). Test with `vi
 
 ## Rationale
 
-- Audience installs from npm. `npx vetlock` is the zero-commitment adoption path.
+- Audience installs from npm. `npx @oj-uday/vetlock` is the zero-commitment
+  adoption path; it exposes the `vetlock` command.
 - Native JS AST access via `@babel/parser` (ADR 0003) — a Go rewrite would need to embed a JS
   parser or shell out. Native is faster and less impedance.
 - Type safety across the finding-schema boundary between engine / detectors / renderers is the

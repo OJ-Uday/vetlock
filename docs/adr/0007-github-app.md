@@ -64,7 +64,7 @@ It requires the **minimum viable set** of permissions and events:
 - Does not fetch or inspect any repo file other than the lockfile(s).
 - Does not read or store the PR title/description/comments (only the
   webhook-provided PR number is used, for the check-run response).
-- Does not phone the OSS `npx vetlock` code path anywhere — the two paths are
+- Does not phone the OSS `npx @oj-uday/vetlock` code path anywhere — the two paths are
   entirely independent (per ADR 0006 D5).
 
 ## Enforcement

@@ -9,17 +9,17 @@ snapshot these items build on.
 
 ## P0 (launch blockers — do next session)
 
-- [ ] **Publish `vetlock@0.7.0` to npm with `--provenance`.** Blocks: the
+- [ ] **Publish `@oj-uday/vetlock@0.8.0` to npm with public access.** Blocks: the
   hosted-scan API path (`vetlock-app`'s `POST /scan`) currently returns
-  verdict `"failed"` on every run because `npx vetlock@latest` inside
+  verdict `"failed"` on every run because `npx @oj-uday/vetlock@latest` inside
   `vetlock-web-scans`' `hosted-scan.yml` gets a 404 — the package has never
-  been published. `.github/workflows/publish.yml` already exists and is
-  wired correctly (tag-triggered, OIDC provenance, version-consistency
-  check against `packages/cli/package.json`) — it just needs `NPM_TOKEN` set
-  in this repo's Actions secrets (Settings → Secrets and variables →
-  Actions), then push the `v0.7.0` tag (already exists locally/remotely —
-  a re-push or `workflow_dispatch` trigger will do). Verify:
-  `npx vetlock@latest --version` succeeds from a clean machine, and the
+  been published. Make the first scoped release manually with a granular npm
+  token and `--access public`; local publishing cannot attach provenance.
+  Then configure npm Trusted Publishing for `OJ-Uday/vetlock` and
+  `.github/workflows/publish.yml` so future tag releases use OIDC provenance.
+  Push annotated tag `v0.8.0` at the scoped-name merge commit after publishing;
+  the idempotent workflow will test and no-op because the version exists. Verify:
+  `npx @oj-uday/vetlock@latest --version` succeeds from a clean machine, and the
   next hosted `/scan` returns a real verdict instead of `"failed"`.
 - [ ] **Register `vetlock.dev`** (~$12/yr at Cloudflare Registrar, same
   account as the Worker — `udayojha129`). Unblocks: `app.vetlock.dev`
@@ -47,13 +47,13 @@ snapshot these items build on.
   action and check "Publish this Action to the GitHub Marketplace."
   Requires a category, description, and icon per GitHub's Marketplace
   listing requirements.
-- [ ] **`npx vetlock demo` flawless on a clean machine.** Spin up a fresh
+- [ ] **`npx @oj-uday/vetlock demo` flawless on a clean machine.** Spin up a fresh
   Docker container (no prior npm cache, no Lilly-network assumptions), run
-  `npx vetlock@latest demo`, and confirm it runs the bundled Shai-Hulud
+  `npx @oj-uday/vetlock@latest demo`, and confirm it runs the bundled Shai-Hulud
   fixture end-to-end with no errors. Patch anything that surfaces — this
   is gating item in `LAUNCH-CHECKLIST.md`'s OSS-core section, and depends
   on the P0 npm-publish item above landing first (there's nothing at
-  `vetlock@latest` to demo until then).
+  `@oj-uday/vetlock@latest` to demo until then).
 - [ ] **README polish pass.** Hero GIF captured from the site scanner
   (oj-uday.github.io's live demo), a comparison table against Snyk/Socket/
   `npm audit`, a tightened quickstart, the honesty section (12/13 corpus,

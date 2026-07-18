@@ -96,7 +96,7 @@ runs:
         VETLOCK_INSTALL_DIR="${RUNNER_TEMP:-$PWD}/vetlock-install"
         rm -rf "$VETLOCK_INSTALL_DIR"
         mkdir -p "$VETLOCK_INSTALL_DIR"
-        npm install --no-save --no-audit --no-fund --prefix "$VETLOCK_INSTALL_DIR" "vetlock@$VETLOCK_VERSION"
+        npm install --no-save --no-audit --no-fund --prefix "$VETLOCK_INSTALL_DIR" "@oj-uday/vetlock@$VETLOCK_VERSION"
         echo "VETLOCK_INSTALL_DIR=$VETLOCK_INSTALL_DIR" >> "$GITHUB_ENV"
 
     - name: Run vetlock diff (SARIF)
