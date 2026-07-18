@@ -39,7 +39,7 @@ function failure(error: unknown) {
 }
 
 export function createVetlockMcpServer(): McpServer {
-  const server = new McpServer({ name: 'vetlock-admission', version: '0.7.0' }, { capabilities: { logging: {} } });
+  const server = new McpServer({ name: 'vetlock-admission', version: '0.8.0' }, { capabilities: { logging: {} } });
 
   server.registerTool('analyze_lockfile_change', {
     title: 'Analyze lockfile change',

@@ -82,6 +82,13 @@ export function evaluatePolicy(findings: readonly Finding[], policy: Policy = {}
   reasons: string[];
 } {
   const resolved = normalizedPolicy(policy);
+  // A synthetic analysis.failed finding means Vetlock could not analyze a
+  // package. When failClosed is enabled, that uncertainty is itself grounds
+  // for rejection even if a caller deliberately omits BLOCK from its normal
+  // severity policy. Turning failClosed off restores severity-only behavior.
+  if (resolved.failClosed && findings.some((finding) => finding.detector === 'analysis.failed')) {
+    return { decision: 'block', policy: resolved, reasons: ['analysis failed while failClosed is enabled'] };
+  }
   const seen = new Set(findings.map((finding) => finding.severity));
   const blocked = resolved.blockSeverities.filter((severity) => seen.has(severity));
   if (blocked.length) return { decision: 'block', policy: resolved, reasons: [`blocking severity present: ${blocked.join(', ')}`] };

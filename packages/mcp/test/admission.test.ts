@@ -22,6 +22,25 @@ describe('admission policy', () => {
   it('sends WARN findings to review by default', () => {
     expect(evaluatePolicy([{ ...finding, severity: 'WARN' }]).decision).toBe('review');
   });
+
+  it('blocks analysis failures when failClosed is enabled even if BLOCK is excluded', () => {
+    const outcome = evaluatePolicy([{ ...finding, detector: 'analysis.failed' }], {
+      blockSeverities: [],
+      reviewSeverities: [],
+      failClosed: true,
+    });
+    expect(outcome.decision).toBe('block');
+    expect(outcome.reasons).toEqual(['analysis failed while failClosed is enabled']);
+  });
+
+  it('uses severity-only policy for analysis failures when failClosed is disabled', () => {
+    const outcome = evaluatePolicy([{ ...finding, detector: 'analysis.failed' }], {
+      blockSeverities: [],
+      reviewSeverities: [],
+      failClosed: false,
+    });
+    expect(outcome.decision).toBe('allow');
+  });
 });
 
 describe('unsigned receipts', () => {
