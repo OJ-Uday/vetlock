@@ -64,9 +64,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run assurance test suite
-        run: pnpm --filter @vetlock/assurance test
+        run: |
+          mkdir -p assurance/.tmp
+          pnpm --filter @vetlock/assurance test --reporter=json --outputFile=.tmp/assurance-vitest.json
 
       - name: Regenerate ASSURANCE.md
+        env:
+          # Reuse the already-green run above. Without this, report generation
+          # executes the full adversarial suite a second time and exceeds the
+          # workflow's 15-minute bound.
+          ASSURANCE_VITEST_JSON: .tmp/assurance-vitest.json
         run: pnpm --filter @vetlock/assurance assurance:report
 
       - name: Detect ASSURANCE.md drift
