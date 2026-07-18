@@ -1,4 +1,4 @@
-# Vetlock — deployment topology (2026-07-15)
+# Vetlock — deployment topology (2026-07-19)
 
 This document is the cross-repo map: what's actually live, how the two
 service paths differ, what they cost, and what secrets exist where. It
@@ -16,10 +16,12 @@ document is a map, not the source of truth for any single fact.
 
 | Component | Where | Status |
 |---|---|---|
-| Vetlock OSS repo | github.com/OJ-Uday/vetlock | Public, tag `v0.7.0`, 540 tests green |
+| Vetlock OSS repo | github.com/OJ-Uday/vetlock | Public, tag `v0.8.0`, release gate green |
+| Vetlock CLI | npmjs.com/package/@oj-uday/vetlock | Public, `latest` = `0.8.0`; registry smoke test passed |
 | Vetlock GitHub App | github.com/apps/vetlock (App ID `4298344`) | Registered + Active, not yet installed on a real repo |
 | Cloudflare Worker | https://vetlock-app.oj-uday.workers.dev | Deployed, version `5ed5b3f1-e708-449e-b9ab-c7597d27e40c` |
 | Runner repo | github.com/OJ-Uday/vetlock-web-scans | Public, unlimited GHA minutes |
+| MCP admission server | `packages/mcp` | Source preview; private workspace package, not published |
 
 Verify each independently:
 
@@ -28,16 +30,17 @@ Verify each independently:
 curl -s https://vetlock-app.oj-uday.workers.dev/health
 # → {"ok":true,"service":"vetlock-app-worker"}
 
-# GitHub App is registered and public
-curl -s https://api.github.com/apps/vetlock | jq '.id, .slug, .name'
-# → 4298344, "vetlock", "vetlock"
+# GitHub App page and installation route resolve
+curl -s -o /dev/null -w '%{http_code}\n' https://github.com/apps/vetlock
+# → 200
 
 # Runner repo exists and is public
 gh repo view OJ-Uday/vetlock-web-scans --json visibility,url
 
-# OSS repo tag + test count claim
-git -C /Users/L122472/personal/vetlock tag --points-at v0.7.0
-gh release view v0.7.0 -R OJ-Uday/vetlock 2>/dev/null || echo "no GH Release object yet — tag only"
+# Public package and release tag
+npm view @oj-uday/vetlock version
+# → 0.8.0
+git ls-remote --tags https://github.com/OJ-Uday/vetlock.git refs/tags/v0.8.0
 
 # Install URL resolves (302 to GitHub's install-choice page, not a 404)
 curl -s -o /dev/null -w '%{http_code}\n' https://github.com/apps/vetlock/installations/new
@@ -47,6 +50,11 @@ Note the App is registered and the webhook is wired and tested (ping →
 `200 {"pong":true}`), but it has **not yet been installed on a real repo**
 with a real PR run through it — that's a P0 item in `TODO.md`, not a
 "live" claim being made here.
+
+The hosted-scan plumbing completed an end-to-end run before the npm release,
+but that run ended in `"failed"` because the CLI did not yet exist on npm.
+Now that `@oj-uday/vetlock@0.8.0` is public, one fresh hosted scan is still
+required before claiming the post-release payload path is live.
 
 ## Architecture — two service paths
 
