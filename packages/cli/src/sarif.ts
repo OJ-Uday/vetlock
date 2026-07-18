@@ -1,6 +1,13 @@
 /**
  * SARIF 2.1.0 renderer — for GitHub code-scanning uploads.
  * We only emit fields GitHub actually reads; the rest is intentionally omitted.
+ *
+ * NOTE: A canonical SARIF renderer also lives at
+ * `@vetlock/core` → packages/core/src/report/sarif.ts as a library-level export
+ * (audit §2.5 architectural borrow). Both share the same level mapping and
+ * emit the same rule/result shape; this CLI file also stamps `properties.mitre`
+ * per result and rule, so a SIEM consuming the vetlock SARIF can group by
+ * ATT&CK technique.
  */
 
 import { VETLOCK_VERSION, type RunResult, type Severity } from '@vetlock/core';
@@ -12,13 +19,14 @@ const SARIF_LEVEL: Record<Severity, 'error' | 'warning' | 'note'> = {
 };
 
 export function renderSARIF(result: RunResult): string {
-  const uniqueRules = new Map<string, { id: string; shortDescription: string; category: string }>();
+  const uniqueRules = new Map<string, { id: string; shortDescription: string; category: string; mitre: readonly string[] }>();
   for (const f of result.findings) {
     if (!uniqueRules.has(f.detector)) {
       uniqueRules.set(f.detector, {
         id: f.detector,
         shortDescription: `${f.category}: ${f.detector}`,
         category: f.category,
+        mitre: f.mitre ?? [],
       });
     }
   }
@@ -28,7 +36,12 @@ export function renderSARIF(result: RunResult): string {
     name: r.id,
     shortDescription: { text: r.shortDescription },
     helpUri: 'https://github.com/OJ-Uday/vetlock/blob/main/docs/DETECTIONS.md',
-    properties: { category: r.category },
+    properties: {
+      category: r.category,
+      // ATT&CK technique IDs so SIEM / GitHub code-scanning consumers can
+      // group findings by kill-chain step; empty array when unmapped.
+      mitre: r.mitre,
+    },
   }));
 
   const results = result.findings.flatMap((f) => {
@@ -55,6 +68,7 @@ export function renderSARIF(result: RunResult): string {
         from: f.from,
         to: f.to,
         confidence: f.confidence,
+        mitre: f.mitre ?? [],
       },
     };
   });
@@ -73,6 +87,11 @@ export function renderSARIF(result: RunResult): string {
           },
         },
         results,
+        properties: {
+          // Top-level riskScore so a GitHub code-scanning summary or SIEM
+          // dashboard can render a single number per SARIF run.
+          riskScore: result.riskScore,
+        },
       },
     ],
   };

@@ -38,7 +38,9 @@ jobs:
   assurance:
     name: PR-tier assurance (blocking)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Hosted-runner variance regularly pushes the full adversarial battery past
+    # 15 minutes. Keep a finite bound without cancelling a healthy run.
+    timeout-minutes: 30
     env:
       # ADR-0004: PR tier uses a fixed, checked-in seed so any reviewer can reproduce
       # a finding by re-running the harness with the same seed.
@@ -64,9 +66,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run assurance test suite
-        run: pnpm --filter @vetlock/assurance test
+        run: |
+          mkdir -p assurance/.tmp
+          pnpm --filter @vetlock/assurance pretest
+          pnpm --filter @vetlock/assurance test:ci
 
       - name: Regenerate ASSURANCE.md
+        env:
+          # Reuse the already-green run above. Without this, report generation
+          # executes the full adversarial suite a second time and exceeds the
+          # workflow's 15-minute bound.
+          ASSURANCE_VITEST_JSON: .tmp/assurance-vitest.json
         run: pnpm --filter @vetlock/assurance assurance:report
 
       - name: Detect ASSURANCE.md drift

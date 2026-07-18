@@ -18,6 +18,7 @@
     "typecheck": "tsc -p . --noEmit",
     "pretest": "pnpm --filter @vetlock/core build && pnpm --filter @vetlock/detectors build && tsc -p .",
     "test": "vitest run",
+    "test:ci": "vitest run --reporter=default --reporter=json --outputFile.json=.tmp/assurance-vitest.json",
     "test:watch": "vitest",
     "assurance:report": "node dist/report/cli.js"
   },

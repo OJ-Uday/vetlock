@@ -86,7 +86,9 @@ function bucketOf(testFileAbs: string, root: string): string | null {
     ? pathResolve(testFileAbs).slice(root.length + 1)
     : testFileAbs;
   // rel now looks like "test/robustness/no-crash.test.ts" or "test/oracles/oracles.test.ts".
-  const m = rel.match(/^test\/([^/]+)\//);
+  // Vitest returns native absolute paths. Normalize after relativizing so the metric
+  // buckets are identical on Windows development machines and Linux CI runners.
+  const m = rel.replaceAll('\\', '/').match(/^test\/([^/]+)\//);
   return m ? m[1] : null;
 }
 
@@ -105,8 +107,11 @@ function rateOrNull(counts: BucketCounts): number | null {
  */
 export async function collectMetrics(): Promise<MetricsSnapshot> {
   const root = assuranceRoot();
-  const tmpDir = mkdtempSync(join(tmpdir(), 'assurance-metrics-'));
-  const outFile = join(tmpDir, 'vitest.json');
+  const suppliedReport = process.env.ASSURANCE_VITEST_JSON?.trim();
+  const tmpDir = suppliedReport ? null : mkdtempSync(join(tmpdir(), 'assurance-metrics-'));
+  const outFile = suppliedReport
+    ? pathResolve(root, suppliedReport)
+    : join(tmpDir!, 'vitest.json');
 
   // Path to vitest's CLI entry — we could also `node_modules/.bin/vitest` but going directly
   // through the .mjs is the same behavior with one fewer shim in the way.
@@ -116,25 +121,27 @@ export async function collectMetrics(): Promise<MetricsSnapshot> {
     // Exclude test/report/** to prevent CLI-inside-CLI recursion when the
     // assurance-report-generated test spawns this CLI as a subprocess.
     // Also skip the "pretest" build hook — the caller is already built.
-    spawnSync(
-      process.execPath, // node
-      [
-        vitestBin,
-        'run',
-        '--reporter=json',
-        `--outputFile=${outFile}`,
-        '--exclude',
-        'test/report/**',
-      ],
-      {
-        cwd: root,
-        stdio: ['ignore', 'pipe', 'pipe'],
-        // Vitest inherits NODE env; keep it minimal.
-        env: { ...process.env },
-        // No timeout at spawn level — vitest has its own internal timeouts (testTimeout in
-        // vitest.config.ts). If the whole thing hangs, ctrl-C is the fix, not a race here.
-      },
-    );
+    if (!suppliedReport) {
+      spawnSync(
+        process.execPath, // node
+        [
+          vitestBin,
+          'run',
+          '--reporter=json',
+          `--outputFile=${outFile}`,
+          '--exclude',
+          'test/report/**',
+        ],
+        {
+          cwd: root,
+          stdio: ['ignore', 'pipe', 'pipe'],
+          // Vitest inherits NODE env; keep it minimal.
+          env: { ...process.env },
+          // No timeout at spawn level — vitest has its own internal timeouts (testTimeout in
+          // vitest.config.ts). If the whole thing hangs, ctrl-C is the fix, not a race here.
+        },
+      );
+    }
 
     if (!existsSync(outFile)) {
       throw new Error(
@@ -273,10 +280,12 @@ export async function collectMetrics(): Promise<MetricsSnapshot> {
     };
   } finally {
     // Always clean up the temp dir; don't leak /tmp/assurance-metrics-* dirs on every run.
-    try {
-      rmSync(tmpDir, { recursive: true, force: true });
-    } catch {
-      // Non-fatal — tmpfs cleanup is best-effort.
+    if (tmpDir) {
+      try {
+        rmSync(tmpDir, { recursive: true, force: true });
+      } catch {
+        // Non-fatal — tmpfs cleanup is best-effort.
+      }
     }
   }
 }

@@ -34,6 +34,16 @@ npx vetlock demo
 
 That's it. No install, no config, no network. You'll see vetlock replay the **Shai-Hulud 2025** worm attack against a bundled defanged fixture and produce 13 findings (BLOCK):
 
+> **New:** `vetlock add <pkg>` — a **pre-install** gate that runs vetlock against the incoming tarball **before npm downloads and executes any code from it**. If the package trips a BLOCK-tier detector, the install is refused. Offline, no auth, no telemetry.
+>
+> ```bash
+> vetlock add lodash            # scan then install
+> vetlock add lodash --dry-run  # scan only, never install
+> ```
+>
+> This is the workflow to add to your dev box today. See [`docs/COMPARISONS.md`](docs/COMPARISONS.md) for how this compares to Socket Firewall, guarddog, and the rest of the space.
+
+
 ```
 vetlock diff summary
   BLOCK · 13 findings · 1 changed package · 3ms
@@ -83,6 +93,7 @@ npx vetlock diff package-lock.before.json package-lock.after.json
 - [Output formats](#output-formats)
 - [GitHub Action](#github-action)
 - [Configuration (`.vetlock.json`)](#configuration-vetlockjson)
+- [Comparisons — vs guarddog, Socket, Snyk, npm audit](#comparisons--where-vetlock-sits-alongside-guarddog-socket-snyk-and-npm-audit)
 - [Tests](#tests)
 - [Architecture](#architecture)
 - [Privacy](#privacy)
@@ -234,6 +245,18 @@ the engine down and (b) sneak malice past it. It fails the build the instant eit
 succeeds. See [ASSURANCE.md](assurance/report/ASSURANCE.md) for the current scorecard.
 
 ---
+
+## Comparisons — where vetlock sits alongside guarddog, Socket, Snyk, and npm audit
+
+vetlock is not the only supply-chain scanner in the ecosystem, and it deliberately does **not** try to be all of them. The
+[`docs/COMPARISONS.md`](docs/COMPARISONS.md) doc is an honest capability-matrix + when-to-use-which-tool guide that
+positions vetlock against guarddog (Datadog's OSS scanner), Socket (commercial SaaS + Socket Firewall), Snyk, and
+`npm audit`. Every row is anchored to a public source; corrections welcome. Short version: vetlock is the diff-native
+behavioral engine, `vetlock add` is the offline pre-install gate, and everything else in that document is why the tools
+are best composed rather than picked one-out-of-many.
+
+---
+
 
 ## Hardening against real-world evasion (v0.3.0)
 

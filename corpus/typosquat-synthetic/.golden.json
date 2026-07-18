@@ -24,6 +24,11 @@
           "my-app",
           "crossenv"
         ]
+      ],
+      "mitre": [
+        "T1036.005",
+        "T1195.002",
+        "T1583.001"
       ]
     },
     {
@@ -48,6 +53,10 @@
           "my-app",
           "crossenv"
         ]
+      ],
+      "mitre": [
+        "T1059.007",
+        "T1059"
       ]
     },
     {
@@ -72,6 +81,10 @@
           "my-app",
           "crossenv"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
       ]
     },
     {
@@ -96,6 +109,11 @@
           "my-app",
           "crossenv"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
       ]
     }
   ],
@@ -117,5 +135,6 @@
       "newIntegrity": "sha512-q5rytaYtAQXSLaEF0alDjyzdWAzPryLSX53bK8VkXVNe09CbhCPXdIGLKAbh9UZ2KSTHmGS86jS9qhp6c5k70A=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 7
 }

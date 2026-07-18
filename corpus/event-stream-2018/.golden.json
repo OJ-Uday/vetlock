@@ -25,6 +25,11 @@
           "event-stream",
           "flatmap-stream"
         ]
+      ],
+      "mitre": [
+        "T1027",
+        "T1140",
+        "T1573"
       ]
     },
     {
@@ -50,6 +55,10 @@
           "event-stream",
           "flatmap-stream"
         ]
+      ],
+      "mitre": [
+        "T1027",
+        "T1140"
       ]
     },
     {
@@ -74,6 +83,10 @@
           "my-app",
           "event-stream"
         ]
+      ],
+      "mitre": [
+        "T1078",
+        "T1195.002"
       ]
     },
     {
@@ -99,6 +112,11 @@
           "event-stream",
           "flatmap-stream"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
       ]
     },
     {
@@ -124,6 +142,10 @@
           "event-stream",
           "flatmap-stream"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
       ]
     },
     {
@@ -148,6 +170,9 @@
           "my-app",
           "event-stream"
         ]
+      ],
+      "mitre": [
+        "T1195.002"
       ]
     }
   ],
@@ -179,5 +204,6 @@
       "newIntegrity": "sha512-NuNy7SIs3/2VZTjBJKYwHUoGJ7nWU26CzO46yFNzb5CloxI27r7yIs0bIg02cyLyV0QRYDFrBsWu2A3DnwVgLg=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 10
 }

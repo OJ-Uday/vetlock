@@ -20,5 +20,6 @@
       "newIntegrity": "sha512-HIzjoNtoics5lUbW3fOMqnK/4J22d+b3g8N7COhaB/Jj0vvHI2P1b6tm0NjZWsSzCnQ+BqhtXN/AW9ZCMJkhQg=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 0
 }

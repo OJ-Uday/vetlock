@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runDiff } from '@vetlock/core';
 import { runAll } from '@vetlock/detectors';
+import { makeLocalFetch } from '../src/corpus/fixture-runner.js';
 
 const CORPUS_DIR = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -17,12 +18,7 @@ describe('CORPUS ACCEPTANCE — Shai-Hulud 2025 (defanged)', () => {
 
     const result = await runDiff(before, after, {
       runDetectors: (pair) => runAll(pair),
-      fetchOverride: async (ref) => {
-        if (ref.resolved?.startsWith('file://')) {
-          return new URL(ref.resolved).pathname;
-        }
-        throw new Error(`test fixture should not need to reach the network for ${ref.name}@${ref.version}`);
-      },
+      fetchOverride: makeLocalFetch(CORPUS_DIR),
     });
 
     // 1. Overall verdict must be BLOCK.

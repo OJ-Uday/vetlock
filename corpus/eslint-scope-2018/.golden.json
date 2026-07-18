@@ -24,6 +24,10 @@
           "my-app",
           "eslint-scope"
         ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1005"
       ]
     },
     {
@@ -48,6 +52,10 @@
           "my-app",
           "eslint-scope"
         ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1005"
       ]
     },
     {
@@ -72,6 +80,10 @@
           "my-app",
           "eslint-scope"
         ]
+      ],
+      "mitre": [
+        "T1027",
+        "T1140"
       ]
     },
     {
@@ -96,6 +108,10 @@
           "my-app",
           "eslint-scope"
         ]
+      ],
+      "mitre": [
+        "T1078",
+        "T1195.002"
       ]
     },
     {
@@ -120,6 +136,10 @@
           "my-app",
           "eslint-scope"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
       ]
     },
     {
@@ -144,6 +164,11 @@
           "my-app",
           "eslint-scope"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
       ]
     }
   ],
@@ -165,5 +190,6 @@
       "newIntegrity": "sha512-KVuLnj8LIc+yeOu4ujOYoXKYrU/Lt6bqvNUcCNn5MFUBXLQeFo5Wg5JQ2Qx8j+XD1IuFwaZiqOSO9eFO02s0Qg=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 10
 }

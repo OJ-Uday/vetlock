@@ -46,6 +46,22 @@ import { firstVersionClusterDetector } from './first-version-cluster.js';
 import { wasmDetector } from './wasm.js';
 import { bundledDepsDetector } from './bundled.js';
 import { adjacentAdvisories, advisoriesForVersion } from './advisories.js';
+// Wave 8-KK parity ports (audit §1 REAL gaps) — obfuscation + net-egress + typosquat.
+// KK's meta-disposable-domain was superseded by LL's meta-disposable-author-domain (below);
+// KK's typo-hyphen-permutation was superseded by LL's version (more sophisticated bundle).
+import { obfJsManglerSignatureDetector } from './obf-js-mangler.js';
+import { obfUnicodeHomoglyphDetector } from './obf-unicode-homoglyph.js';
+import { netDnsTemplatedHostnameDetector } from './net-dns-templated-hostname.js';
+// Wave 8-LL — guarddog rule ports (audit §4) — with bundled data (top-1000, disposable-domains).
+import { typoHyphenPermutationDetector } from './typo-hyphen-permutation.js';
+import { disposableAuthorDomainDetector } from './meta-disposable-author-domain.js';
+import { httpResolvedUrlDetector } from './manifest-deps-http.js';
+import { imageDecodeExecDetector } from './obf-image-decode-exec.js';
+import { selfPublishShapeDetector } from './install-self-publish-shape.js';
+// Wave 8-MM — MITRE ATT&CK tagging; stamped onto every emitted Finding via runAll below.
+import { mitreTagsFor } from '@vetlock/core';
+
+export { mitreTagsFor, MITRE_TAGS } from '@vetlock/core';
 
 export const ALL_DETECTORS: readonly Detector[] = [
   installDetector,
@@ -64,6 +80,16 @@ export const ALL_DETECTORS: readonly Detector[] = [
   firstVersionClusterDetector,
   wasmDetector,
   bundledDepsDetector,
+  // Wave 8-KK parity ports (audit §1)
+  obfJsManglerSignatureDetector,
+  obfUnicodeHomoglyphDetector,
+  netDnsTemplatedHostnameDetector,
+  // Wave 8-LL — rule ports (audit §4 rows 6-10)
+  typoHyphenPermutationDetector,
+  disposableAuthorDomainDetector,
+  httpResolvedUrlDetector,
+  imageDecodeExecDetector,
+  selfPublishShapeDetector,
 ];
 
 export {
@@ -83,6 +109,16 @@ export {
   firstVersionClusterDetector,
   wasmDetector,
   bundledDepsDetector,
+  // Wave 8-KK parity ports
+  obfJsManglerSignatureDetector,
+  obfUnicodeHomoglyphDetector,
+  netDnsTemplatedHostnameDetector,
+  // Wave 8-LL rule ports
+  typoHyphenPermutationDetector,
+  disposableAuthorDomainDetector,
+  httpResolvedUrlDetector,
+  imageDecodeExecDetector,
+  selfPublishShapeDetector,
 };
 
 const DANGEROUS_CODE_KINDS = new Set([
@@ -263,6 +299,18 @@ export function runAll(pair: SnapshotPair, ctx?: DetectorContext): Finding[] {
       f.message += ` [adjacent GHSA: ${adjacentCite}]`;
       if (f.confidence === 'low') f.confidence = 'medium';
     }
+  }
+
+  // Attach MITRE ATT&CK technique tags. Central mapping lives in
+  // packages/detectors/src/mitre-tags.ts so a security-review pass can update
+  // one file rather than sprinkling ID literals across every detector.
+  // Findings whose detector id is unmapped get no `mitre` (allowed by
+  // validateFinding). Findings that already set `mitre` explicitly (e.g.
+  // engine-emitted synthetics) are preserved.
+  for (const f of all) {
+    if (f.mitre !== undefined) continue;
+    const tags = mitreTagsFor(f.detector);
+    if (tags.length > 0) f.mitre = tags;
   }
 
   for (const f of all) {

@@ -19,7 +19,11 @@
           "snippet": "imports subprocess"
         }
       ],
-      "provenance": []
+      "provenance": [],
+      "mitre": [
+        "T1059.007",
+        "T1059"
+      ]
     },
     {
       "detector": "net.new-endpoint",
@@ -38,7 +42,12 @@
           "snippet": "https://miner.example.invalid/payload.py"
         }
       ],
-      "provenance": []
+      "provenance": [],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
+      ]
     }
   ],
   "rollupByDirect": {},
@@ -54,5 +63,6 @@
       "newIntegrity": "sha256-c7fe3a1c5b3cc59c58fe814db47d20a5e7319de308895add107759a5308a6292"
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 5.6
 }

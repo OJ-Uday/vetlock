@@ -19,7 +19,11 @@
           "snippet": "integrity sha512-4dEpaekNEUE/sfNtk3E+Lvjorx7nZ3Zs+3lfOhl/41Udmsp/FN5yBfMPjWfRAsB2B10nsKLroElmYTa3Hfnccw== → sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw=="
         }
       ],
-      "provenance": []
+      "provenance": [],
+      "mitre": [
+        "T1554",
+        "T1195.002"
+      ]
     }
   ],
   "rollupByDirect": {
@@ -40,5 +44,6 @@
       "newIntegrity": "sha512-Gci01/6kylroSGDyZkRaEzsjdmYzpQyCVZ9+cJNkRJGTuHC+xfml262sz5YSb5xYdO4r0m2NRjUp1o/I6BAnHw=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 4
 }

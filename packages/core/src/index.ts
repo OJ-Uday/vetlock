@@ -19,3 +19,5 @@ export * from './fetch.js';
 export * from './config.js';
 export * from './config-trust.js';
 export * from './wasm.js';
+export * from './mitre-tags.js';
+export * from './report/sarif.js';

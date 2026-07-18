@@ -24,6 +24,10 @@
           "my-app",
           "coa"
         ]
+      ],
+      "mitre": [
+        "T1059.007",
+        "T1059"
       ]
     },
     {
@@ -48,6 +52,10 @@
           "my-app",
           "coa"
         ]
+      ],
+      "mitre": [
+        "T1195.002",
+        "T1059.007"
       ]
     },
     {
@@ -72,6 +80,10 @@
           "my-app",
           "coa"
         ]
+      ],
+      "mitre": [
+        "T1078",
+        "T1195.002"
       ]
     },
     {
@@ -96,6 +108,10 @@
           "my-app",
           "coa"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
       ]
     },
     {
@@ -120,6 +136,11 @@
           "my-app",
           "coa"
         ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
       ]
     }
   ],
@@ -141,5 +162,6 @@
       "newIntegrity": "sha512-cUPrnCAsGh6LhVdWjDDWTTHVyPAGE6u4FLPtHmK8GUBhcz4YtuzNrnCSoTjP0YQ55Arjrf+imsS25lkRJc40tw=="
     }
   ],
-  "errors": []
+  "errors": [],
+  "riskScore": 10
 }
