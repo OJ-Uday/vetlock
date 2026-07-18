@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -40,7 +41,7 @@
       "direction": "added",
       "severity": "BLOCK",
       "confidence": "low",
-      "message": "Newly-installed package ships obfuscated file index.js: 1 suspicious high-entropy literal(s) [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS findings in this package]",
+      "message": "Newly-installed package ships obfuscated file index.js: 1 suspicious high-entropy literal(s) [escalated: co-occurring NET/INSTALL/EXEC/ENV/FS or dangerous CODE findings in this package]",
       "evidence": [
         {
           "file": "index.js",

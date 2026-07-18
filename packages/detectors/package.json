@@ -9,17 +9,17 @@
     ".": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc -p . && cp src/capability-map.json dist/capability-map.json && mkdir -p dist/data && cp src/data/*.json dist/data/",
+    "build": "tsc -p . && node scripts/copy-static-assets.mjs",
     "typecheck": "tsc -p . --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@vetlock/core": "workspace:*",
-    "@babel/parser": "^7.24.0",
-    "@babel/traverse": "^7.24.0",
-    "@babel/types": "^7.24.0",
-    "damerau-levenshtein": "^1.0.8",
-    "semver": "^7.6.0"
+    "@babel/parser": "7.29.7",
+    "@babel/traverse": "7.29.7",
+    "@babel/types": "7.29.7",
+    "damerau-levenshtein": "1.0.8",
+    "semver": "7.8.5"
   },
   "devDependencies": {
     "@types/babel__traverse": "^7.20.5",

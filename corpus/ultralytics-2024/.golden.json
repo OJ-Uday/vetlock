@@ -1,0 +1,68 @@
+{
+  "_schema": "v1",
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "ultralytics",
+      "from": "8.3.40",
+      "to": "8.3.41",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Package started using process/execution module \"subprocess\". [escalated: package 'ultralytics' has 2 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint]",
+      "evidence": [
+        {
+          "file": "ultralytics/__init__.py",
+          "line": 1,
+          "snippet": "imports subprocess"
+        }
+      ],
+      "provenance": [],
+      "mitre": [
+        "T1059.007",
+        "T1059"
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "ultralytics",
+      "from": "8.3.40",
+      "to": "8.3.41",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "New network endpoint appeared: https://miner.example.invalid/payload.py [escalated: package 'ultralytics' has 2 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint]",
+      "evidence": [
+        {
+          "file": "ultralytics/__init__.py",
+          "line": 1,
+          "snippet": "https://miner.example.invalid/payload.py"
+        }
+      ],
+      "provenance": [],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
+      ]
+    }
+  ],
+  "rollupByDirect": {},
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "ultralytics",
+      "nodeKeyOld": "pypi/ultralytics",
+      "nodeKeyNew": "pypi/ultralytics",
+      "oldVersion": "8.3.40",
+      "newVersion": "8.3.41",
+      "oldIntegrity": "sha256-511022202b08577c047ec43c719a4604144c7acc3cc1932ca2ddfd133a03c0f1",
+      "newIntegrity": "sha256-c7fe3a1c5b3cc59c58fe814db47d20a5e7319de308895add107759a5308a6292"
+    }
+  ],
+  "errors": [],
+  "riskScore": 5.6
+}

@@ -18,5 +18,15 @@ export default defineConfig({
         singleFork: false,
       },
     },
+    // Coverage via @vitest/coverage-v8 — install separately when needed:
+    //   pnpm --filter @vetlock/assurance add -D @vitest/coverage-v8
+    // Then uncomment:
+    // coverage: {
+    //   provider: 'v8',
+    //   reporter: ['text', 'json-summary'],
+    //   all: true,
+    //   thresholds: { lines: 80, branches: 75, functions: 80 },
+    //   exclude: ['**/test/**', '**/dist/**', '**/*.d.ts'],
+    // },
   },
 });

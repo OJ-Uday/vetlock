@@ -22,6 +22,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { runDiff } from '@vetlock/core';
 import { runAll } from '@vetlock/detectors';
+import { makeLocalFetch, resolveFixtureLockfiles } from '../src/corpus/fixture-runner.js';
 
 const CORPUS_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -66,27 +67,6 @@ function loadManifestsSync(): CorpusManifest[] {
 
 const MANIFESTS = loadManifestsSync();
 
-/**
- * Resolve a lockfile's `resolved: file:...` URL to an absolute tarball path.
- * Corpus fixtures use RELATIVE (`file:./...`) refs for portability + to avoid
- * baking the builder's home directory into shipped fixtures — see
- * build-all.ts::relativeFileResolved. Absolute `file:///...` refs are still
- * accepted (legacy shape, or hand-rolled test fixtures).
- */
-function resolveFileRef(resolved: string, fixtureDir: string): string {
-  const raw = resolved.slice('file:'.length);
-  if (raw.startsWith('///')) return raw.slice(2); // canonical file:/// → /abs
-  if (raw.startsWith('//')) return raw.slice(raw.indexOf('/', 2)); // file://host/path
-  // Relative form (file:./x, file:../x, file:x): resolve against the fixture dir.
-  return path.resolve(fixtureDir, raw.replace(/^\.\//, ''));
-}
-
-const makeLocalFetch = (fixtureDir: string) =>
-  async (ref: { resolved?: string | null; name: string; version: string }) => {
-    if (ref.resolved?.startsWith('file:')) return resolveFileRef(ref.resolved, fixtureDir);
-    throw new Error(`corpus replay should not need to fetch ${ref.name}@${ref.version}`);
-  };
-
 describe('CORPUS REPLAY — 10+ known npm supply-chain attacks', () => {
   it('has at least 10 fixtures loaded', () => {
     expect(MANIFESTS.length).toBeGreaterThanOrEqual(10);
@@ -96,11 +76,14 @@ describe('CORPUS REPLAY — 10+ known npm supply-chain attacks', () => {
     '$id ($year) — $title',
     async (manifest: CorpusManifest) => {
       const dir = path.join(CORPUS_ROOT, manifest.id);
-      const before = await fs.readFile(path.join(dir, 'lockfile.before.json'), 'utf8');
-      const after = await fs.readFile(path.join(dir, 'lockfile.after.json'), 'utf8');
+      const lockfiles = resolveFixtureLockfiles(dir);
+      const before = await fs.readFile(lockfiles.beforePath, 'utf8');
+      const after = await fs.readFile(lockfiles.afterPath, 'utf8');
       const result = await runDiff(before, after, {
         runDetectors: (pair) => runAll(pair),
         fetchOverride: makeLocalFetch(dir),
+        oldLockfilePath: lockfiles.oldLockfilePath,
+        newLockfilePath: lockfiles.newLockfilePath,
       });
 
       const detectors = new Set(result.findings.map((f) => f.detector));

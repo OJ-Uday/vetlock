@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -10,7 +11,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using process/execution module \"child_process\". [escalated: package 'coa' has 3 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "Package started using process/execution module \"child_process\". [escalated: package 'coa' has 3 WARN findings across 3 categories; source detectors: exec.new-module, meta.maintainer-change, net.new-module] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "postinstall.js",
@@ -66,7 +67,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Publisher/maintainer set changed between versions. [escalated: package 'coa' has 3 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "Publisher/maintainer set changed between versions. [escalated: package 'coa' has 3 WARN findings across 3 categories; source detectors: exec.new-module, meta.maintainer-change, net.new-module] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "package.json",
@@ -94,7 +95,7 @@
       "direction": "changed",
       "severity": "BLOCK",
       "confidence": "high",
-      "message": "Package started using network module \"https\". [escalated: package 'coa' has 3 WARN findings across 3 categories] [GHSA: GHSA-mh6f-8j2x-4483]",
+      "message": "Package started using network module \"https\". [escalated: package 'coa' has 3 WARN findings across 3 categories; source detectors: exec.new-module, meta.maintainer-change, net.new-module] [GHSA: GHSA-mh6f-8j2x-4483]",
       "evidence": [
         {
           "file": "postinstall.js",

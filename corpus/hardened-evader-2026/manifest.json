@@ -11,7 +11,9 @@
     "mustFire": [
       "env.token-harvest",
       "exec.new-module",
-      "net.encoded-endpoint"
+      "net.encoded-endpoint",
+      "net.new-module",
+      "net.new-endpoint"
     ],
     "verdict": "BLOCK",
     "minCategories": [

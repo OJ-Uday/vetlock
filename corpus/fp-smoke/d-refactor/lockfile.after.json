@@ -14,7 +14,7 @@
       "name": "small-parser",
       "version": "1.5.1",
       "integrity": "sha512-kYhcN6UQsOYE1jHshPkJHTFb4I2CVHXlwmJ+XIVonVotKRefCH37O74ivimghyHU9jDDR6G5OiuqAh0m1EZhHQ==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/d-refactor/small-parser-new/small-parser-new.tgz"
+      "resolved": "file:./small-parser-new/small-parser-new.tgz"
     }
   }
 }

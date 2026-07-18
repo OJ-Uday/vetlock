@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "CLEAN",
   "findings": [],
   "rollupByDirect": {

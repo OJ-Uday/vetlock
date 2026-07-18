@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -30,34 +31,6 @@
       ]
     },
     {
-      "detector": "exec.new-module",
-      "category": "EXEC",
-      "package": "ua-parser-js",
-      "from": "0.7.28",
-      "to": "0.7.29",
-      "direction": "changed",
-      "severity": "BLOCK",
-      "confidence": "high",
-      "message": "Package started using process/execution module \"child_process\". [escalated: package 'ua-parser-js' has 2 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
-      "evidence": [
-        {
-          "file": "preinstall.js",
-          "line": 1,
-          "snippet": "imports child_process"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "ua-parser-js"
-        ]
-      ],
-      "mitre": [
-        "T1059.007",
-        "T1059"
-      ]
-    },
-    {
       "detector": "install.script-added",
       "category": "INSTALL",
       "package": "ua-parser-js",
@@ -86,15 +59,43 @@
       ]
     },
     {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "ua-parser-js",
+      "from": "0.7.28",
+      "to": "0.7.29",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "high",
+      "message": "Package started using process/execution module \"child_process\". [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "evidence": [
+        {
+          "file": "preinstall.js",
+          "line": 1,
+          "snippet": "imports child_process"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "ua-parser-js"
+        ]
+      ],
+      "mitre": [
+        "T1059.007",
+        "T1059"
+      ]
+    },
+    {
       "detector": "net.new-module",
       "category": "NET",
       "package": "ua-parser-js",
       "from": "0.7.28",
       "to": "0.7.29",
       "direction": "changed",
-      "severity": "BLOCK",
+      "severity": "WARN",
       "confidence": "high",
-      "message": "Package started using network module \"https\". [escalated: package 'ua-parser-js' has 2 WARN findings across 2 categories] [GHSA: GHSA-fh58-9fw3-vf2v]",
+      "message": "Package started using network module \"https\". [GHSA: GHSA-fh58-9fw3-vf2v]",
       "evidence": [
         {
           "file": "preinstall.js",

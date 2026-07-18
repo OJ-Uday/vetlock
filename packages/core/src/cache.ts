@@ -1,10 +1,11 @@
 /**
  * Content-addressed cache for PackageSnapshot values.
  *
- * Key: the tarball's ssri integrity string (e.g. 'sha512-…='). We derive
- * the on-disk filename by stripping non-filesystem-safe chars.
+ * Key: the tarball's ssri integrity string (e.g. 'sha512-…='). We hash it
+ * with SHA-256 for the on-disk filename so attacker-controlled integrity text
+ * cannot create collisions via ad-hoc sanitization.
  *
- * Storage: `~/.cache/vetlock/analysis/<safe-key>.json`. Override via env var
+ * Storage: `~/.cache/vetlock/analysis/<sha256>.json`. Override via env var
  * `VETLOCK_CACHE_DIR` (respected here, not read at import).
  *
  * Snapshots include a `formatVersion` field; read() ignores hits whose format
@@ -48,6 +49,7 @@
  */
 
 import { promises as fs } from 'node:fs';
+import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import * as crypto from 'node:crypto';
@@ -103,24 +105,44 @@ export function makeCache(dir: string = defaultCacheDir()): SnapshotCache {
         hmacKey = existing;
         return existing;
       }
-      // Corrupt/short key file → regenerate. This IS a legitimate cache
-      // invalidation event (equivalent to a formatVersion bump).
-    } catch {
-      // No key yet; fall through to create.
+      // Corrupt/short key file → regenerate in place. This IS a legitimate
+      // cache invalidation event (equivalent to a formatVersion bump).
+      const regenerated = crypto.randomBytes(32);
+      await fs.writeFile(keyPath, regenerated, { mode: 0o600 });
+      try {
+        await fs.chmod(keyPath, 0o600);
+      } catch {
+        /* best-effort */
+      }
+      hmacKey = regenerated;
+      return regenerated;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
     }
+
     const fresh = crypto.randomBytes(32);
-    // Atomic write with restrictive permissions.
-    const tmp = `${keyPath}.tmp-${process.pid}-${Date.now()}`;
-    await fs.writeFile(tmp, fresh, { mode: 0o600 });
-    await fs.rename(tmp, keyPath);
-    // Belt-and-suspenders — some fs/os combos ignore mode on writeFile.
     try {
-      await fs.chmod(keyPath, 0o600);
-    } catch {
-      /* best-effort */
+      const fd = await fs.open(
+        keyPath,
+        fsSync.constants.O_WRONLY | fsSync.constants.O_CREAT | fsSync.constants.O_EXCL,
+        0o600,
+      );
+      try {
+        await fd.writeFile(fresh);
+      } finally {
+        await fd.close();
+      }
+      hmacKey = fresh;
+      return fresh;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+      const existing = await fs.readFile(keyPath);
+      if (existing.length < 32) {
+        throw new Error(`hmac key at ${keyPath} is shorter than 32 bytes after concurrent creation`);
+      }
+      hmacKey = existing;
+      return existing;
     }
-    hmacKey = fresh;
-    return fresh;
   }
 
   return {
@@ -197,7 +219,6 @@ async function computeHmac(
 }
 
 function keyPath(dir: string, integrity: string): string {
-  // sha512-abc/def= → sha512-abc_def_
-  const safe = integrity.replace(/[^A-Za-z0-9._-]/g, '_');
+  const safe = crypto.createHash('sha256').update(integrity).digest('hex');
   return path.join(dir, `${safe}.json`);
 }

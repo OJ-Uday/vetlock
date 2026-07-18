@@ -33,7 +33,9 @@ function probeAddCommand(): boolean {
   return /^\s*add\b/m.test(res.stdout ?? '');
 }
 
-const HAS_ADD = probeAddCommand();
+const HAS_ADD = process.platform !== 'win32'
+  && process.env.VETLOCK_ENABLE_PREINSTALL_INTEGRATION === '1'
+  && probeAddCommand();
 
 /** Latency budget for `vetlock add` on the warm-cache path.  Report-only. */
 const WARM_TARGET_MS = 3_000;

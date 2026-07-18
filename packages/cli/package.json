@@ -3,14 +3,25 @@
   "version": "0.7.0",
   "private": false,
   "description": "Behavioral diff for npm dependency updates. What does this update DO now that it didn't before?",
-  "keywords": ["security", "supply-chain", "npm", "dependencies", "audit", "sast", "lockfile", "sbom"],
+  "keywords": [
+    "security",
+    "supply-chain",
+    "npm",
+    "dependencies",
+    "audit",
+    "sast",
+    "lockfile",
+    "sbom"
+  ],
   "author": "Uday Ojha <OJ-Uday@users.noreply.github.com>",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OJ-Uday/vetlock.git"
+    "url": "git+https://github.com/OJ-Uday/vetlock.git",
+    "directory": "packages/cli"
   },
-  "homepage": "https://github.com/OJ-Uday/vetlock",
+  "homepage": "https://github.com/OJ-Uday/vetlock#readme",
+  "bugs": "https://github.com/OJ-Uday/vetlock/issues",
   "type": "module",
   "bin": {
     "vetlock": "./dist/cli.js"
@@ -18,9 +29,10 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc -p . && node scripts/copy-demo-fixture.js",
+    "build": "tsc -p . && node scripts/copy-demo-fixture.mjs",
     "typecheck": "tsc -p . --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run bundle"
   },
   "engines": {
     "node": ">=20"
@@ -38,13 +50,15 @@
   "dependencies": {
     "@vetlock/core": "workspace:*",
     "@vetlock/detectors": "workspace:*",
-    "commander": "^12.0.0",
-    "ora": "^8.1.0",
-    "picocolors": "^1.0.0",
-    "tar": "^7.0.0",
-    "zod": "^3.23.0"
+    "commander": "12.1.0",
+    "ora": "8.2.0",
+    "picocolors": "1.1.1",
+    "tar": "7.5.20",
+    "zod": "3.25.76"
   },
   "devDependencies": {
+    "@vetlock/core": "workspace:*",
+    "@vetlock/detectors": "workspace:*",
     "pacote": "^18.0.0"
   }
 }

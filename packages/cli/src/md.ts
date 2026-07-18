@@ -63,5 +63,10 @@ export function renderMarkdown(result: RunResult): string {
 }
 
 function escape(s: string): string {
-  return s.replace(/`/g, '\\`').slice(0, 200);
+  return truncateSnippet(s.replace(/`/g, '\\`'));
+}
+
+function truncateSnippet(s: string, max = 200): string {
+  if (s.length <= max) return s;
+  return s.slice(0, max) + ' …(truncated)';
 }

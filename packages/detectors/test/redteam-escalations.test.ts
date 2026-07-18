@@ -206,113 +206,151 @@ describe('D5 — typosquat escalation on 2+ WARN-tier findings across 2+ categor
   });
 });
 
-// ---------------------------------------------------------------------------
-// D4 — Compound rule: exactly 2 findings across 2 categories stays WARN under old rule
-// Fix: rule 3 now escalates on (warns.length >= 2 && cats.size >= 2 && security-relevant).
-// ---------------------------------------------------------------------------
-describe('D4 — compound-suspicion: 2 WARN findings across 2 security-relevant categories', () => {
-  it('escalates both findings to BLOCK: net.new-module (NET) + code.dynamic-loading-added (CODE)', () => {
-    // Old rule requires warns.length >= 3. New rule: 2+ across 2+ with security-relevant cat.
+describe('v0.6.0 FP regressions', () => {
+  it('does NOT escalate OBF when the only CODE finding is dynamic-import', () => {
     const pair = {
       old: mkSnap({
-        name: 'evil-d4',
+        name: 'vite-like',
         version: '1.0.0',
-        files: [mkFile({ path: 'index.js' })],
+        files: [mkFile({ path: 'dist/index.mjs', entropy: 2.8, minified: false })],
       }),
       new: mkSnap({
-        name: 'evil-d4',
+        name: 'vite-like',
         version: '1.0.1',
         files: [
           mkFile({
-            path: 'index.js',
-            networkModules: ['https'],
-            dynamicCode: [{ line: 5, kind: 'eval', snippet: 'eval("...")' }],
+            path: 'dist/index.mjs',
+            entropy: 6.1,
+            minified: true,
+            dynamicCode: [{ line: 10, kind: 'dynamic-import', snippet: 'await import(x)' }],
           }),
         ],
       }),
     };
     const findings = runAll(pair);
-    const netFinding = findings.find((f) => f.detector === 'net.new-module');
-    const codeFinding = findings.find((f) => f.detector === 'code.dynamic-loading-added');
-    expect(netFinding).toBeDefined();
-    expect(codeFinding).toBeDefined();
-    expect(netFinding!.severity).toBe('BLOCK');
-    expect(codeFinding!.severity).toBe('BLOCK');
-    expect(netFinding!.message).toMatch(/escalated/);
-    expect(codeFinding!.message).toMatch(/escalated/);
+    const obf = findings.find((f) => f.category === 'OBF');
+    const code = findings.find((f) => f.detector === 'code.dynamic-loading-added');
+    expect(obf).toBeDefined();
+    expect(code).toBeDefined();
+    expect(obf!.severity).toBe('WARN');
+    expect(obf!.message).not.toMatch(/escalated/);
+    expect(code!.severity).toBe('INFO');
   });
-});
 
-// ---------------------------------------------------------------------------
-// S5 — Compound rule: exactly 4 WARN findings all in NET category stays WARN under old rule
-// Fix: rule 3 now escalates on warns.length >= 3 regardless of category count.
-// ---------------------------------------------------------------------------
-describe('S5 — compound-suspicion: 4 net.new-endpoint WARN findings (single NET category)', () => {
-  it('escalates all 4 findings to BLOCK when warns.length >= 3 in single category', () => {
-    // 4 separate URL literals each emitting net.new-endpoint WARN.
-    // Old rule: cats.size == 1 (only NET) → no escalation.
-    // New rule: warns.length >= 3 → escalate regardless of category count.
+  it('still escalates OBF when the co-occurring CODE finding is eval', () => {
     const pair = {
       old: mkSnap({
-        name: 'evil-s5',
+        name: 'evil-eval',
         version: '1.0.0',
-        files: [mkFile({ path: 'index.js', urlLiterals: [] })],
+        files: [mkFile({ path: 'dist/index.js', entropy: 2.7, minified: false })],
       }),
       new: mkSnap({
-        name: 'evil-s5',
+        name: 'evil-eval',
+        version: '1.0.1',
+        files: [
+          mkFile({
+            path: 'dist/index.js',
+            entropy: 6.2,
+            minified: true,
+            dynamicCode: [{ line: 4, kind: 'eval', snippet: 'eval(payload)' }],
+          }),
+        ],
+      }),
+    };
+    const findings = runAll(pair);
+    const obf = findings.find((f) => f.category === 'OBF');
+    const code = findings.find((f) => f.detector === 'code.dynamic-loading-added');
+    expect(obf).toBeDefined();
+    expect(code).toBeDefined();
+    expect(obf!.severity).toBe('BLOCK');
+    expect(obf!.message).toMatch(/escalated/);
+    expect(code!.severity).toBe('WARN');
+  });
+
+  it('does NOT escalate NET literal + CODE dynamic-import to BLOCK', () => {
+    const pair = {
+      old: mkSnap({
+        name: 'config-only',
+        version: '1.0.0',
+        files: [mkFile({ path: 'index.js' })],
+      }),
+      new: mkSnap({
+        name: 'config-only',
         version: '1.0.1',
         files: [
           mkFile({
             path: 'index.js',
-            // net.new-endpoint fires BLOCK not WARN — so we need to use net.new-module
-            // style signals. Actually net.new-endpoint is BLOCK so it won't be in warns.
-            // Use obf findings (which are WARN) spread across 4 files to hit warns >= 3.
-            // But the fixture spec says 4 net.new-endpoint findings. Let's check: net.new-endpoint
-            // fires as BLOCK (detectors.test.ts line 87). So 4 BLOCK findings won't be in warns.
-            // The exploit desc says attacker ships "4 net.new-endpoint on 4 URLs" — but if
-            // net.new-endpoint is BLOCK they already escalate. The real evasion shape is:
-            // 4 obf.entropy-jump WARN across 4 files in a single OBF category.
-            // We use obf (4 files) to produce warns.length=4, cats.size=1.
+            urlLiterals: ['https://docs.example.com/faq'],
+            urlLiteralContexts: { 'https://docs.example.com/faq': 'literal' },
+            dynamicCode: [{ line: 9, kind: 'dynamic-import', snippet: 'await import("./chunk.js")' }],
           }),
-          mkFile({ path: 'lib/a.min.js', entropy: 6.0, minified: true }),
-          mkFile({ path: 'lib/b.min.js', entropy: 6.1, minified: true }),
-          mkFile({ path: 'lib/c.min.js', entropy: 6.2, minified: true }),
-          mkFile({ path: 'lib/d.min.js', entropy: 6.3, minified: true }),
         ],
       }),
     };
-    // "old" needs corresponding files so obf can detect a delta
-    const oldPair = {
+    const findings = runAll(pair);
+    const net = findings.find((f) => f.detector === 'net.new-endpoint');
+    const code = findings.find((f) => f.detector === 'code.dynamic-loading-added');
+    expect(net).toBeDefined();
+    expect(code).toBeDefined();
+    expect(net!.severity).toBe('INFO');
+    expect(code!.severity).toBe('INFO');
+    expect(findings.some((f) => f.severity === 'BLOCK')).toBe(false);
+  });
+
+  it('still yields a BLOCK verdict for NET network-arg + ENV attack shapes', () => {
+    const pair = {
       old: mkSnap({
-        name: 'evil-s5',
+        name: 'evil-env',
         version: '1.0.0',
-        files: [
-          mkFile({ path: 'index.js' }),
-          mkFile({ path: 'lib/a.min.js', entropy: 2.0, minified: false }),
-          mkFile({ path: 'lib/b.min.js', entropy: 2.0, minified: false }),
-          mkFile({ path: 'lib/c.min.js', entropy: 2.0, minified: false }),
-          mkFile({ path: 'lib/d.min.js', entropy: 2.0, minified: false }),
-        ],
+        files: [mkFile({ path: 'index.js' })],
       }),
       new: mkSnap({
-        name: 'evil-s5',
+        name: 'evil-env',
         version: '1.0.1',
         files: [
-          mkFile({ path: 'index.js' }),
-          mkFile({ path: 'lib/a.min.js', entropy: 6.0, minified: true }),
-          mkFile({ path: 'lib/b.min.js', entropy: 6.1, minified: true }),
-          mkFile({ path: 'lib/c.min.js', entropy: 6.2, minified: true }),
-          mkFile({ path: 'lib/d.min.js', entropy: 6.3, minified: true }),
+          mkFile({
+            path: 'index.js',
+            urlLiterals: ['https://exfil.attacker.invalid/data'],
+            urlLiteralContexts: { 'https://exfil.attacker.invalid/data': 'network-arg' },
+            envAccesses: [{ line: 2, keys: ['JWT_SECRET'], snippet: 'process.env.JWT_SECRET' }],
+          }),
         ],
       }),
     };
-    const findings = runAll(oldPair);
-    const obfFindings = findings.filter((f) => f.category === 'OBF');
-    // At least 3 OBF findings (one per obfuscated file), all in one category.
-    expect(obfFindings.length).toBeGreaterThanOrEqual(3);
-    for (const f of obfFindings) {
-      expect(f.severity).toBe('BLOCK');
-      expect(f.message).toMatch(/escalated/);
-    }
+    const findings = runAll(pair);
+    const net = findings.find((f) => f.detector === 'net.new-endpoint');
+    const env = findings.find((f) => f.detector === 'env.token-harvest');
+    expect(net).toBeDefined();
+    expect(env).toBeDefined();
+    expect(net!.severity).toBe('WARN');
+    expect(env!.severity).toBe('BLOCK');
+    expect(findings.some((f) => f.severity === 'BLOCK')).toBe(true);
+  });
+
+  it('preserves deps.first-version-cluster for first-install secret-exfil shapes', () => {
+    const pair = {
+      old: null,
+      new: mkSnap({
+        name: 'aiocpa-like',
+        version: '0.1.0',
+        files: [
+          mkFile({
+            path: 'index.js',
+            networkModules: ['https'],
+            urlLiterals: ['https://harvest.attacker.invalid/wallets'],
+            envAccesses: [
+              { line: 1, keys: ['MNEMONIC'], snippet: 'process.env.MNEMONIC' },
+              { line: 2, keys: ['PRIVATE_KEY'], snippet: 'process.env.PRIVATE_KEY' },
+              { line: 3, keys: null, snippet: 'Object.assign({}, process.env)' },
+            ],
+          }),
+        ],
+      }),
+    };
+    const findings = runAll(pair);
+    const cluster = findings.find((f) => f.detector === 'deps.first-version-cluster');
+    expect(cluster).toBeDefined();
+    expect(cluster!.severity).toBe('BLOCK');
+    expect(cluster!.category).toBe('DEPS');
   });
 });

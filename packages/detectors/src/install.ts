@@ -3,14 +3,18 @@
  * Fires when the new manifest introduces (or changes) a lifecycle script.
  *
  * v0.4.2 FP-STUDY §3d — severity split by hook type:
- *   - INSTALL-triggered hooks (preinstall/install/postinstall + prepare + prepack
- *     + preuninstall etc): BLOCK — these run on `npm install`, the whole point
- *     of supply-chain scanning. High-signal.
+ *   - INSTALL-triggered hooks (preinstall/install/postinstall + preuninstall
+ *     etc): BLOCK — these run on `npm install`, the whole point of supply-chain
+ *     scanning. High-signal.
  *   - PUBLISH/VERSION/PACK hooks (prepublish/publish/postpublish + preversion
  *     etc.): WARN — these only run when the developer publishes or tags. Legit
  *     packages routinely change them (e.g. build-step migration). Attacker
  *     would still need the developer to actually publish, and vetlock scans
  *     lockfiles of *consumers*, who never execute publish scripts.
+ *   - `prepare` family (`preprepare`/`prepare`/`postprepare`): INFO — these do
+ *     NOT run for registry-installed dependencies, which is the routine-upgrade
+ *     study shape. They do run for publish/pack and git-url installs, so we
+ *     still surface them, just not at WARN.
  *   - `test`: INFO — some pipelines run `npm test` on install, but that's opt-in
  *     CI behavior, not npm-default. A `test` script change is not a supply-chain
  *     signal on its own. commander@11→12 fired BLOCK on this in the v0.4.0
@@ -33,36 +37,45 @@ const INSTALL_TIER: readonly string[] = [
   'preinstalled',
 ];
 
-// PUBLISH_TIER: run on `npm publish` / `npm version` / `npm pack` / git-URL
-// install for `prepare`. Consumers installing from a registry never execute
-// these. Change is worth WARN, not BLOCK. `prepare` is here rather than in
-// INSTALL_TIER because in practice ~99% of installs come from the registry
-// (where prepare doesn't run) and legit libraries routinely change `prepare`
-// as their build tooling evolves. If a consumer specifically installs from
-// git (`npm i github:foo/bar`), prepare DOES run — but that's an opt-in
-// pattern users take with eyes open.
-const PUBLISH_TIER: readonly string[] = [
+// PUBLISH_ONLY_TIER: prepare-family hooks do NOT run for registry-installed
+// dependencies (the supply-chain-upgrade shape vetlock scans), but they do run
+// for publish/pack and git-url installs. Surface them at INFO.
+const PUBLISH_ONLY_TIER: readonly string[] = [
   'preprepare', 'prepare', 'postprepare',
+];
+
+// PUBLISH_TIER: publish/version/pack hooks that matter to publishers, but not
+// routine consumers. Worth WARN, not BLOCK.
+const PUBLISH_TIER: readonly string[] = [
   'prepublish', 'prepublishOnly', 'publish', 'postpublish',
   'prepack', 'pack', 'postpack',
   'preversion', 'version', 'postversion',
+  'preshrinkwrap', 'shrinkwrap', 'postshrinkwrap',
 ];
 
 // CI_TIER: `npm test` and adjacent. Not npm-executed automatically; some CI
 // pipelines run them explicitly. Change is worth INFO — visible but low-signal.
+// We intentionally track only execution-capable hooks here, not arbitrary user-
+// defined script names.
 const CI_TIER: readonly string[] = [
   'test',
+  'prestart', 'start', 'poststart',
+  'prestop', 'stop', 'poststop',
+  'prerestart', 'restart', 'postrestart',
 ];
 
 function tierOf(script: string): { severity: Severity; confidence: 'low' | 'medium' | 'high' } | null {
   if (INSTALL_TIER.includes(script)) return { severity: 'BLOCK', confidence: 'high' };
+  if (PUBLISH_ONLY_TIER.includes(script)) return { severity: 'INFO', confidence: 'medium' };
   if (PUBLISH_TIER.includes(script)) return { severity: 'WARN', confidence: 'medium' };
   if (CI_TIER.includes(script)) return { severity: 'INFO', confidence: 'low' };
   return null;
 }
 
 // Union of all tiers, for iteration.
-const ALL_TRACKED: readonly string[] = [...new Set([...INSTALL_TIER, ...PUBLISH_TIER, ...CI_TIER])];
+const ALL_TRACKED: readonly string[] = [
+  ...new Set([...INSTALL_TIER, ...PUBLISH_ONLY_TIER, ...PUBLISH_TIER, ...CI_TIER]),
+];
 
 export const installDetector: Detector = {
   id: 'install',

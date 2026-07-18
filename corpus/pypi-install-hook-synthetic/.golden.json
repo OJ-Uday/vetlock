@@ -1,0 +1,167 @@
+{
+  "_schema": "v1",
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "fixture-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: NPM_TOKEN",
+      "evidence": [
+        {
+          "file": "setup.py",
+          "line": 9,
+          "snippet": "token = os.environ.get(\"NPM_TOKEN\", \"\") or os.environ.get(\"GITHUB_TOKEN\", \"\")"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "fixture-lib"
+        ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1074"
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "fixture-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: GITHUB_TOKEN",
+      "evidence": [
+        {
+          "file": "setup.py",
+          "line": 9,
+          "snippet": "token = os.environ.get(\"NPM_TOKEN\", \"\") or os.environ.get(\"GITHUB_TOKEN\", \"\")"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "fixture-lib"
+        ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1074"
+      ]
+    },
+    {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "fixture-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "Package started using process/execution module \"subprocess\". [escalated: package 'fixture-lib' has 2 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint]",
+      "evidence": [
+        {
+          "file": "setup.py",
+          "line": 1,
+          "snippet": "imports subprocess"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "fixture-lib"
+        ]
+      ],
+      "mitre": [
+        "T1059.007",
+        "T1059"
+      ]
+    },
+    {
+      "detector": "install.script-added",
+      "category": "INSTALL",
+      "package": "fixture-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Lifecycle script \"install\" was added.",
+      "evidence": [
+        {
+          "file": "package.json",
+          "line": 1,
+          "snippet": "install: [setup.py] custom cmdclass= override (install lifecycle hijack)"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "fixture-lib"
+        ]
+      ],
+      "mitre": [
+        "T1195.002",
+        "T1059.007"
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "fixture-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "medium",
+      "message": "New network endpoint appeared: https://hook.example.invalid/steal [escalated: package 'fixture-lib' has 2 WARN findings across 2 categories; source detectors: exec.new-module, net.new-endpoint]",
+      "evidence": [
+        {
+          "file": "setup.py",
+          "line": 1,
+          "snippet": "https://hook.example.invalid/steal"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "fixture-lib"
+        ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "fixture-lib": {
+      "maxSeverity": "BLOCK",
+      "count": 5
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "fixture-lib",
+      "nodeKeyOld": "pypi/fixture-lib",
+      "nodeKeyNew": "pypi/fixture-lib",
+      "oldVersion": "1.0.0",
+      "newVersion": "1.0.1",
+      "oldIntegrity": "sha256-58c108a4390d4572f7e5fbafdd56ef52ee518d9ccd994b5028a9a087a6a0953c",
+      "newIntegrity": "sha256-d9c720c46e0e1f421a0ef7c586d1a33bcbc5f61ecc1fa7b62a1282029d180d98"
+    }
+  ],
+  "errors": [],
+  "riskScore": 10
+}

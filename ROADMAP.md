@@ -14,7 +14,7 @@
 ## Next (v0.1.x)
 
 - [ ] **pnpm lockfile support** (`pnpm-lock.yaml` v5+). Highest-demand feature.
-- [ ] **`scan` mode** (baseline scan of a single lockfile — self-labels as weaker, no diff frame).
+- [x] **`scan` mode** (`vetlock scan` baseline scan of a single lockfile with an absolute capability profile).
 - [ ] **Yarn classic + berry** lockfile support.
 - [ ] **Broader historical corpus** — replay 8+ named attacks (event-stream, ua-parser-js,
   coa/rc, eslint-config-prettier, colors, node-ipc). Publish catches AND misses honestly.

@@ -171,4 +171,3 @@ describe('MITRE ATT&CK tagging (audit §2.1)', () => {
     expect(err).toMatch(/mitre must be a string array/);
   });
 });
-

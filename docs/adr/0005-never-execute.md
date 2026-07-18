@@ -36,6 +36,12 @@ This is a **tested** invariant, not a convention.
 Any future refactor that would allow execution must first delete this test consciously (which
 is itself a review flag).
 
+### CI hook
+
+The `never-execute-canary.test.ts` test is marked `@critical` in the CI configuration. Any PR that skips, removes, or comments out this test will fail CI automatically. This is not a soft convention — it is a required check.
+
+See `.github/workflows/assurance-pr.yml` for the enforcement hook.
+
 ## Rationale
 
 - Malware detonation-in-a-sandbox is not a viable OSS product surface — the infrastructure

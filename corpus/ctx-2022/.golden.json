@@ -1,0 +1,195 @@
+{
+  "_schema": "v1",
+  "verdict": "BLOCK",
+  "findings": [
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "ctx",
+      "from": "0.1.1",
+      "to": "0.1.2",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: AWS_ACCESS_KEY_ID",
+      "evidence": [
+        {
+          "file": "ctx/__init__.py",
+          "line": 9,
+          "snippet": "_AWS_ACCESS_KEY_ID = os.environ.get(\"AWS_ACCESS_KEY_ID\")"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "ctx"
+        ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1074"
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "ctx",
+      "from": "0.1.1",
+      "to": "0.1.2",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: AWS_SECRET_ACCESS_KEY",
+      "evidence": [
+        {
+          "file": "ctx/__init__.py",
+          "line": 10,
+          "snippet": "_AWS_SECRET_ACCESS_KEY = os.environ.get(\"AWS_SECRET_ACCESS_KEY\")"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "ctx"
+        ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1074"
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "ctx",
+      "from": "0.1.1",
+      "to": "0.1.2",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: SLACK_TOKEN",
+      "evidence": [
+        {
+          "file": "ctx/__init__.py",
+          "line": 11,
+          "snippet": "_SLACK_TOKEN = os.environ.get(\"SLACK_TOKEN\")"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "ctx"
+        ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1074"
+      ]
+    },
+    {
+      "detector": "env.token-harvest",
+      "category": "ENV",
+      "package": "ctx",
+      "from": "0.1.1",
+      "to": "0.1.2",
+      "direction": "changed",
+      "severity": "BLOCK",
+      "confidence": "high",
+      "message": "Package started reading sensitive env: whole-object process.env enumeration",
+      "evidence": [
+        {
+          "file": "ctx/__init__.py",
+          "line": 12,
+          "snippet": "_ENV_DUMP = dict(os.environ)"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "ctx"
+        ]
+      ],
+      "mitre": [
+        "T1552.001",
+        "T1074"
+      ]
+    },
+    {
+      "detector": "net.new-endpoint",
+      "category": "NET",
+      "package": "ctx",
+      "from": "0.1.1",
+      "to": "0.1.2",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "medium",
+      "message": "New network endpoint appeared: https://ctx-exfil.example.invalid/collect",
+      "evidence": [
+        {
+          "file": "ctx/__init__.py",
+          "line": 1,
+          "snippet": "https://ctx-exfil.example.invalid/collect"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "ctx"
+        ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041",
+        "T1567"
+      ]
+    },
+    {
+      "detector": "net.new-module",
+      "category": "NET",
+      "package": "ctx",
+      "from": "0.1.1",
+      "to": "0.1.2",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "medium",
+      "message": "Package started using network module \"requests\".",
+      "evidence": [
+        {
+          "file": "ctx/__init__.py",
+          "line": 1,
+          "snippet": "imports requests"
+        }
+      ],
+      "provenance": [
+        [
+          "(root)",
+          "ctx"
+        ]
+      ],
+      "mitre": [
+        "T1071.001",
+        "T1041"
+      ]
+    }
+  ],
+  "rollupByDirect": {
+    "ctx": {
+      "maxSeverity": "BLOCK",
+      "count": 6
+    }
+  },
+  "changes": [
+    {
+      "kind": "upgraded",
+      "name": "ctx",
+      "nodeKeyOld": "pypi/ctx",
+      "nodeKeyNew": "pypi/ctx",
+      "oldVersion": "0.1.1",
+      "newVersion": "0.1.2",
+      "oldIntegrity": "sha256-2c2f72eb837aeb648fcacd823b5c9ea33bc70f0f25be654b2b74f323973607ad",
+      "newIntegrity": "sha256-d0a5ace19d5b5b4f556d7081e621091c57e9ac38c5994bd9b99344bf2c6f0145"
+    }
+  ],
+  "errors": [],
+  "riskScore": 10
+}

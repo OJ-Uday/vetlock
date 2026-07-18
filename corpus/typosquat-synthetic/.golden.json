@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -37,9 +38,9 @@
       "from": null,
       "to": "1.0.0",
       "direction": "added",
-      "severity": "BLOCK",
+      "severity": "WARN",
       "confidence": "low",
-      "message": "Newly-installed package uses process/execution module \"child_process\". [escalated: package 'crossenv' has 2 WARN findings across 2 categories]",
+      "message": "Newly-installed package uses process/execution module \"child_process\".",
       "evidence": [
         {
           "file": "index.js",
@@ -65,9 +66,9 @@
       "from": null,
       "to": "1.0.0",
       "direction": "added",
-      "severity": "BLOCK",
+      "severity": "WARN",
       "confidence": "low",
-      "message": "Newly-installed package imports network module \"https\". [escalated: package 'crossenv' has 2 WARN findings across 2 categories]",
+      "message": "Newly-installed package imports network module \"https\".",
       "evidence": [
         {
           "file": "index.js",
@@ -135,5 +136,5 @@
     }
   ],
   "errors": [],
-  "riskScore": 10
+  "riskScore": 7
 }

@@ -14,7 +14,7 @@
       "name": "requests-lite",
       "version": "2.0.1",
       "integrity": "sha512-cZPqf+NT1FOIh7f9PHlXmMfhT1icYL6X79QiNQh+jZyXFWQWBfCkaeaeVpe2RvideoSbJGnUlW5akfSgeelU1g==",
-      "resolved": "file:///Users/L122472/personal/vetlock/corpus/fp-smoke/b-feature-bump/requests-lite-new/requests-lite-new.tgz"
+      "resolved": "file:./requests-lite-new/requests-lite-new.tgz"
     }
   }
 }

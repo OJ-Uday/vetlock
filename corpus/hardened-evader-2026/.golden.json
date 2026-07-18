@@ -1,4 +1,5 @@
 {
+  "_schema": "v1",
   "verdict": "BLOCK",
   "findings": [
     {
@@ -27,34 +28,6 @@
       "mitre": [
         "T1552.001",
         "T1074"
-      ]
-    },
-    {
-      "detector": "exec.new-module",
-      "category": "EXEC",
-      "package": "evader-lib",
-      "from": "1.0.0",
-      "to": "1.0.1",
-      "direction": "changed",
-      "severity": "BLOCK",
-      "confidence": "medium",
-      "message": "Package started using process/execution module \"child_process\". [escalated: package 'evader-lib' has 2 WARN findings across 2 categories]",
-      "evidence": [
-        {
-          "file": "util.js",
-          "line": 1,
-          "snippet": "imports child_process"
-        }
-      ],
-      "provenance": [
-        [
-          "my-app",
-          "evader-lib"
-        ]
-      ],
-      "mitre": [
-        "T1059.007",
-        "T1059"
       ]
     },
     {
@@ -87,15 +60,43 @@
       ]
     },
     {
+      "detector": "exec.new-module",
+      "category": "EXEC",
+      "package": "evader-lib",
+      "from": "1.0.0",
+      "to": "1.0.1",
+      "direction": "changed",
+      "severity": "WARN",
+      "confidence": "medium",
+      "message": "Package started using process/execution module \"child_process\".",
+      "evidence": [
+        {
+          "file": "util.js",
+          "line": 1,
+          "snippet": "imports child_process"
+        }
+      ],
+      "provenance": [
+        [
+          "my-app",
+          "evader-lib"
+        ]
+      ],
+      "mitre": [
+        "T1059.007",
+        "T1059"
+      ]
+    },
+    {
       "detector": "net.new-module",
       "category": "NET",
       "package": "evader-lib",
       "from": "1.0.0",
       "to": "1.0.1",
       "direction": "changed",
-      "severity": "BLOCK",
+      "severity": "WARN",
       "confidence": "medium",
-      "message": "Package started using network module \"https\". [escalated: package 'evader-lib' has 2 WARN findings across 2 categories]",
+      "message": "Package started using network module \"https\".",
       "evidence": [
         {
           "file": "net.js",

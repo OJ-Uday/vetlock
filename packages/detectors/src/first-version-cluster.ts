@@ -1,18 +1,32 @@
 /**
  * DEPS first-version-with-cluster compound detector.
  *
- * Fires when a package is ADDED (not upgraded) AND ships three or more
+ * Fires when a package is ADDED (not upgraded) AND ships four or more
  * distinct capability categories at once. Real npm packages nearly never do
  * this on their first version — a package that on day one already imports
  * network+process+fs modules AND reads sensitive env is a red flag by shape.
  *
+ * v0.7.1 PyPI FP-study follow-up: the original 3-category threshold over-fired
+ * on legitimate Python build/publish tools (`setuptools`, `build`, `flake8`,
+ * `black`) whose first-install shape naturally mixes FS + EXEC + ENV/CODE. We
+ * now require 4 categories so the individual detectors still surface the
+ * interesting behaviors, but the synthetic "brand-new package cluster" BLOCK
+ * only lands on rarer multi-capability combinations.
+ *
  * BLOCK, high. Only fires on pair.old === null.
  */
 
-import type { Detector, DetectorCategory, Finding, SnapshotPair } from '@vetlock/core';
+import type { Detector, DetectorCategory, EnvAccess, Finding, SnapshotPair } from '@vetlock/core';
+import { SENSITIVE_ENV_KEYS } from '@vetlock/core';
 import { directionFor } from './direction.js';
 
 const CLUSTER_CATEGORIES: readonly DetectorCategory[] = ['NET', 'EXEC', 'FS', 'ENV', 'CODE', 'OBF'];
+const FIRST_VERSION_CLUSTER_THRESHOLD = 4;
+const SENSITIVE_SET = new Set(SENSITIVE_ENV_KEYS);
+
+function isSensitiveEnvAccess(access: EnvAccess): boolean {
+  return access.keys === null || access.keys.some((key) => SENSITIVE_SET.has(key));
+}
 
 export const firstVersionClusterDetector: Detector = {
   id: 'deps-first-version-cluster',
@@ -35,7 +49,7 @@ export const firstVersionClusterDetector: Detector = {
       if (f.networkModules.length > 0) netModuleHit = true;
       if (f.execModules.length > 0) execModuleHit = true;
       if (f.fsModules.length > 0) fsModuleHit = true;
-      if (f.envAccesses.length > 0) envSensitiveHit = true; // any env access, not just sensitive keys
+      if (f.envAccesses.some(isSensitiveEnvAccess)) envSensitiveHit = true;
       if (f.dynamicCode.length > 0) codeSinkHit = true;
       if (f.minified || f.suspiciousLiterals.length > 0) obfHit = true;
     }
@@ -46,8 +60,9 @@ export const firstVersionClusterDetector: Detector = {
     if (codeSinkHit) cats.add('CODE');
     if (obfHit) cats.add('OBF');
 
-    // Threshold: 3+ categories. Below that, the individual detectors cover it.
-    if (cats.size < 3) return [];
+    // Threshold: 4+ categories. Below that, the individual detectors cover it
+    // without the synthetic "first-version cluster" umbrella finding.
+    if (cats.size < FIRST_VERSION_CLUSTER_THRESHOLD) return [];
 
     const catList = [...cats].sort();
     return [

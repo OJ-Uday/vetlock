@@ -18,9 +18,12 @@
 import * as http from 'node:http';
 import { z } from 'zod';
 import { VETLOCK_VERSION } from '@vetlock/core';
-import { ScanQueue, type ScanBackend } from './scan-queue.js';
+import { QueueFullError, ScanQueue, type ScanBackend } from './scan-queue.js';
 
 const PORT = Number(process.env.PORT) || 8080;
+const allowedOrigins = (process.env.VETLOCK_CORS_ORIGINS ?? '').split(',').map((origin) => origin.trim()).filter(Boolean);
+// TODO: Keep VETLOCK_API_KEY documented in README.md alongside the other deployment env vars.
+const API_KEY = process.env.VETLOCK_API_KEY;
 
 /** Hard cap enforced before we even attempt to parse the body. */
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB
@@ -75,12 +78,27 @@ class RateLimiter {
 }
 
 function clientIp(req: http.IncomingMessage): string {
-  // Trust a single well-formed X-Forwarded-For hop if present (typical
-  // behind a reverse proxy / load balancer); fall back to the socket.
-  const xff = req.headers['x-forwarded-for'];
-  if (typeof xff === 'string' && xff.length > 0) {
-    return xff.split(',')[0].trim();
+  // Fly.io injects Fly-Client-IP itself, so this branch prefers the platform's
+  // trusted client IP over any caller-controlled forwarding headers.
+  const flyClientIp = req.headers['fly-client-ip'];
+  if (flyClientIp && typeof flyClientIp === 'string') {
+    return flyClientIp.trim();
   }
+
+  // X-Forwarded-For is only safe when an operator explicitly trusts the proxy
+  // chain in front of this process; otherwise a direct client can spoof it.
+  const trustProxy = process.env.VETLOCK_TRUST_PROXY === 'true';
+  if (trustProxy) {
+    const xff = req.headers['x-forwarded-for'];
+    if (xff && typeof xff === 'string') {
+      const hops = xff.split(',').map((s) => s.trim());
+      // Use the last hop (closest trusted proxy) rather than the first hop,
+      // which can be attacker-controlled when upstreams append to the header.
+      return hops[hops.length - 1] ?? req.socket.remoteAddress ?? 'unknown';
+    }
+  }
+
+  // Safe default: ignore untrusted forwarding headers and use the TCP peer.
   return req.socket.remoteAddress ?? 'unknown';
 }
 
@@ -88,20 +106,59 @@ function clientIp(req: http.IncomingMessage): string {
 // Response helpers
 // ---------------------------------------------------------------------------
 
-function sendJson(res: http.ServerResponse, status: number, body: unknown, extraHeaders?: Record<string, string>): void {
+function corsHeaders(req: http.IncomingMessage): Record<string, string> {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    return {
+      'Access-Control-Allow-Origin': origin,
+      Vary: 'Origin',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, X-API-Key, Authorization',
+    };
+  }
+  return {};
+}
+
+function sendJson(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  status: number,
+  body: unknown,
+  extraHeaders?: Record<string, string>,
+): void {
   const payload = JSON.stringify(body);
   res.writeHead(status, {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    ...corsHeaders(req),
     ...extraHeaders,
   });
   res.end(payload);
 }
 
-function sendError(res: http.ServerResponse, status: number, error: string, code?: string, extraHeaders?: Record<string, string>): void {
-  sendJson(res, status, code ? { error, code } : { error }, extraHeaders);
+function sendError(
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+  status: number,
+  error: string,
+  code?: string,
+  extraHeaders?: Record<string, string>,
+): void {
+  sendJson(req, res, status, code ? { error, code } : { error }, extraHeaders);
+}
+
+function requireApiKey(req: http.IncomingMessage, res: http.ServerResponse): boolean {
+  // If no API_KEY is configured, skip auth (development mode).
+  if (!API_KEY) return true;
+
+  const headerApiKey = req.headers['x-api-key'];
+  const authorization = req.headers.authorization;
+  const bearerToken = typeof authorization === 'string' ? authorization.replace(/^Bearer\s+/, '') : undefined;
+  const provided = typeof headerApiKey === 'string' ? headerApiKey : bearerToken;
+  if (provided !== API_KEY) {
+    sendJson(req, res, 401, { error: 'Unauthorized' });
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -152,14 +209,14 @@ function readBody(req: http.IncomingMessage): Promise<{ ok: true; text: string }
 async function handleScanCreate(req: http.IncomingMessage, res: http.ServerResponse, queue: ScanQueue, limiter: RateLimiter): Promise<void> {
   const contentType = req.headers['content-type'] ?? '';
   if (!contentType.toLowerCase().includes('application/json')) {
-    sendError(res, 415, 'Content-Type must be application/json', 'UNSUPPORTED_MEDIA_TYPE');
+    sendError(req, res, 415, 'Content-Type must be application/json', 'UNSUPPORTED_MEDIA_TYPE');
     req.resume();
     return;
   }
 
   const contentLength = Number(req.headers['content-length'] ?? 0);
   if (contentLength > MAX_BODY_BYTES) {
-    sendError(res, 413, 'request body exceeds 1 MB limit', 'PAYLOAD_TOO_LARGE');
+    sendError(req, res, 413, 'request body exceeds 1 MB limit', 'PAYLOAD_TOO_LARGE');
     req.resume();
     return;
   }
@@ -168,16 +225,21 @@ async function handleScanCreate(req: http.IncomingMessage, res: http.ServerRespo
   const now = Date.now();
   const rate = limiter.check(ip, now);
   if (!rate.allowed) {
-    sendError(res, 429, 'rate limit exceeded: 5 scans per 60s per IP', 'RATE_LIMITED', {
+    sendError(req, res, 429, 'rate limit exceeded: 5 scans per 60s per IP', 'RATE_LIMITED', {
       'Retry-After': String(rate.retryAfterSec),
     });
     req.resume();
     return;
   }
 
+  if (!requireApiKey(req, res)) {
+    req.resume();
+    return;
+  }
+
   const bodyResult = await readBody(req);
   if (!bodyResult.ok) {
-    sendError(res, 413, 'request body exceeds 1 MB limit', 'PAYLOAD_TOO_LARGE');
+    sendError(req, res, 413, 'request body exceeds 1 MB limit', 'PAYLOAD_TOO_LARGE');
     return;
   }
 
@@ -185,50 +247,62 @@ async function handleScanCreate(req: http.IncomingMessage, res: http.ServerRespo
   try {
     parsedJson = JSON.parse(bodyResult.text);
   } catch {
-    sendError(res, 400, 'request body is not valid JSON', 'INVALID_JSON');
+    sendError(req, res, 400, 'request body is not valid JSON', 'INVALID_JSON');
     return;
   }
 
   const parsed = ScanRequestSchema.safeParse(parsedJson);
   if (!parsed.success) {
-    sendError(res, 400, parsed.error.issues.map((i) => i.message).join('; '), 'INVALID_REQUEST');
+    sendError(req, res, 400, parsed.error.issues.map((i) => i.message).join('; '), 'INVALID_REQUEST');
     return;
   }
 
-  const scanId = queue.enqueue({
-    lockfileBefore: parsed.data.lockfile_before,
-    lockfileAfter: parsed.data.lockfile_after,
-    ecosystem: parsed.data.ecosystem,
-  });
+  let scanId: string;
+  try {
+    scanId = queue.enqueue({
+      lockfileBefore: parsed.data.lockfile_before,
+      lockfileAfter: parsed.data.lockfile_after,
+      ecosystem: parsed.data.ecosystem,
+    });
+  } catch (err) {
+    if (err instanceof QueueFullError) {
+      sendError(req, res, 503, err.message, 'QUEUE_FULL');
+      return;
+    }
+    throw err;
+  }
 
-  sendJson(res, 202, { scanId, statusUrl: `/scan/${scanId}` });
+  sendJson(req, res, 202, { scanId, statusUrl: `/scan/${scanId}` });
 }
 
-function handleScanStatus(res: http.ServerResponse, queue: ScanQueue, scanId: string): void {
+function handleScanStatus(req: http.IncomingMessage, res: http.ServerResponse, queue: ScanQueue, scanId: string): void {
   const record = queue.getResult(scanId);
   if (!record) {
-    sendError(res, 404, `unknown scanId: ${scanId}`, 'NOT_FOUND');
+    sendError(req, res, 404, `unknown scanId: ${scanId}`, 'NOT_FOUND');
     return;
   }
 
   switch (record.status) {
     case 'expired':
-      sendError(res, 410, `scan results for ${scanId} have expired (24h retention)`, 'EXPIRED');
+      sendError(req, res, 410, `scan results for ${scanId} have expired (24h retention)`, 'EXPIRED');
       return;
     case 'pending':
-      sendJson(res, 202, { stage: record.stage, elapsedMs: record.elapsedMs });
+      sendJson(req, res, 202, { stage: record.stage, elapsedMs: record.elapsedMs });
       return;
     case 'error':
-      sendJson(res, 200, { verdict: 'BLOCK', findings: [], error: record.error });
+      sendJson(req, res, 200, { verdict: 'BLOCK', findings: [], error: record.error });
       return;
     case 'done':
-      sendJson(res, 200, { verdict: record.verdict, findings: record.findings });
+      sendJson(req, res, 200, { verdict: record.verdict, findings: record.findings });
       return;
   }
 }
 
-function handleHealth(res: http.ServerResponse): void {
-  sendJson(res, 200, { ok: true, version: VETLOCK_VERSION });
+function handleHealth(req: http.IncomingMessage, res: http.ServerResponse): void {
+  sendJson(req, res, 200, {
+    status: 'ok',
+    ...(process.env.VETLOCK_DEBUG === 'true' ? { version: VETLOCK_VERSION } : {}),
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -253,12 +327,12 @@ export function createServer(opts: CreateServerOptions = {}): http.Server {
     const pathname = url.pathname;
 
     if (method === 'OPTIONS') {
-      sendJson(res, 204, {});
+      sendJson(req, res, 204, {});
       return;
     }
 
     if (method === 'GET' && pathname === '/health') {
-      handleHealth(res);
+      handleHealth(req, res);
       return;
     }
 
@@ -269,17 +343,24 @@ export function createServer(opts: CreateServerOptions = {}): http.Server {
 
     const statusMatch = SCAN_STATUS_PATH.exec(pathname);
     if (method === 'GET' && statusMatch) {
-      handleScanStatus(res, queue, decodeURIComponent(statusMatch[1]));
+      handleScanStatus(req, res, queue, decodeURIComponent(statusMatch[1]));
       return;
     }
 
-    sendError(res, 404, `no route for ${method} ${pathname}`, 'NOT_FOUND');
+    sendError(req, res, 404, `no route for ${method} ${pathname}`, 'NOT_FOUND');
   });
 }
 
 /* c8 ignore start -- entrypoint glue, exercised via `pnpm dev` / `pnpm start`, not unit tests */
 const isDirectRun = process.argv[1] !== undefined && /server\.(js|ts)$/.test(process.argv[1]);
 if (isDirectRun) {
+  if (process.env.NODE_ENV === 'production' && process.env.VETLOCK_HTTPS_TERMINATOR !== 'true') {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[vetlock-api] WARNING: Running in production without VETLOCK_HTTPS_TERMINATOR=true. ' +
+        'Ensure a HTTPS reverse proxy (e.g. Fly.io, nginx) is terminating TLS before this server.',
+    );
+  }
   const server = createServer();
   server.listen(PORT, () => {
     // eslint-disable-next-line no-console

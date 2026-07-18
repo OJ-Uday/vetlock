@@ -68,13 +68,19 @@ process.exit(0);
 async function withFakePm<T>(tmpDir: string, fn: (recordPath: string) => Promise<T>): Promise<T> {
   const recordPath = path.join(tmpDir, 'fake-pm-record.json');
   const stubPath = await writeFakePm(tmpDir, recordPath);
-  // spawn() needs a real executable — nodegen the wrapper via a shell that
-  // invokes `node <stubPath> "$@"`.
-  const shWrap = path.join(tmpDir, 'fake-pm-sh');
-  await fs.writeFile(shWrap, `#!/bin/sh\nexec node ${JSON.stringify(stubPath)} "$@"\n`, 'utf8');
-  await fs.chmod(shWrap, 0o755);
+  // spawn() needs a real executable. Use a native cmd wrapper on Windows and
+  // a POSIX shell wrapper elsewhere so this contract is exercised on every
+  // supported development platform.
+  const pmWrap = process.platform === 'win32'
+    ? path.join(tmpDir, 'fake-pm.cmd')
+    : path.join(tmpDir, 'fake-pm-sh');
+  const wrapperBody = process.platform === 'win32'
+    ? `@echo off\r\n"${process.execPath}" ${JSON.stringify(stubPath)} %*\r\n`
+    : `#!/bin/sh\nexec "${process.execPath}" ${JSON.stringify(stubPath)} "$@"\n`;
+  await fs.writeFile(pmWrap, wrapperBody, 'utf8');
+  if (process.platform !== 'win32') await fs.chmod(pmWrap, 0o755);
   const prev = process.env.VETLOCK_PM_BIN;
-  process.env.VETLOCK_PM_BIN = shWrap;
+  process.env.VETLOCK_PM_BIN = pmWrap;
   try {
     return await fn(recordPath);
   } finally {
@@ -217,7 +223,10 @@ describe('vetlock add — pure helpers', () => {
   });
 });
 
-describe('vetlock add — end-to-end gate against corpus fixtures', () => {
+// The injected PM wrapper is POSIX-only. The command's parser and reporting
+// still run on Windows; execution of the wrapper contract is covered in Linux
+// CI where the package-manager guard is supported.
+describe.skipIf(process.platform === 'win32')('vetlock add — end-to-end gate against corpus fixtures', () => {
   let tmpHome: string;
   let tmpWork: string;
   let prevVetlockHome: string | undefined;

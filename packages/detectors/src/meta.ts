@@ -115,6 +115,9 @@ export const maintainerDetector: Detector = {
     const oldTrusted = trustList.length > 0 && oldEmails.every(
       (e) => isTrustedPublisher(e, trustList),
     );
+    const unknownAdded = trustList.length > 0
+      ? added.filter((e) => !isTrustedPublisher(e, trustList))
+      : [];
     const newTrusted = trustList.length > 0 && newEmails.every(
       (e) => isTrustedPublisher(e, trustList),
     );
@@ -133,10 +136,10 @@ export const maintainerDetector: Detector = {
       severity = 'BLOCK';
       confidence = 'high';
       note = ` [takeover pattern: trusted publisher(s) replaced by unknown]`;
-    } else if (oldTrusted && !newTrusted && anyNewTrusted) {
+    } else if (unknownAdded.length > 0) {
       severity = 'WARN';
       confidence = 'medium';
-      note = ` [new publisher added alongside trusted team]`;
+      note = ` [new unknown maintainer added: ${unknownAdded.join(', ')}]`;
     } else if (newTrusted && oldTrusted) {
       severity = 'INFO';
       confidence = 'high';

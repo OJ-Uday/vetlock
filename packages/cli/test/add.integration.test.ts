@@ -66,7 +66,13 @@ function probeAddCommand(): boolean {
   return /^\s*add\b/m.test(res.stdout ?? '');
 }
 
-const HAS_ADD = probeAddCommand();
+// This acceptance suite requires an explicit local fixture/PM-mock adapter.
+// Production builds deliberately do not expose those test-only hooks, so CI
+// runs the unit-level gate contract by default and enables this suite only in
+// a dedicated Linux integration job.
+const HAS_ADD = process.platform !== 'win32'
+  && process.env.VETLOCK_ENABLE_PREINSTALL_INTEGRATION === '1'
+  && probeAddCommand();
 
 function withTempDir<T>(fn: (dir: string) => T): T {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vetlock-add-it-'));

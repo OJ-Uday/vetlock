@@ -31,7 +31,11 @@ function probeGuardCommand(): boolean {
   return /^\s*guard\b/m.test(res.stdout ?? '');
 }
 
-const HAS_GUARD = probeGuardCommand();
+// Guard shims are POSIX shell scripts. Exercise them only in the dedicated
+// Linux integration job; unit tests cover their rendered contents everywhere.
+const HAS_GUARD = process.platform !== 'win32'
+  && process.env.VETLOCK_ENABLE_PREINSTALL_INTEGRATION === '1'
+  && probeGuardCommand();
 
 function withTempDir<T>(fn: (dir: string) => T): T {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vetlock-guard-it-'));

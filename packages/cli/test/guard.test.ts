@@ -41,9 +41,12 @@ describe('vetlock guard — shim install/uninstall/status', () => {
       const shimPath = path.join(tmpHome, 'bin', pm);
       expect(fsSync.existsSync(shimPath)).toBe(true);
       const stat = await fs.stat(shimPath);
-      // Executable bit set (any of user/group/other exec permissions).
-      // eslint-disable-next-line no-bitwise
-      expect(stat.mode & 0o111).not.toBe(0);
+      // POSIX has executable permission bits. Windows executes through file
+      // associations instead, so checking them there would be meaningless.
+      if (process.platform !== 'win32') {
+        // eslint-disable-next-line no-bitwise
+        expect(stat.mode & 0o111).not.toBe(0);
+      }
       const body = await fs.readFile(shimPath, 'utf8');
       // The shim's PM name is the file's basename.
       expect(body).toContain(`PM_NAME="${pm}"`);

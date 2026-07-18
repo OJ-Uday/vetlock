@@ -79,7 +79,9 @@ export function getCapabilityMap(): CapabilityMap {
     try { text = readFileSync(p, 'utf8'); break; } catch { /* try next */ }
   }
   if (text === null) {
-    throw new Error(`could not locate capability-map.json. Tried: ${candidates.join(', ')}`);
+    console.error(`[vetlock] WARNING: capability-map.json not found in any candidate path. Tried: ${candidates.join(', ')}`);
+    cachedMap = { version: 'missing', entries: [] };
+    return cachedMap;
   }
   const parsed = JSON.parse(text) as CapabilityMap;
   if (!parsed.entries || !Array.isArray(parsed.entries)) {

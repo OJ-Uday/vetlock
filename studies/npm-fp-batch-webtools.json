@@ -1,0 +1,995 @@
+{
+  "batch": "WEB TOOLS",
+  "description": "npm false-positive study for web tools that warned in the real v0.5.0 run plus related packages",
+  "version": "1",
+  "ecosystem": "npm",
+  "vetlockVersion": "0.7.0",
+  "ranAt": "2026-07-15T06:36:09.019Z",
+  "totalPackages": 15,
+  "totalCases": 30,
+  "scenarioKinds": [
+    "bump",
+    "prepare-added"
+  ],
+  "summary": {
+    "totalCases": 30,
+    "BLOCK": 1,
+    "WARN": 15,
+    "INFO": 0,
+    "CLEAN": 14,
+    "ERROR": 0,
+    "detectorHits": {
+      "install.script-added": 15,
+      "bin.new-native-artifact": 1
+    },
+    "expectedMatches": 30,
+    "expectedMismatches": 0,
+    "documentedFalsePositives": 1,
+    "documentedTrueWarns": 15
+  },
+  "scenarioSummary": {
+    "bump": {
+      "totalCases": 15,
+      "BLOCK": 1,
+      "WARN": 0,
+      "INFO": 0,
+      "CLEAN": 14,
+      "ERROR": 0,
+      "detectorHits": {
+        "bin.new-native-artifact": 1
+      },
+      "expectedMatches": 15,
+      "expectedMismatches": 0,
+      "documentedFalsePositives": 1,
+      "documentedTrueWarns": 0
+    },
+    "prepare-added": {
+      "totalCases": 15,
+      "BLOCK": 0,
+      "WARN": 15,
+      "INFO": 0,
+      "CLEAN": 0,
+      "ERROR": 0,
+      "detectorHits": {
+        "install.script-added": 15
+      },
+      "expectedMatches": 15,
+      "expectedMismatches": 0,
+      "documentedFalsePositives": 0,
+      "documentedTrueWarns": 15
+    }
+  },
+  "results": [
+    {
+      "package": "express",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "express",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "express",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "fastify",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "fastify",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "fastify",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "koa",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "koa",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "koa",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "hapi",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "hapi",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "hapi",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "commander",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "commander",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "commander",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "yargs",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "yargs",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "yargs",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "minimist",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "minimist",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "minimist",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "eslint",
+      "group": "static-local-require",
+      "scenarios": [
+        {
+          "package": "eslint",
+          "scenario": "bump",
+          "group": "static-local-require",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "A new static local require('./flat-config/config-loader') should not count as dynamic loading."
+          ],
+          "findings": []
+        },
+        {
+          "package": "eslint",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "mocha",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "mocha",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "mocha",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "jest",
+      "group": "prepare-script-change",
+      "scenarios": [
+        {
+          "package": "jest",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "jest",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "dotenv",
+      "group": "existing-fs-read",
+      "scenarios": [
+        {
+          "package": "dotenv",
+          "scenario": "bump",
+          "group": "existing-fs-read",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "fs.readFileSync(.env) exists in both versions, so fs.new-hotpath-read should not fire."
+          ],
+          "findings": []
+        },
+        {
+          "package": "dotenv",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "glob",
+      "group": "utility-clean",
+      "scenarios": [
+        {
+          "package": "glob",
+          "scenario": "bump",
+          "group": "utility-clean",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Small utility keeps the same fs/path imports in both versions, so the bump should stay CLEAN."
+          ],
+          "findings": []
+        },
+        {
+          "package": "glob",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "minimatch",
+      "group": "utility-clean",
+      "scenarios": [
+        {
+          "package": "minimatch",
+          "scenario": "bump",
+          "group": "utility-clean",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Small utility keeps the same fs/path imports in both versions, so the bump should stay CLEAN."
+          ],
+          "findings": []
+        },
+        {
+          "package": "minimatch",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "uuid",
+      "group": "uuid-prepare-script",
+      "scenarios": [
+        {
+          "package": "uuid",
+          "scenario": "bump",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "CLEAN",
+          "findingCount": 0,
+          "detectors": [],
+          "expectedVerdict": "CLEAN",
+          "expectedDetectors": [],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": false,
+          "expectationNotes": [
+            "Baseline benign bump: same package shape with a small pure-JS feature/refactor and no new detector-relevant capability."
+          ],
+          "findings": []
+        },
+        {
+          "package": "uuid",
+          "scenario": "prepare-added",
+          "group": "uuid-prepare-script",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: rollup -c"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "package": "sharp",
+      "group": "native-binary-recompiled",
+      "scenarios": [
+        {
+          "package": "sharp",
+          "scenario": "bump",
+          "group": "native-binary-recompiled",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "BLOCK",
+          "findingCount": 1,
+          "detectors": [
+            "bin.new-native-artifact"
+          ],
+          "expectedVerdict": "BLOCK",
+          "expectedDetectors": [
+            "bin.new-native-artifact"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": true,
+          "trueWarn": false,
+          "expectationNotes": [
+            "The detector keys native artifacts by path+sha256, so a recompiled .node at the same path still looks like a new artifact."
+          ],
+          "findings": [
+            {
+              "severity": "BLOCK",
+              "detector": "bin.new-native-artifact",
+              "category": "INSTALL",
+              "message": "New native binary artifact shipped in tarball: build/Release/sharp.node (node, 28 bytes)",
+              "evidence": {
+                "file": "build/Release/sharp.node",
+                "line": 1,
+                "snippet": "node artifact, sha256=e0145382afc4f2fb…"
+              }
+            }
+          ]
+        },
+        {
+          "package": "sharp",
+          "scenario": "prepare-added",
+          "group": "prepare-script-change",
+          "oldVersion": "1.0.0",
+          "newVersion": "2.0.0",
+          "verdict": "WARN",
+          "findingCount": 1,
+          "detectors": [
+            "install.script-added"
+          ],
+          "expectedVerdict": "WARN",
+          "expectedDetectors": [
+            "install.script-added"
+          ],
+          "matchesExpectation": true,
+          "falsePositive": false,
+          "trueWarn": true,
+          "expectationNotes": [
+            "prepare is tracked in INSTALL detector PUBLISH_TIER, so adding it should yield install.script-added at WARN.",
+            "This is a true WARN, but it documents one of the known noise sources the study wants to keep rare."
+          ],
+          "findings": [
+            {
+              "severity": "WARN",
+              "detector": "install.script-added",
+              "category": "INSTALL",
+              "message": "Lifecycle script \"prepare\" was added.",
+              "evidence": {
+                "file": "package.json",
+                "line": 1,
+                "snippet": "prepare: npm run compile"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
