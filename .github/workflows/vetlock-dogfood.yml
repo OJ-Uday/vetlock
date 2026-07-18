@@ -34,11 +34,27 @@ jobs:
           # Fetch the base version of the lockfile and diff it.
           git show "${{ github.event.pull_request.base.sha }}:pnpm-lock.yaml" > /tmp/before.yaml 2>/dev/null || cp pnpm-lock.yaml /tmp/before.yaml
           # A BLOCK verdict is a useful analyst signal, not by itself a failed
-          # dogfood run. Capture it once as JSON so the versioned gate can show
-          # every finding and apply its explicit high-confidence policy.
+          # dogfood run. Capture it as JSON so the versioned gate can show every
+          # finding and apply its explicit high-confidence policy. Registry
+          # timeouts get one bounded retry; successful package analyses are
+          # cached, and the final result still fails closed if errors remain.
           set +e
           node packages/cli/dist/cli.js diff /tmp/before.yaml pnpm-lock.yaml --json > /tmp/vetlock.json
           scan_status=$?
+          if node -e '
+            const fs = require("node:fs");
+            let analysis;
+            try { analysis = JSON.parse(fs.readFileSync("/tmp/vetlock.json", "utf8")); }
+            catch { process.exit(1); }
+            const transient = (analysis.errors || []).some((entry) =>
+              /(?:timed out|ETIMEDOUT|ECONNRESET|EAI_AGAIN)/i.test(String(entry?.error || entry?.message || entry))
+            );
+            process.exit(transient ? 0 : 1);
+          '; then
+            echo "Transient registry failure detected; retrying incomplete analysis once." >&2
+            node packages/cli/dist/cli.js diff /tmp/before.yaml pnpm-lock.yaml --json > /tmp/vetlock.json
+            scan_status=$?
+          fi
           # Keep the policy exit code while still allowing it to print a full
           # report for a failing policy decision.
           node scripts/vetlock-dogfood-policy.cjs /tmp/vetlock.json
