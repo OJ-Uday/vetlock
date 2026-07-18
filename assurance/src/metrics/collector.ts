@@ -86,7 +86,9 @@ function bucketOf(testFileAbs: string, root: string): string | null {
     ? pathResolve(testFileAbs).slice(root.length + 1)
     : testFileAbs;
   // rel now looks like "test/robustness/no-crash.test.ts" or "test/oracles/oracles.test.ts".
-  const m = rel.match(/^test\/([^/]+)\//);
+  // Vitest returns native absolute paths. Normalize after relativizing so the metric
+  // buckets are identical on Windows development machines and Linux CI runners.
+  const m = rel.replaceAll('\\', '/').match(/^test\/([^/]+)\//);
   return m ? m[1] : null;
 }
 

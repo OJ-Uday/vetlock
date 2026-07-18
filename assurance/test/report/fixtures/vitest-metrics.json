@@ -1,0 +1,30 @@
+{
+  "numTotalTests": 6,
+  "numPassedTests": 4,
+  "numFailedTests": 2,
+  "numPendingTests": 0,
+  "numTotalTestSuites": 3,
+  "testResults": [
+    {
+      "name": "test/robustness/fixture.test.ts",
+      "assertionResults": [
+        { "status": "passed" },
+        { "status": "passed" },
+        { "status": "failed" }
+      ]
+    },
+    {
+      "name": "test/evasion/fixture.test.ts",
+      "assertionResults": [
+        { "status": "passed" },
+        { "status": "passed" }
+      ]
+    },
+    {
+      "name": "test/metamorphic/fixture.test.ts",
+      "assertionResults": [
+        { "status": "failed" }
+      ]
+    }
+  ]
+}

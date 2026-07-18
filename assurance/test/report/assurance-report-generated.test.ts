@@ -33,10 +33,10 @@
  */
 
 import { execSync, spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve as pathResolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, it, expect } from 'vitest';
+import { afterAll, describe, it, expect } from 'vitest';
 
 // This test file is at assurance/test/report/. Go up two levels to reach assurance/.
 const ASSURANCE_ROOT = pathResolve(
@@ -46,17 +46,20 @@ const ASSURANCE_ROOT = pathResolve(
 );
 const CLI_PATH = pathResolve(ASSURANCE_ROOT, 'dist', 'report', 'cli.js');
 const REPORT_PATH = pathResolve(ASSURANCE_ROOT, 'report', 'ASSURANCE.md');
+const METRICS_FIXTURE = 'test/report/fixtures/vitest-metrics.json';
+const originalReport = readFileSync(REPORT_PATH, 'utf-8');
 
 /**
  * Run the CLI once, wait for it to finish, then return the ASSURANCE.md that was written.
- * The CLI itself spawns vitest for its measurement pass, so this is not instantaneous —
- * expect ~1-3 seconds per invocation on a warm cache.
+ * This test supplies a compact deterministic Vitest report. That preserves report-contract
+ * coverage without launching a second full assurance suite from inside the first one.
  */
 function runCliAndReadReport(): string {
   const result = spawnSync(process.execPath, [CLI_PATH], {
     cwd: ASSURANCE_ROOT,
     encoding: 'utf-8',
-    // No env overrides — we want the CLI to see the same environment a user would.
+    env: { ...process.env, ASSURANCE_VITEST_JSON: METRICS_FIXTURE },
+    // The fixture prevents an inner Vitest run; ordinary CLI use has no such override.
   });
   if (result.status !== 0) {
     throw new Error(
@@ -92,6 +95,9 @@ describe('assurance-report-generated (packet §4)', () => {
   it('regenerates ASSURANCE.md and every metric is either a percentage or the "no data" sentinel', () => {
     const report = runCliAndReadReport();
     const metrics = extractMetricsSection(report);
+    expect(metrics).toContain('66.7%');
+    expect(metrics).toContain('100.0%');
+    expect(metrics).toContain('0.0%');
 
     // Extract every metric line — anything starting with "- **" under ## Metrics.
     const lines = metrics
@@ -134,4 +140,8 @@ describe('assurance-report-generated (packet §4)', () => {
     const second = extractMetricsSection(runCliAndReadReport());
     expect(second).toBe(first);
   });
+});
+
+afterAll(() => {
+  writeFileSync(REPORT_PATH, originalReport, 'utf-8');
 });
