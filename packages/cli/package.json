@@ -1,6 +1,6 @@
 {
   "name": "vetlock",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": false,
   "description": "Behavioral diff for npm dependency updates. What does this update DO now that it didn't before?",
   "keywords": [
@@ -36,7 +36,7 @@
     "prepack": "pnpm run bundle"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22.14.0"
   },
   "files": [
     "dist",

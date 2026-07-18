@@ -31,16 +31,22 @@ jobs:
         with:
           fetch-depth: 0   # so `git describe` in the build can find recent history
 
-      - name: Setup Node 20
+      - name: Setup Node 22.14
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
-          node-version: "20"
+          node-version: "22.14.0"
           registry-url: "https://registry.npmjs.org"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
         with:
           version: 9
+
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install --global npm@">=11.5.0 <12"
+          node --version
+          npm --version
 
       - name: Install (frozen)
         run: pnpm install --frozen-lockfile
@@ -65,7 +71,13 @@ jobs:
           fi
           echo "publishing vetlock@$TAG"
 
-      - name: Publish to npm (with provenance)
+      - name: Publish to npm with trusted publishing (OIDC)
+        if: ${{ secrets.NPM_TOKEN == '' }}
+        working-directory: packages/cli
+        run: npm publish --provenance --access public
+
+      - name: Publish to npm with automation token (fallback)
+        if: ${{ secrets.NPM_TOKEN != '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         working-directory: packages/cli
