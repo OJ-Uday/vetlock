@@ -36,7 +36,7 @@
     "prepack": "pnpm run bundle"
   },
   "engines": {
-    "node": ">=22.14.0"
+    "node": ">=20"
   },
   "files": [
     "dist",
