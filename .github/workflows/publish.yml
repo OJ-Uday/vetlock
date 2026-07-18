@@ -1,6 +1,6 @@
 name: publish
 
-# Publishes `vetlock` to npm with build provenance (npm's SLSA attestation).
+# Publishes `@oj-uday/vetlock` to npm with build provenance (npm's SLSA attestation).
 # A supply-chain scanner MUST ship with the supply-chain hygiene it advocates
 # for — that's the whole story, and provenance is the technical backing.
 #
@@ -71,15 +71,15 @@ jobs:
             echo "::error::tag v$TAG != packages/cli/package.json v$PKG" >&2
             exit 1
           fi
-          echo "publishing vetlock@$TAG"
+          echo "publishing @oj-uday/vetlock@$TAG"
 
       - name: Check whether this immutable version already exists
         id: registry
         run: |
           TAG="${GITHUB_REF#refs/tags/v}"
-          if npm view "vetlock@$TAG" version --json >/dev/null 2>&1; then
+          if npm view "@oj-uday/vetlock@$TAG" version --json >/dev/null 2>&1; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "vetlock@$TAG is already published; retaining the verified tag as a no-op release run"
+            echo "@oj-uday/vetlock@$TAG is already published; retaining the verified tag as a no-op release run"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi

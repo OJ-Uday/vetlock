@@ -24,7 +24,7 @@ one of them paid for it with community anger and forks.
 
 1. **All detection logic lives in the OSS core**, under `packages/detectors/`
    (Apache-2.0). Every finding a paid customer sees originates from the same
-   `runAll(pair, ctx)` a `npx vetlock` user runs locally. There is exactly one
+   `runAll(pair, ctx)` a `npx @oj-uday/vetlock` user runs locally. There is exactly one
    detection code path across every tier.
 
 2. **The commercial layer sells convenience, scale, collaboration, governance,
@@ -63,7 +63,7 @@ one of them paid for it with community anger and forks.
   class, or a new sink/entry-point to the CAPABILITY-MAP (ADR 0011) MUST land
   in `packages/detectors/*`. The commercial `vetlock-app` repo never contains
   detection logic — CI on that repo asserts the dependency is on the published
-  `vetlock` npm package (or the workspace symlink during dev), not on a forked
+  `@oj-uday/vetlock` npm package (or the workspace symlink during dev), not on a forked
   or reimplemented detector.
 
 - **Public statement**: the `README.md` and the marketing site say explicitly

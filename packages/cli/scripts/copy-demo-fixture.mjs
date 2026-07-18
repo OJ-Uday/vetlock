@@ -9,7 +9,7 @@
  * We can't just add "../../corpus/shai-hulud-2025" to package.json's `files`
  * because npm's `files` cannot escape the package dir. Copy first, ship second.
  *
- * The fixture is ~20 KB — trivial. Zero-effort try-out (`npx vetlock demo`)
+ * The fixture is ~20 KB — trivial. Zero-effort try-out (`npx @oj-uday/vetlock demo`)
  * requires no network and no external state.
  */
 

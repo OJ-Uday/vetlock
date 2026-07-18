@@ -74,7 +74,7 @@ Every one is a *published, well-audited, presumed-safe* upgrade. Any finding is 
 
 ```bash
 export NPM_CONFIG_REGISTRY=https://<your-registry>/
-pnpm --filter vetlock build
+pnpm --filter @oj-uday/vetlock build
 node packages/cli/dist/corpus/fp-study.js \
   --input studies/top-100.txt \
   --output studies/fp-results.json \

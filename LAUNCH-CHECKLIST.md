@@ -22,8 +22,8 @@ artifact in this repo, it's not done.
 - [ ] **P1-E** red-team tail (4 remaining exploits): close where cheap, honest-disclose otherwise (fan-out running)
 - [ ] P2 FP study run + published (`docs/FP-STUDY.md`) — top-100 × 5 bumps ≈ 500 diffs, per-detector rate, tuning journey
 - [ ] `.npmrc` committed with public registry (verified 2026-07-13; c20a66d — no Artifactory URL in any committed file)
-- [ ] `npm publish --provenance` on next release (supply-chain hygiene symmetry — a supply-chain tool ships with provenance)
-- [ ] `npx vetlock demo` flawless on a clean machine (already ships bundled Shai-Hulud fixture in `dist/demo-fixture/`; verify from a non-Lilly machine before P9)
+- [ ] First public `@oj-uday/vetlock` release; publish v0.8.0 manually, then configure npm Trusted Publishing so future tag releases carry OIDC provenance
+- [ ] `npx @oj-uday/vetlock demo` flawless on a clean machine (already ships bundled Shai-Hulud fixture in `dist/demo-fixture/`; verify from a non-Lilly machine before P9)
 - [ ] README final: hero GIF from site scanner, comparison table, quickstart, honesty section, red-team story link
 - [ ] GitHub Marketplace listing for the Action (screenshots, category, description, verified org — P9)
 - [ ] External PR shows the bot comment (Action dogfooded on vetlock's own PRs)

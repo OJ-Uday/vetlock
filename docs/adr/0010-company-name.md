@@ -1,6 +1,6 @@
 # ADR 0010: Company Name Posture
 
-**Status:** Accepted, 2026-07-13
+**Status:** Accepted, 2026-07-13; npm decision amended 2026-07-18
 
 ## Context
 
@@ -42,9 +42,9 @@ This ADR records the availability audit and the resulting decision.
 ## Decision
 
 - **Name:** `vetlock` (kept — it's what the tool ships as today, and it's fully clear).
-- **npm:** publish under the bare `vetlock` package name. Scoped names are reserved
-  as a fallback (`@vetlock/core`, `@vetlock/detectors`, `@vetlock/cli` are already
-  in use inside the workspace).
+- **npm:** publish the public CLI as `@oj-uday/vetlock`. npm rejected the bare
+  `vetlock` name on 2026-07-18 as too similar to `redlock`. The product and
+  installed executable remain `vetlock`; internal packages remain `@vetlock/*`.
 - **GitHub org (commercial layer):** `vetlock-dev` when we form the entity. The
   OSS repo stays at `OJ-Uday/vetlock` until incorporation; transferring the OSS
   repo INTO the org at that point is a one-command move (`gh repo transfer …`)
@@ -89,6 +89,5 @@ This ADR records the availability audit and the resulting decision.
   `OJ-Uday/vetlock` until then — pre-incorporation, a personal-repo posture
   matches the "personal IP, built off-hours on personal hardware" story
   required by the legal gate.
-- When we publish v0.4.0 to npm, publish as `vetlock` (bare name).
-- Reserve `@vetlock/*` scope on npm at that time (npm scopes are free and lock
-  the whole namespace against typosquats).
+- Publish v0.8.0 as the first public `@oj-uday/vetlock` release. Keep the CLI
+  binary named `vetlock` so existing commands and the product identity stay stable.

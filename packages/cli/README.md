@@ -25,7 +25,7 @@
 ## Try it in 10 seconds
 
 ```bash
-npx vetlock demo
+npx @oj-uday/vetlock demo
 ```
 
 That's it. No install, no config, no network. You'll see vetlock replay the **Shai-Hulud 2025** worm attack against a bundled defanged fixture and produce 13 findings (BLOCK):
@@ -62,7 +62,7 @@ Impact by direct dependency:
 To run it against your own lockfiles:
 
 ```bash
-npx vetlock diff package-lock.before.json package-lock.after.json
+npx @oj-uday/vetlock diff package-lock.before.json package-lock.after.json
 ```
 
 ---
@@ -135,15 +135,15 @@ vetlock complements — not replaces — advisory scanning. Use `npm audit` for 
 
 ```bash
 # 1. Try the bundled demo (Shai-Hulud 2025 worm, replayed against a defanged fixture)
-npx vetlock demo
+npx @oj-uday/vetlock demo
 
 # 2. Diff two lockfiles from your repo
-npx vetlock diff package-lock.before.json package-lock.after.json
+npx @oj-uday/vetlock diff package-lock.before.json package-lock.after.json
 
 # 3. In CI — machine-readable output for gating
-npx vetlock diff before.json after.json --json > vetlock.json
-npx vetlock diff before.json after.json --sarif > vetlock.sarif   # → upload to GitHub code-scanning
-npx vetlock diff before.json after.json --md > vetlock-comment.md # → paste as sticky PR comment
+npx @oj-uday/vetlock diff before.json after.json --json > vetlock.json
+npx @oj-uday/vetlock diff before.json after.json --sarif > vetlock.sarif   # → upload to GitHub code-scanning
+npx @oj-uday/vetlock diff before.json after.json --md > vetlock-comment.md # → paste as sticky PR comment
 ```
 
 **Exit codes**
@@ -160,12 +160,13 @@ npx vetlock diff before.json after.json --md > vetlock-comment.md # → paste as
 ### Install locally
 
 ```bash
-npm install --save-dev vetlock
+npm install --save-dev @oj-uday/vetlock
 # then
 npx vetlock ...
 ```
 
-Or globally: `npm install -g vetlock`.
+The package stays scoped, while its executable remains `vetlock`.
+Or globally: `npm install -g @oj-uday/vetlock` (then run `vetlock`).
 
 ---
 
@@ -378,7 +379,7 @@ Schema stable across patch releases within a minor version.
 ### SARIF 2.1.0
 
 ```bash
-npx vetlock diff before.json after.json --sarif > vetlock.sarif
+npx @oj-uday/vetlock diff before.json after.json --sarif > vetlock.sarif
 ```
 
 Upload to GitHub's code-scanning:
@@ -391,7 +392,7 @@ Upload to GitHub's code-scanning:
 ### Markdown
 
 ```bash
-npx vetlock diff before.json after.json --md > pr-comment.md
+npx @oj-uday/vetlock diff before.json after.json --md > pr-comment.md
 ```
 
 Paste directly as a sticky PR comment. Renders the same finding-grouping as the TTY output.
