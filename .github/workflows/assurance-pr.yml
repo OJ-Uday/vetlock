@@ -38,7 +38,9 @@ jobs:
   assurance:
     name: PR-tier assurance (blocking)
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Hosted-runner variance regularly pushes the full adversarial battery past
+    # 15 minutes. Keep a finite bound without cancelling a healthy run.
+    timeout-minutes: 30
     env:
       # ADR-0004: PR tier uses a fixed, checked-in seed so any reviewer can reproduce
       # a finding by re-running the harness with the same seed.
