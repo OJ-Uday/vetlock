@@ -58,6 +58,7 @@ import {
   type Finding,
   type Change,
   type RunResult,
+  parsePackageSpec,
 } from '@vetlock/core';
 import { runAll } from '@vetlock/detectors';
 import { renderTTY } from '../tty.js';
@@ -118,33 +119,7 @@ export interface AddCommandResult {
  *
  * Returns null on invalid input so the caller can print a usage message.
  */
-export function parsePackageSpec(spec: string): { name: string; version: string } | null {
-  if (!spec || typeof spec !== 'string') return null;
-  const trimmed = spec.trim();
-  if (trimmed.length === 0) return null;
-  // Scoped: '@scope/name' or '@scope/name@version'
-  if (trimmed.startsWith('@')) {
-    const slash = trimmed.indexOf('/');
-    if (slash < 2) return null;
-    const rest = trimmed.slice(slash + 1);
-    const at = rest.indexOf('@');
-    if (at === -1) {
-      return { name: trimmed, version: 'latest' };
-    }
-    const name = `${trimmed.slice(0, slash)}/${rest.slice(0, at)}`;
-    const version = rest.slice(at + 1) || 'latest';
-    return { name, version };
-  }
-  // Unscoped: 'name' or 'name@version'
-  const at = trimmed.indexOf('@');
-  if (at === -1) {
-    return { name: trimmed, version: 'latest' };
-  }
-  return {
-    name: trimmed.slice(0, at),
-    version: trimmed.slice(at + 1) || 'latest',
-  };
-}
+export { parsePackageSpec } from '@vetlock/core';
 
 /**
  * Detect the developer's package manager from lockfiles in `cwd`.

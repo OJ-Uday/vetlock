@@ -20,4 +20,5 @@ export * from './config.js';
 export * from './config-trust.js';
 export * from './wasm.js';
 export * from './mitre-tags.js';
+export * from './package-spec.js';
 export * from './report/sarif.js';

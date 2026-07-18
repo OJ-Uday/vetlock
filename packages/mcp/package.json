@@ -1,0 +1,24 @@
+{
+  "name": "@vetlock/mcp",
+  "version": "0.7.0",
+  "private": true,
+  "description": "Scan-only MCP admission server for Vetlock",
+  "type": "module",
+  "bin": { "vetlock-mcp": "./dist/server.js" },
+  "scripts": {
+    "build": "tsc -p .",
+    "typecheck": "tsc -p . --noEmit",
+    "start": "node dist/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "@vetlock/core": "workspace:*",
+    "@vetlock/detectors": "workspace:*",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "vitest": "^1.4.0"
+  }
+}
